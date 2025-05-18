@@ -199,9 +199,9 @@ export default function Sidebar(){
 											<div className="d-flex flex-column gap-2">
 												<Link to="/iddetails" className="btn btn-outline-secondary menu-title">Edit Template Details</Link>
 												<Link to="/dynamicdetails" className="btn btn-outline-secondary menu-title">Edit Organization Information</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Organization Units</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Job Positions</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Job Title Categories</Link>
+												<Link to="/organization-unit" className="btn btn-outline-secondary menu-title">Organization Units</Link>
+												<Link to="/job-position" className="btn btn-outline-secondary menu-title">Job Positions</Link>
+												<Link to="/job-title-category" className="btn btn-outline-secondary menu-title">Job Title Categories</Link>
 												<Link to="" className="btn btn-outline-secondary menu-title">Salaries</Link>
 												<Link to="" className="btn btn-outline-secondary menu-title">Marital Statuses</Link>
 												<Link to="" className="btn btn-outline-secondary menu-title">Regions</Link>

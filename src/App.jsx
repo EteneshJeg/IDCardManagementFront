@@ -12,6 +12,9 @@ import DynamicDetails from './pages/dynamicdetails'
 import EmployeeDashboard from './pages/employeedashboard'
 import HrDashboard from './pages/hrdashboard'
 import ItStaffDashboard from './pages/itstaffdashboard'
+import OrganizationUnit from './pages/OrganizationUnit';
+import JobTitleCategories from './pages/JobTitleCategories';
+import JobPositions from './pages/JobPositions';
 
 function App() {
   
@@ -20,7 +23,7 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login/>}/>
-        <Route path="usermanagement" element={<UserManagement/>}/>
+        <Route path="/usermanagement" element={<UserManagement/>}/>
         <Route path="/employeemanagement" element={<EmployeeManagement/>}/>
         <Route path="/idmanagement" element={<IdManagement/>}/>
         <Route path="/iddetails" element={<IdDetails/>}/>
@@ -28,6 +31,10 @@ function App() {
         <Route path="/home/employeedashboard" element={<EmployeeDashboard/>}/>
         <Route path="/home/hrdashboard" element={<HrDashboard/>}/>
         <Route path="/home/itstaffdashboard" element={<ItStaffDashboard/>}/>
+        <Route path="/job-title-category" element={<JobTitleCategories />}/>
+        <Route path="/job-position" element={<JobPositions />}/>
+        <Route path="/organization-unit" element={<OrganizationUnit />}/>
+
       </Routes>
     </>
   )
