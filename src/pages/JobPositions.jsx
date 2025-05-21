@@ -11,11 +11,18 @@ import {
   deleteBunchPositions,
   fetchJobPositions
 } from "../features/jobPositionSlice";
+import {
+  fetchJobTitleCategories,
+  selectAllJobTitleCategories,
+} from "../features/jobTitleCategorySlice";
+import { toast } from "react-toastify";
+
 
 export default function JobPositionManagement() {
   const dispatch = useDispatch();
   const jobPositions = useSelector(selectAllJobPositions);
   const { status, error } = useSelector(state => state.jobPositions);
+  const jobTitleCategories = useSelector(selectAllJobTitleCategories);
 
   // State management
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,6 +45,12 @@ export default function JobPositionManagement() {
   useEffect(() => {
     dispatch(fetchJobPositions());
   }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchJobTitleCategories());
+  }, [dispatch]);
+
+
 
   // Script initialization
   useEffect(() => {
@@ -72,9 +85,11 @@ export default function JobPositionManagement() {
   // Handlers
   const handleSavePosition = () => {
     if (!formData.organization_unit || !formData.position_code) {
-      return alert("Organization Unit and Position Code are required");
+      toast.error("Organization Unit and Position Code are required");
+      return;
     }
     dispatch(addJobPosition(formData));
+    toast.success("Position added successfully!");
     setIsModalOpen(false);
     resetForm();
   };
@@ -82,6 +97,7 @@ export default function JobPositionManagement() {
   const handleUpdatePosition = () => {
     if (!selectedPosition?.id) return;
     dispatch(updateJobPosition({ id: selectedPosition.id, formData }));
+    toast.success("Position updated successfully!");
     setIsEditModalOpen(false);
     resetForm();
   };
@@ -89,6 +105,7 @@ export default function JobPositionManagement() {
   const handleDeletePosition = () => {
     if (!selectedPosition?.id) return;
     dispatch(deleteJobPosition(selectedPosition.id));
+    toast.success("Position deleted successfully!");
     setIsDeleteModalOpen(false);
   };
 
@@ -99,9 +116,12 @@ export default function JobPositionManagement() {
 
     if (selectedIds.length > 0) {
       dispatch(deleteBunchPositions(selectedIds));
+      toast.success("Selected positions deleted successfully!");
       setSelectedPositions({});
       setStartSelection(false);
-    }
+    } else {
+    toast.info("No positions selected for deletion.");
+  }
   };
 
   const resetForm = () => {
@@ -126,6 +146,7 @@ export default function JobPositionManagement() {
       return updated;
     });
   };
+  
 
   // SVG Close Icon
   const CloseIcon = () => (
@@ -190,8 +211,20 @@ export default function JobPositionManagement() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label">Job Title Category</label>
-                        <input type="text" className="form-control" name="job_title_category" 
-                          value={formData.job_title_category} onChange={handleChange} required />
+                        <select
+                          className="form-select"
+                          name="job_title_category"
+                          value={formData.job_title_category} // should hold the category ID
+                          onChange={handleChange}
+                          required
+                        >
+                          <option value="">Select a category</option>
+                          {jobTitleCategories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="mb-3">
                         <label className="form-label">Position Code</label>
@@ -302,8 +335,20 @@ export default function JobPositionManagement() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label">Job Title Category</label>
-                        <input type="text" className="form-control" name="job_title_category" 
-                          value={formData.job_title_category} onChange={handleChange} required />
+                        <select
+                          className="form-select"
+                          name="job_title_category"
+                          value={formData.job_title_category} // should hold the category ID
+                          onChange={handleChange}
+                          required
+                        >
+                          <option value="">Select a category</option>
+                          {jobTitleCategories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="mb-3">
                         <label className="form-label">Position Code</label>

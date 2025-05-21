@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
-import './App.css'
+import './App.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Route,Routes } from 'react-router-dom'
 import UserManagement from './pages/usermanagement'
 import EmployeeManagement from './pages/employeemanagement'
@@ -15,6 +17,7 @@ import ItStaffDashboard from './pages/itstaffdashboard'
 import OrganizationUnit from './pages/OrganizationUnit';
 import JobTitleCategories from './pages/JobTitleCategories';
 import JobPositions from './pages/JobPositions';
+
 
 function App() {
   
@@ -36,6 +39,7 @@ function App() {
         <Route path="/organization-unit" element={<OrganizationUnit />}/>
 
       </Routes>
+      <ToastContainer />
     </>
   )
 }

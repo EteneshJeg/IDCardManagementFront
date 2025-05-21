@@ -11,6 +11,7 @@ import {
   selectAllOrganizationUnits,
   deleteBunchUnits
 } from "../features/organizationUnitSlice";
+import { toast } from "react-toastify";
 
 // Reusable Modal Component
 const Modal = ({ isOpen, onClose, children }) => {
@@ -124,9 +125,12 @@ export default function OrganizationUnit() {
   // Handlers
   const handleSaveUnit = () => {
     if (!formData.en_name || !formData.abbreviation) {
-      return alert("English Name and Abbreviation are required");
-    }
+        toast.error("English Name and Abbreviation are required");
+        return;
+      }
+
     dispatch(addOrganizationUnit(formData));
+    toast.success("Organization Unit added successfully!");
     setIsModalOpen(false);
     resetForm();
   };
@@ -134,6 +138,7 @@ export default function OrganizationUnit() {
   const handleUpdateUnit = () => {
     if (!selectedUnit?.id) return;
     dispatch(updateOrganizationUnit({ id: selectedUnit.id, formData }));
+    toast.success("Organization Unit updated successfully!");
     setIsEditModalOpen(false);
     resetForm();
   };
@@ -141,6 +146,7 @@ export default function OrganizationUnit() {
   const handleDeleteUnit = () => {
     if (!selectedUnit?.id) return;
     dispatch(deleteOrganizationUnit(selectedUnit.id));
+    toast.success("Organization Unit deleted successfully!");
     setIsDeleteModalOpen(false);
   };
 
@@ -151,8 +157,11 @@ export default function OrganizationUnit() {
 
     if (selectedIds.length > 0) {
       dispatch(deleteBunchUnits(selectedIds));
+      toast.success("Selected units deleted successfully!");
       setSelectedUnits({});
       setStartSelection(false);
+    } else {
+      toast.info("No units selected for deletion.");
     }
   };
 
@@ -404,42 +413,94 @@ export default function OrganizationUnit() {
 
             {/* Edit Modal */}
             <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-              <div className="modal-header">
-                <h5 className="modal-title">Edit Organization Unit</h5>
-                <CloseButton onClose={() => setIsEditModalOpen(false)} />
-              </div>
-              <div className="modal-body">
-                {/* Add edit form fields similar to Add modal */}
-                <div className="mb-3">
-                  <label className="form-label">English Name</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    name="en_name" 
-                    value={formData.en_name}
-                    onChange={handleChange} 
-                    required 
+              <div className="modal-content">
+                {/* Modal Header */}
+                <div className="modal-header">
+                  <h5 className="modal-title">Edit Organization Unit</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={() => setIsEditModalOpen(false)}
                   />
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Abbreviation</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    name="abbreviation" 
-                    value={formData.abbreviation}
-                    onChange={handleChange} 
-                    required 
-                  />
+
+                {/* Modal Body */}
+                <div className="modal-body">
+                  {/* English Name */}
+                  <div className="mb-3">
+                    <label className="form-label">English Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="en_name"
+                      value={formData.en_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Abbreviation */}
+                  <div className="mb-3">
+                    <label className="form-label">Abbreviation</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="abbreviation"
+                      value={formData.abbreviation}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div className="mb-3">
+                    <label className="form-label">Address</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div className="mb-3">
+                    <label className="form-label">Phone Number</label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  {/* Status (Updated to your logic) */}
+                  <div className="mb-3">
+                    <label className="form-label">Status</label>
+                    <select
+                      className="form-select"
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-primary" onClick={handleUpdateUnit}>
-                  Save Changes
-                </button>
-            
+
+                {/* Modal Footer */}
+                <div className="modal-footer">
+                  <button className="btn btn-primary" onClick={handleUpdateUnit}>
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </Modal>
+
 
             {/* View Details Modal */}
             <Modal isOpen={isShowModalOpen} onClose={() => setIsShowModalOpen(false)}>

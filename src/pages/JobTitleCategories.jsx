@@ -11,6 +11,8 @@ import {
   deleteBunchCategories,
   fetchJobTitleCategories
 } from "../features/jobTitleCategorySlice";
+import { toast } from "react-toastify";
+
 
 export default function JobTitleCategories() {
   const dispatch = useDispatch();
@@ -61,10 +63,11 @@ export default function JobTitleCategories() {
   // Handlers
   const handleSaveCategory = () => {    
     if (!formData.name) {
-      alert('Name is required');
+      toast.error("Category name is required");
       return;
     }
     dispatch(addJobTitleCategory(formData));
+    toast.success("Category added successfully!");
     setIsModalOpen(false);
     setFormData({ name: '', description: '', parent: null });
   };
@@ -75,6 +78,7 @@ export default function JobTitleCategories() {
       id: selectedCategory.id, 
       formData 
     }));
+    toast.success("Category updated successfully!");
     setIsEditModalOpen(false);
     setFormData({ name: '', description: '', parent: null });
   };
@@ -82,6 +86,7 @@ export default function JobTitleCategories() {
   const handleDeleteCategory = () => {
     if (!selectedCategory?.id) return;
     dispatch(deleteJobTitleCategory(selectedCategory.id));
+    toast.success("Category deleted successfully!");
     setIsDeleteModalOpen(false);
   };
 
@@ -109,9 +114,13 @@ export default function JobTitleCategories() {
 
     if (selectedIds.length > 0) {
       dispatch(deleteBunchCategories(selectedIds));
+      toast.success("Selected categories deleted successfully!");
       setSelectedCategories({});
       setStartSelection(false);
-    }
+    } else {
+    toast.info("No categories selected for deletion.");
+  }
+
   };
 
   // Close Icon Component
