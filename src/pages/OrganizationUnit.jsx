@@ -13,9 +13,18 @@ import {
 } from "../features/organizationUnitSlice";
 import { toast } from "react-toastify";
 
+   // SVG Close Icon
+  const CloseIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+      <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+    </svg> )
+
 // Reusable Modal Component
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
+
+
 
   return (
     <div 
@@ -345,8 +354,10 @@ export default function OrganizationUnit() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
               <div className="modal-header">
                 <h5 className="modal-title">Add Organization Unit</h5>
-                <CloseButton onClose={() => setIsModalOpen(false)} />
-              </div>
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsModalOpen(false)}>
+                  <span className="svg-icon svg-icon-1"><CloseIcon /></span>
+                </div>             
+               </div>
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">English Name</label>
@@ -417,12 +428,9 @@ export default function OrganizationUnit() {
                 {/* Modal Header */}
                 <div className="modal-header">
                   <h5 className="modal-title">Edit Organization Unit</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    aria-label="Close"
-                    onClick={() => setIsEditModalOpen(false)}
-                  />
+                  <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsEditModalOpen(false)}>
+                    <span className="svg-icon svg-icon-1"><CloseIcon /></span>
+                  </div>
                 </div>
 
                 {/* Modal Body */}
@@ -506,7 +514,9 @@ export default function OrganizationUnit() {
             <Modal isOpen={isShowModalOpen} onClose={() => setIsShowModalOpen(false)}>
               <div className="modal-header">
                 <h5 className="modal-title">Unit Details</h5>
-                <CloseButton onClose={() => setIsShowModalOpen(false)} />
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsShowModalOpen(false)}>
+                    <span className="svg-icon svg-icon-1"><CloseIcon /></span>
+                </div>
               </div>
               <div className="modal-body">
                 <div className="mb-3">
@@ -539,7 +549,9 @@ export default function OrganizationUnit() {
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
               <div className="modal-header">
                 <h5 className="modal-title">Confirm Unit Deletion</h5>
-                <CloseButton onClose={() => setIsDeleteModalOpen(false)} />
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsDeleteModalOpen(false)}>
+                    <span className="svg-icon svg-icon-1"><CloseIcon /></span>
+                  </div>
               </div>
               <div className="modal-body">
                 <p className="fs-5 text-gray-800">

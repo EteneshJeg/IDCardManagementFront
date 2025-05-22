@@ -6,7 +6,11 @@ import organizationReducer from './features/organizationSlice';
 import jobTitleCategoryReducer from './features/jobTitleCategorySlice';
 import jobPositionsReducer from './features/jobPositionSlice';
 import organizationUnitReducer from "./features/organizationUnitSlice";
-
+import regionReducer from './features/regionSlice';
+import zoneReducer from './features/zoneSlice'
+import woredaReducer from './features/woredaSlice'
+import salaryReducer from './features/salarySlice'
+import maritalStatusReducer from './features/maritalStatusSlice'
 
 
 const store = configureStore({
@@ -17,7 +21,12 @@ const store = configureStore({
     organization:organizationReducer,
     jobTitleCategory: jobTitleCategoryReducer,
     jobPositions: jobPositionsReducer,
-    organizationUnits: organizationUnitReducer
+    organizationUnits: organizationUnitReducer,
+    region:regionReducer,
+    zone:zoneReducer,
+    woreda:woredaReducer,
+    salary:salaryReducer,
+    maritalStatus:maritalStatusReducer
 
 
 

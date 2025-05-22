@@ -202,11 +202,11 @@ export default function Sidebar(){
 												<Link to="/organization-unit" className="btn btn-outline-secondary menu-title">Organization Units</Link>
 												<Link to="/job-position" className="btn btn-outline-secondary menu-title">Job Positions</Link>
 												<Link to="/job-title-category" className="btn btn-outline-secondary menu-title">Job Title Categories</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Salaries</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Marital Statuses</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Regions</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Zones</Link>
-												<Link to="" className="btn btn-outline-secondary menu-title">Woredas</Link>
+												<Link to="/salarymanagement" className="btn btn-outline-secondary menu-title">Salaries</Link>
+												<Link to="/maritalstatusmanagement" className="btn btn-outline-secondary menu-title">Marital Statuses</Link>
+												<Link to="/regionmanagement" className="btn btn-outline-secondary menu-title">Regions</Link>
+												<Link to="/zonemanagement" className="btn btn-outline-secondary menu-title">Zones</Link>
+												<Link to="/woredamanagement" className="btn btn-outline-secondary menu-title">Woredas</Link>
 											</div>
 											</div>
 										</div>

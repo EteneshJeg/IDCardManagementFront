@@ -17,6 +17,13 @@ import ItStaffDashboard from './pages/itstaffdashboard'
 import OrganizationUnit from './pages/OrganizationUnit';
 import JobTitleCategories from './pages/JobTitleCategories';
 import JobPositions from './pages/JobPositions';
+import Salary from './pages/SalaryManagement';
+import MaritalStatus from './pages/MaritalStatusManagement';
+import Region from './pages/RegionManagement';
+import Zone from './pages/ZoneManagement';
+import Woreda from './pages/WoredaManagement';
+
+
 
 
 function App() {
@@ -37,7 +44,11 @@ function App() {
         <Route path="/job-title-category" element={<JobTitleCategories />}/>
         <Route path="/job-position" element={<JobPositions />}/>
         <Route path="/organization-unit" element={<OrganizationUnit />}/>
-
+        <Route path="/salarymanagement" element={<Salary/>}/>
+        <Route path="/maritalstatusmanagement" element={<MaritalStatus/>}/>
+        <Route path="/regionmanagement" element={<Region/>}/>
+        <Route path="/zonemanagement" element={<Zone/>}/>
+        <Route path="/woredamanagement" element={<Woreda/>}/>
       </Routes>
       <ToastContainer />
     </>
