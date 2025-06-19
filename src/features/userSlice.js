@@ -1,4 +1,5 @@
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const signin=createAsyncThunk(
     'user/signin',
@@ -20,7 +21,7 @@ export const signin=createAsyncThunk(
             if(!Array.isArray(userData)){
                 if(String(FormData.email).trim()===String(userData.email).trim()){
                     if(String(FormData.password).trim()===String(userData.password).trim()){
-                        alert('Login successful');
+                        toast.success('Login successful');
                         
                         console.log(userData.role)
                     return { role: userData.role, email:userData.email,message: 'Login successful' };
@@ -32,17 +33,17 @@ export const signin=createAsyncThunk(
                 const userFound=userData.find(user=>String(user.email).trim()===FormData.email);
                 if(userFound){
                     if(String(userFound.password).trim()===FormData.password){
-                        alert('Login successful');
+                        toast.success('Login successful');
                         console.log(userFound)
                         return { role: userFound.role, email:userFound.email,message: 'Login successful' };
                     }
                     else{
-                        alert('Incorrect password');
+                        toast.error('Incorrect password');
                         return rejectWithValue('password mismatch');
                     }
                 }   
                 else{
-                    alert('Email not found');
+                    toast.error('Email not found');
                     return rejectWithValue('email not found');
                 }
             }
@@ -110,7 +111,7 @@ export const addUser = createAsyncThunk(
             const isUserRegistered=storedUsers.some(storedUser=>storedUser.email===FormData.email)
 
             if(isUserRegistered){
-                alert('Email is already taken');
+                toast.error('Email is already taken');
                 return;
             }
             console.log(Date)
@@ -127,7 +128,7 @@ export const addUser = createAsyncThunk(
             console.log(user)
             storedUsers.push(user); 
             localStorage.setItem('userdata', JSON.stringify(storedUsers)); 
-            alert('User successfully added:', user);
+            toast.success('User successfully added:', user);
             return user;
         } catch (error) {
             return rejectWithValue(error.message);
@@ -160,7 +161,7 @@ export const updateUser = createAsyncThunk(
             
             storedUsers[userIndex] = updatedUser;
             localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            alert('Update successful');
+            toast.success('Update successful');
 
             return updatedUser;
         } catch (error) {
@@ -180,7 +181,7 @@ export const deleteUser = createAsyncThunk(
             });
 
             localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            alert('Delete successful');
+            toast.success('Delete successful');
             return storedUsers; 
         } catch (error) {
             return rejectWithValue(error.message);
@@ -200,7 +201,7 @@ export const deleteBunch=createAsyncThunk(
             }
  )
             localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            alert('Delete successful');
+            toast.success('Delete successful');
             return storedUsers
         }catch(error){
             return rejectWithValue(error);

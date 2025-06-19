@@ -1,4 +1,5 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const createRegion=createAsyncThunk(
     'region/create',
@@ -31,7 +32,7 @@ export const createRegion=createAsyncThunk(
 
             const isRegionRegistered=storedRegions.some(storedRegion=>storedRegion.code===FormData.code)
             if(isRegionRegistered){
-                alert('Region already exists');
+                toast.error('Region already exists');
                 return;
             }
             
@@ -43,9 +44,10 @@ export const createRegion=createAsyncThunk(
             }
             storedRegions.push(newRegion);
             localStorage.setItem('region',JSON.stringify(storedRegions));
-            alert('Region saved successfully');
+            toast.success('Region saved successfully');
             return newRegion;
         }catch(error){
+            toast.error('Failed to save region');
             return rejectWithValue(error.message);
         }
     }
@@ -103,11 +105,12 @@ export const updateRegion=createAsyncThunk(
             if(updatedRegion){
                 storedRegions[regionIndex]=updatedRegion;
                 localStorage.setItem('region',JSON.stringify(storedRegions));
-                alert('Region Updated Successfully');
+                toast.success('Region Updated Successfully');
                 return updatedRegion
             }
 
         }catch(error){
+            toast.error('Failed to update');
             return rejectWithValue(error.message);
         }
     }
@@ -134,10 +137,11 @@ export const deleteRegion=createAsyncThunk(
               
         console.log(storedRegions)
         localStorage.setItem('region',JSON.stringify(storedRegions));
-        alert('Region deleted successfully');
+        toast.success('Region deleted successfully');
         return storedRegions;
 
         }catch(error){
+            toast.error('Failed to delete region');
             return rejectWithValue(error.message);
         }
     }
@@ -167,10 +171,11 @@ export const deleteBunch=createAsyncThunk(
             console.log(storedRegions)
 
             localStorage.setItem('region',JSON.stringify(storedRegions));
-            alert('Delete successful');
+            toast.success('Delete successful');
             return storedRegions;            
 
         }catch(error){
+            toast.error('Failed to delete');
             return rejectWithValue(error.message);
         }
     }

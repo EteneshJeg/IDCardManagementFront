@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 
 
 export default function JobPositionManagement() {
+  
   const dispatch = useDispatch();
   const jobPositions = useSelector(selectAllJobPositions);
   const { status, error } = useSelector(state => state.jobPositions);
@@ -41,6 +42,7 @@ export default function JobPositionManagement() {
     job_description: ""
   });
   const [searchTerm, setSearchTerm] = useState("");
+     const [selectedFilter, setSelectedFilter] = useState("show all");
 
   useEffect(() => {
     dispatch(fetchJobPositions());
@@ -63,6 +65,8 @@ export default function JobPositionManagement() {
     document.body.appendChild(script);
     return () => document.body.removeChild(script);
   }, []);
+
+  
 
   // Filtering and pagination
   const filteredData = jobPositions.filter(position => {
@@ -157,12 +161,8 @@ export default function JobPositionManagement() {
   );
 
   return (
-    <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-      <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-        <div className="app-wrapper" id="kt_app_wrapper">
-          <Sidebar />
-          <div className="main-content">
-            <Header />
+    <>
+    
 
             {/* Toolbar Section */}
             <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
@@ -423,6 +423,22 @@ export default function JobPositionManagement() {
                     </h3>
                     <div className="card-toolbar">
                       <div className="d-flex flex-stack flex-wrap gap-4">
+                        <div className="d-flex align-items-center fw-bold">
+                      {/*begin::Label*/}
+                      <div className="text-gray-400 fs-7 me-2">Position Status</div>
+                      {/*end::Label*/}
+                      {/*begin::Select*/}
+                      <select className="form-select form-select-transparent text-graY-800 fs-base lh-1 fw-bold py-0 ps-3 w-auto"
+                        data-control="select" data-hide-search="true" data-dropdown-css-classname="w-150px"
+                        data-placeholder="Unit status" value={selectedFilter}
+                        onChange={(e) => setSelectedFilter(e.target.value)}>
+
+                        <option value="show all" >Show All</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                      {/*end::Select*/}
+                    </div>
                         <div className="position-relative my-1">
                           <input 
                             type="text" 
@@ -436,10 +452,11 @@ export default function JobPositionManagement() {
                   </div>
 
                   <div className="card-body pt-2">
-                    <table className="table align-middle table-row-dashed fs-6 gy-3">
+                    <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                       <thead>
                         <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                           <th className="min-w-50px"></th>
+                          <th className="min-w-100px">#</th>
                           <th>Organization Unit</th>
                           <th>Job Title</th>
                           <th>Position Code</th>
@@ -449,7 +466,11 @@ export default function JobPositionManagement() {
                         </tr>
                       </thead>
                       <tbody className="fw-bold text-gray-600">
-                        {currentData.map(position => (
+                        {currentData.filter((data)=>{
+                          const matchFilter=selectedFilter === 'show all' ||
+                            data.status?.toLowerCase() === selectedFilter.toLowerCase();
+                            return matchFilter;
+                        }).map((position,index) => (
                           <tr key={position.id}>
                             <td>
                               <input 
@@ -458,12 +479,13 @@ export default function JobPositionManagement() {
                                 onChange={() => handleSelectedRows(position.id)} 
                               />
                             </td>
+                            <td>{index+1}</td>
                             <td>{position.organization_unit || '-'}</td>
                             <td>{position.job_title_category || '-'}</td>
                             <td>{position.position_code || '-'}</td>
                             <td>{position.salary || '-'}</td>
                             <td>
-                              <span className={`badge badge-light-${position.status === 'active' ? 'success' : 'danger'}`}>
+                              <span className={`badge badge-${position.status === 'active' ? 'success' : 'danger'}`}>
                                 {position.status}
                               </span>
                             </td>
@@ -502,29 +524,37 @@ export default function JobPositionManagement() {
                       </tbody>
                     </table>
 
-                    <div className="pagination mt-3">
-                      <button 
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} 
-                        disabled={currentPage === 1}
-                      >
-                        <i className="bi bi-chevron-left"></i>
-                      </button>
-                      <span className="mx-3">Page {currentPage} of {totalPages}</span>
-                      <button 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} 
-                        disabled={currentPage === totalPages}
-                      >
-                        <i className="bi bi-chevron-right"></i>
-                      </button>
+                    <div className="pagination d-flex justify-content-between align-items-center mt-5">
+                      <div>
+                        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
+                        {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
+                        {filteredData.length} entries
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button 
+                          className="btn btn-sm btn-icon btn-light-primary"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                          disabled={currentPage === 1}
+                        >
+                          <i className="bi bi-chevron-left"></i>
+                        </button>
+                        <span className="px-3 d-flex align-items-center">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button 
+                          className="btn btn-sm btn-icon btn-light-primary"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
+                          disabled={currentPage === totalPages || totalPages === 0}
+                        >
+                          <i className="bi bi-chevron-right"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <Footer />
-          </div>
-        </div>
-      </div>
-    </div>
+           
+    </>
   );
 }

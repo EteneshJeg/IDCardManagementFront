@@ -143,13 +143,11 @@ export default function JobTitleCategories() {
     return () => document.body.removeChild(script);
   }, []);
 
+  
+
   return (
-    <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-      <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-        <div className="app-wrapper" id="kt_app_wrapper">
-          <Sidebar />
-          <div className="main-content">
-            <Header />
+    <>
+    
             
             {/* Toolbar */}
             <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
@@ -188,6 +186,7 @@ export default function JobTitleCategories() {
                     </h3>
                     <div className="card-toolbar">
                       <div className="d-flex flex-stack flex-wrap gap-4">
+                        
                         <div className="position-relative my-1">
                           <span className="svg-icon svg-icon-2 position-absolute top-50 translate-middle-y ms-4">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,10 +207,11 @@ export default function JobTitleCategories() {
                   </div>
 
                   <div className="card-body pt-2">
-                    <table className="table align-middle table-row-dashed fs-6 gy-3">
+                    <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                       <thead>
                         <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                           <th className="min-w-50px"></th>
+                          <th className="min-w-100px">#</th>
                           <th>Name</th>
                           <th>Description</th>
                           <th>Parent Category</th>
@@ -220,8 +220,14 @@ export default function JobTitleCategories() {
                       </thead>
                       <tbody className="fw-bold text-gray-600">
                         {Array.isArray(currentdata) && currentdata.length > 0 ? (
-                          currentdata.map((category) => (
+                          currentdata.map((category,index) => (
                             <tr key={category.id}>
+                              <td><input 
+                                type="checkbox" 
+                                checked={!!selectedCategories[category.id]}
+                                onChange={() => handleSelectedRows(category.id)} 
+                              /></td>
+                              <td>{index+1}</td>
                               <td>
                                 <div className="form-check form-check-sm form-check-custom form-check-solid">
                                   <input 
@@ -515,10 +521,7 @@ export default function JobTitleCategories() {
               </div>
             )}
 
-            <Footer />
-          </div>
-        </div>
-      </div>
-    </div>
+            
+    </>
   );
 }

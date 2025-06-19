@@ -1,4 +1,5 @@
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit"
+import { toast } from "react-toastify";
 
 export const getProfile = createAsyncThunk(
     'profile/get',
@@ -48,11 +49,17 @@ export const generateId=createAsyncThunk(
                 return String(storedProfile.employment_id).toLowerCase().trim()===String(Id).toLowerCase().trim()
             })
             console.log(userIndex)
+            const validateDate=FormData?.id_issue_date < FormData?. id_expire_date;
+            if(!validateDate){
+              toast.error('The issue date needs to be before the expire date');
+              return;
+            }
+            const date=new Date().toISOString().split('T')[0];
             const updatedProfile={
                 ...storedProfiles[userIndex],
                 id_expire_date:FormData?.id_expire_date,
                 id_issue_date:FormData?.id_issue_date,
-                id_status:'Active'
+                id_status : FormData?.id_expire_date < date ? 'Expired' : 'Active'
             }
             console.log(updatedProfile);
             const newId={
@@ -74,8 +81,10 @@ export const generateId=createAsyncThunk(
             console.log(newId);
             console.log(storedProfiles)
             console.log('saved');
+            toast.success('Id generated');
             return newId
         }catch(error){
+            toast.error('Failed to generate Id');
             return rejectWithValue(error.message)
         }
     }
@@ -113,11 +122,12 @@ export const generateIdBunch = createAsyncThunk(
 
       
       localStorage.setItem('idcard', JSON.stringify(storedIds));
-      alert('generation successful')
+      toast.success('generation successful')
       
       return updatedUsers;
 
     } catch (error) {
+      toast.error('Generation Failed');
       return rejectWithValue(error.message || 'An error occurred while updating the IDs');
     }
   }
@@ -135,9 +145,10 @@ export const saveTemplate=createAsyncThunk(
             console.log('template saved');
             console.log(TemplateData)
             console.log(Enabled);
-            alert('new template saved');
+            toast.success('new template saved');
             return TemplateData
         }catch(error){
+          toast.error('Failed to save template');
             console.log(error);
             return rejectWithValue(error.message)
         }

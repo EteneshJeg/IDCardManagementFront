@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import { useState } from "react"
 import { useDispatch } from "react-redux";
 import { Stage,Layer,Text,Image,Circle,Group,Image as KonvaImage } from "react-konva";
+import { toast } from "react-toastify";
 
 
 import { getOrganizationInfo } from "../features/organizationSlice";
@@ -229,7 +230,7 @@ export default function IdDetails() {
               field_label:'Job Category',
               field_name:'job_title_category',
           },
-          salary_id:{
+          salary_amount:{
             text_positionx:400,
               text_positiony:140,
               text_font_size:18,
@@ -237,7 +238,7 @@ export default function IdDetails() {
               text_font_type:'arial',
               gap:200,
               field_label:'Salary ID',
-              field_name:'salary_id',
+              field_name:'salary_amount',
           },
           marital_status:{
             text_positionx:400,
@@ -631,7 +632,7 @@ export default function IdDetails() {
           field_label:'Job Category',
           field_name:'job_title_category',
       },
-      salary_id:{
+      salary_amount:{
         text_positionx:400,
           text_positiony:140,
           text_font_size:18,
@@ -639,7 +640,7 @@ export default function IdDetails() {
           text_font_type:'arial',
           gap:200,
           field_label:'Salary ID',
-          field_name:'salary_id',
+          field_name:'salary_amount',
       },
       marital_status:{
         text_positionx:400,
@@ -1031,7 +1032,7 @@ export default function IdDetails() {
           field_label:'Job Category',
           field_name:'job_title_category',
       },
-      salary_id:{
+      salary_amount:{
         text_positionx:400,
           text_positiony:140,
           text_font_size:18,
@@ -1039,7 +1040,7 @@ export default function IdDetails() {
           text_font_type:'arial',
           gap:200,
           field_label:'Salary ID',
-          field_name:'salary_id',
+          field_name:'salary_amount',
       },
       marital_status:{
         text_positionx:400,
@@ -1315,7 +1316,7 @@ export default function IdDetails() {
                 organization_unit:false,
                 job_position:false,
                 job_title_category:false,
-                salary_id:false,
+                salary_amount:false,
                 marital_status:false,
                 nation:false,
                 employment_id:false,
@@ -1748,7 +1749,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
           ...prevTemplates,
           [selectedTemplate]: {
             ...prevTemplates[selectedTemplate],
-            imageMaskColor: value, 
+            logoMaskColor: value, 
           },
         }));
       
@@ -1769,14 +1770,10 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
 
   return (
     <>
-    <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-    <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-    
-    <div className="app-wrapper" id="kt_app_wrapper">
-        <Sidebar />
+   
 
-        <div className="main-content">
-        <Header />
+       
+      
           {/* Toolbar */}
           <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
             <div
@@ -1818,7 +1815,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                             <option value="badge">Badge</option>
           </select>
           {selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
-                                <Stage className="stage"width={700} height={600}>
+                                <Stage className="stage" width={700} height={600}>
                                     <Layer>
                                         <KonvaImage
                                            image={backObj|| backImg}
@@ -1842,7 +1839,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                               y={templates[selectedTemplate]?.imagePosition?.y || 50}
                                               image={image}
                                               width={templates[selectedTemplate]?.logoDimension?.image_width || 150}
-                                              height={templates[selectedTemplate]?.logoD?.image_height || 150}
+                                              height={templates[selectedTemplate]?.logoDimension?.image_height || 150}
                                               stroke={templates[selectedTemplate]?.imageMaskColor || imageMaskColor}
                                               strokeWidth={templates[selectedTemplate]?.imageMaskThickness || imageMaskThickness}
                                               cornerRadius={templates[selectedTemplate]?.imageCircleDiameter || imageCircleDiameter}
@@ -1994,7 +1991,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                       handleViewTemplate('front');
                                     }}
                                   ></i>
-                                </td>
+                                
 
                                 <div
                                   className={`modal fade ${isViewModalOpen ? 'show' : ''}`}
@@ -2025,6 +2022,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                   </div>
                                 </div>
                               </div>
+                              </td>
 
                                                            <td>
                                                                <label htmlFor="template-front">
@@ -2051,7 +2049,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                           handleViewTemplate('back');
                                                         }}
                                                       ></i>
-                                                    </td>
+                                                    
 
                                                     <div
                                                       className={`modal fade ${isViewModalOpen ? 'show' : ''}`}
@@ -2082,6 +2080,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                         </div>
                                                       </div>
                                                     </div>
+                                                    </td>
 
                                                            <td>
                                                            <label htmlFor="template-back">
@@ -2108,7 +2107,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                               handleViewTemplate('badge');
                                                             }}
                                                           ></i>
-                                                        </td>
+                                                        
 
                                                         <div
                                                           className={`modal fade ${isViewModalOpen ? 'show' : ''}`}
@@ -2139,6 +2138,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                             </div>
                                                           </div>
                                                         </div>
+                                                        </td>
 
                                                            <td>
                                                            <label htmlFor="template-badge">
@@ -2162,7 +2162,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                       </div>
                                       <div className="tab-pane fade" id="kt_tab_pane_5" role="tabpanel">
                                       <label>Choose fields to include</label>
-                                      <select>
+                                      <select className="form-select">
                                         <option value="photo" name="photo">Image</option>
                                         <option value="en_name" name="en_name">Name</option>
                                         <option value="job_position" name="job_position">Role</option>
@@ -2182,7 +2182,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         <option value="woreda" name="woreda">Woreda</option>
                                         <option value="house_number" name="house_number">House Number</option>
                                         <option value="marital_status" name="marital_status">Marital Status</option>
-                                        <option value="salary_id" name="salary_id">Salary ID</option>
+                                        <option value="salary_amount" name="salary_amount">Salary ID</option>
                                         <option value="job_position_start_date" name="job_position_start_date">Job Position Start Date</option>
                                         <option value="job_position_end_date" name="job_position_end_date">Job Position End Date</option>
                                         <option value="employment_id" name="employment_id">Employment ID</option>
@@ -2202,7 +2202,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         <option value="abbreviation" name="abbreviation">Abbreviation</option>
 
                                       </select>
-                                    <button onClick={(e)=>handleEnableField(e)}>Add Field</button>
+                                    <button className="btn btn-primary" onClick={(e)=>handleEnableField(e)}>Add Field</button>
                                         {enableField[selectedTemplate]?.['photo']&&(<Group className="controls">
                                                                               
                                                                               <Group>
@@ -2220,6 +2220,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Image X Position</summary>
                                                                                           <input 
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="x"
                                                                                           onChange={handlePositionChange} 
                                                                                           
@@ -2231,6 +2232,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Image Y Position</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                          className="form-control"
                                                                                           name="y"
                                                                                           onChange={handlePositionChange} 
                                                                                           
@@ -2242,6 +2244,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Image Width</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                          className="form-control"
                                                                                           name="image_width"
                                                                                           onChange={handleDimensionChange} 
                                                                                           
@@ -2253,6 +2256,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Image Height</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="image_height"
                                                                                           onChange={handleDimensionChange} 
                                                                                           
@@ -2266,7 +2270,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                               <input
                                                                                                   type="radio"
                                                                                                   name="has_mask"
-                                                                                                  
+                                                                                                   className="form-control"
                                                                                                   onChange={(e)=>handleMask(e,true)}
                                                                                               />
                                                                                               Apply
@@ -2276,7 +2280,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                               <input
                                                                                                   type="radio"
                                                                                                   name="has_mask"
-                                                                                                  
+                                                                                                   className="form-control"
                                                                                                   onChange={(e)=>handleMask(e,false)}
                                                                                               />
                                                                                               Disable
@@ -2287,6 +2291,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Mask thickness</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="mask_thickness"
                                                                                           onChange={handleMaskThickness}
                                                                                          
@@ -2298,6 +2303,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Mask color</summary>
                                                                                           <input
                                                                                           type="color"
+                                                                                          className="form-control"
                                                                                           name="mask_color"
                                                                                           onChange={handleMaskColor}
                                                                                           disabled={ !templates[selectedTemplate]?.photo?.has_mask}
@@ -2310,6 +2316,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <label>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="is_circle"
                                                                                                  
                                                                                                   onChange={(e)=>handleCircle(e,true)}
@@ -2320,6 +2327,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                               <label style={{ marginLeft: '1rem' }}>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="is_circle"
                                                                                                  
                                                                                                   onChange={(e)=>handleCircle(e,false)}
@@ -2332,6 +2340,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                     <summary className="field">Circle Diameter</summary>
                                                                                     <input
                                                                                       type="number"
+                                                                                       className="form-control"
                                                                                       name="circle_diameter"
                                                                                       onChange={handleCircleDiameter}
                                                                                       disabled={!templates[selectedTemplate]?.photo?.is_circle}
@@ -2364,6 +2373,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Logo X Position</summary>
                                                                                           <input 
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="x"
                                                                                           onChange={handleLogoPositionChange} 
                                                                                           
@@ -2375,6 +2385,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Logo Y Position</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="y"
                                                                                           onChange={handleLogoPositionChange} 
                                                                                           
@@ -2386,6 +2397,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Logo Width</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="logo_image_width"
                                                                                           onChange={handleLogoDimensionChange} 
                                                                                           
@@ -2397,6 +2409,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Logo Height</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="logo_image_height"
                                                                                           onChange={handleLogoDimensionChange} 
                                                                                           
@@ -2409,6 +2422,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <label>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="logo_has_mask"
                                                                                                   
                                                                                                   onChange={(e)=>handleLogoMask(e,true)}
@@ -2419,6 +2433,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                               <label style={{ marginLeft: '1rem' }}>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="logo_has_mask"
                                                                                                   
                                                                                                   onChange={(e)=>handleLogoMask(e,false)}
@@ -2431,6 +2446,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Mask thickness</summary>
                                                                                           <input
                                                                                           type="number"
+                                                                                           className="form-control"
                                                                                           name="logo_mask_thickness"
                                                                                           onChange={handleLogoMaskThickness}
                                                                                          
@@ -2442,6 +2458,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <summary className="field">Mask color</summary>
                                                                                           <input
                                                                                           type="color"
+                                                                                           className="form-control"
                                                                                           name="logo_mask_color"
                                                                                           onChange={handleLogoMaskColor}
                                                                                           disabled={ !templates[selectedTemplate]?.logo?.logo_has_mask}
@@ -2454,6 +2471,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                           <label>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="logo_is_circle"
                                                                                                  
                                                                                                   onChange={(e)=>handleLogoCircle(e,true)}
@@ -2464,6 +2482,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                               <label style={{ marginLeft: '1rem' }}>
                                                                                               <input
                                                                                                   type="radio"
+                                                                                                   className="form-control"
                                                                                                   name="logo_is_circle"
                                                                                                  
                                                                                                   onChange={(e)=>handleLogoCircle(e,false)}
@@ -2476,6 +2495,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                                                     <summary className="field">Circle Diameter</summary>
                                                                                     <input
                                                                                       type="number"
+                                                                                       className="form-control"
                                                                                       name="logo_circle_diameter"
                                                                                       onChange={handleLogoCircleDiameter}
                                                                                       disabled={!templates[selectedTemplate]?.logo?.logo_is_circle}
@@ -2503,6 +2523,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         </summary>
                                             <input
                                             type="number"
+                                             className="form-control"
                                             name="text_positionx"
                                             value={field.text_positionx}
                                             onChange={(e) => handleTemplateChange(e, key)}  
@@ -2510,6 +2531,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         />
                                         <input
                                             type="number"
+                                             className="form-control"
                                             name="text_positiony"
                                             value={field.text_positiony}
                                             onChange={(e) => handleTemplateChange(e, key)}
@@ -2517,6 +2539,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         />
                                         <input
                                             type="number"
+                                             className="form-control"
                                             name="text_font_size"
                                             value={field.text_font_size}
                                             onChange={(e) => handleTemplateChange(e, key)}
@@ -2524,11 +2547,13 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         />
                                         <input 
                                             type="text"
+                                             className="form-control"
                                             name="field_label"
                                             value={field.field_label}
                                             onChange={(e)=>handleTemplateChange(e,key)}/>
                                         <input
                                             type="color"
+                                             className="form-control"
                                             name="text_font_color"
                                             value={field.text_font_color}
                                             onChange={(e) => handleTemplateChange(e, key)}
@@ -2536,6 +2561,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                         />
                                         <input 
                                           type="number"
+                                           className="form-control"
                                           name="gap"
                                           value={field.gap}
                                           onChange={(e)=>handleTemplateChange(e,key)}/>
@@ -2543,7 +2569,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                             name="text_font_type"
                                             value={field.text_font_type}
                                             onChange={(e) => handleTemplateChange(e, key)}
-                                            
+                                             className="form-select"
                                         >
                                             <option value="arial">Arial</option>
                                             <option value="calibri">Calibri</option>
@@ -2565,14 +2591,11 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
           
           </div>
           
-         <Footer/>
-        </div>
+         
+        
                         
                         
-      </div>
       
-    </div>
-    </div>
       
       
     </>

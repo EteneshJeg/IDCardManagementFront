@@ -9,6 +9,16 @@ export default function Header(){
 	const dispatch=useDispatch();
 	const {organizationInfo}=useSelector((state)=>state.organization);
 
+   useEffect(() => {
+
+  if (window.KTDrawer) {
+
+    window.KTDrawer.createInstances();
+
+  }
+
+}, []);
+
 	useEffect(()=>{
 		dispatch(getOrganizationInfo()).then((data)=>{
 			console.log(data);

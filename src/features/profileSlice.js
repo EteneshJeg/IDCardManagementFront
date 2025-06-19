@@ -1,16 +1,35 @@
+
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const createProfile=createAsyncThunk(
     'create/profile',
     async(FormData,{rejectWithValue})=>{
         try{
-            
+            let profileId;
             let storedProfiles=JSON.parse(localStorage.getItem('profile'))||[];
             if(!Array.isArray(storedProfiles)){
                 storedProfiles=[]
             }
             console.log(storedProfiles);
+            if (storedProfiles.length === 0) {
+                let lastProfileId=0;
+                profileId=lastProfileId+1;
+            } else {
+                const lastProfile = storedProfiles.pop();
+                if (lastProfile && lastProfile.id) {
+                    let lastProfileId = lastProfile.id;
+                     lastProfileId=parseInt(lastProfileId,10);
+                      profileId=lastProfileId+1;
+                      
+                } else {
+                    let lastProfileId=0;
+                    profileId=lastProfileId+1;
+                }
+                storedProfiles.push(lastProfile);
+            }
             const newProfile={
+                id:profileId,
                 en_name:FormData?.en_name,
                 title:FormData?.title,
                 sex:FormData?.sex,
@@ -22,7 +41,7 @@ export const createProfile=createAsyncThunk(
                 organization_unit:FormData?.organization_unit,
                 job_position:FormData?.job_position,
                 job_title_category:FormData?.job_title_category,
-                salary_id:FormData?.salary_id,
+                salary_amount:FormData?.salary_amount,
                 marital_status:FormData?.marital_status,
                 nation:FormData?.nation,
                 employment_id:FormData?.employment_id,
@@ -43,16 +62,16 @@ export const createProfile=createAsyncThunk(
                 return String(storedProfile.employment_id).toLowerCase().trim()===String(newProfile.employment_id).toLowerCase().trim()
             })
             if(checkId){
-                alert('profile is already registered');
+                toast.error('profile is already registered');
                 return rejectWithValue('profile is already registered');
             }
             if(!newProfile){
-                alert('Employee is not saved');
+                toast.error('Employee is not saved');
                 return rejectWithValue('user is not saved');
             }
             storedProfiles.push(newProfile);
             localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            alert('save successful');
+            toast.success('save successful');
         }catch(error){
             console.log(error);
             return rejectWithValue(error);
@@ -90,10 +109,10 @@ export const updateProfile=createAsyncThunk(
             }
             console.log(Id);
             const userIndex=storedProfiles.findIndex(storedProfile=>{
-                return String(storedProfile.employment_id).toLowerCase().trim()===String(Id).toLowerCase().trim()
+                return String(storedProfile.id).toLowerCase().trim()===String(Id).toLowerCase().trim()
             })
             if(userIndex==-1){
-                alert('Match not found');
+                toast.error('Match not found');
                 return;
             }
             const updatedProfile={
@@ -108,7 +127,7 @@ export const updateProfile=createAsyncThunk(
                 organization_unit:FormData?.organization_unit || storedProfiles[userIndex].organization_unit,
                 job_position:FormData?.job_position || storedProfiles[userIndex].job_position,
                 job_title_category:FormData?.job_title_category || storedProfiles[userIndex].job_title_category,
-                salary_id:FormData?.salary_id || storedProfiles[userIndex].salary_id,
+                salary_amount:FormData?.salary_amount || storedProfiles[userIndex].salary_amount,
                 marital_status:FormData?.marital_status || storedProfiles[userIndex].marital_status,
                 nation:FormData?.nation || storedProfiles[userIndex].nation,
                 employment_id:FormData?.employment_id || storedProfiles[userIndex].employment_id,
@@ -126,13 +145,13 @@ export const updateProfile=createAsyncThunk(
                 
             }
             if(!updatedProfile){
-                alert('Fields are empty');
+                toast.error('Fields are empty');
                 return rejectWithValue('empty field');
             }
            
             storedProfiles[userIndex]=updatedProfile;
             localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            alert('Update successful');
+            toast.success('Update successful');
             return updatedProfile;
         }catch(error){
             return rejectWithValue(error);
@@ -149,21 +168,15 @@ export const deleteProfile=createAsyncThunk(
                 storedProfiles=[];
             }
             console.log(Id);
-            const userIndex=storedProfiles.findIndex(storedProfile=>{
-                return String(storedProfile.employment_id).toLowerCase().trim()===String(Id).toLowerCase().trim()
-            })
-            if(userIndex==-1){
-                alert('Match not found');
-                return;
-            }
+            
             storedProfiles=storedProfiles.filter(storedProfile=>{
-               return String(storedProfile.employment_id).toLowerCase().trim()!==String(Id).toLowerCase().trim()
+               return String(storedProfile.id).toLowerCase().trim()!==String(Id).toLowerCase().trim()
             })
             if(!storedProfiles){
                 console.log('delete unsuccessful');
             }
             localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            alert('Delete Successful');
+            toast.success('Delete Successful');
             return storedProfiles;
         }catch(error){
                 return rejectWithValue(error);
@@ -186,7 +199,7 @@ export const deleteProfileBunch = createAsyncThunk(
           console.log(userIdsToRemove)
 
           storedUsers = storedUsers.filter((user) => {
-            const employmentId = String(user.employment_id); 
+            const employmentId = String(user.id); 
             const isSelected = userIdsToRemove.includes(employmentId); 
             console.log(`Checking user: ${employmentId}, selected: ${isSelected}`); 
             return !isSelected; 
@@ -195,7 +208,7 @@ export const deleteProfileBunch = createAsyncThunk(
         
         localStorage.setItem('profile', JSON.stringify(storedUsers));
   
-        alert('Delete successful');
+        toast.success('Delete successful');
         return storedUsers;
       } catch (error) {
         return rejectWithValue(error.message);
@@ -226,7 +239,7 @@ export const deleteProfileBunch = createAsyncThunk(
         
   
         if (!matchedProfile) {
-          alert('Match not found');
+          
           return rejectWithValue('No profile matched the email.');
         }
         console.log(matchedProfile)

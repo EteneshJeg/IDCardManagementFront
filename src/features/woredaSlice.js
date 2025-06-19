@@ -1,4 +1,5 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const createWoreda=createAsyncThunk(
     'woreda/create',
@@ -36,12 +37,12 @@ export const createWoreda=createAsyncThunk(
                 zone:FormData.zone
             }
             if(!newWoreda){
-                alert('Failed to create woreda');
+                toast.error('Failed to create woreda');
                 return rejectWithValue('Failed to create woreda');
             }
             storedWoredas.push(newWoreda);
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            alert ('Woreda saved successfully');
+            toast.success ('Woreda saved successfully');
             return newWoreda;
         }catch(error){
             return rejectWithValue(error.message);
@@ -92,11 +93,12 @@ export const updateWoreda=createAsyncThunk(
             storedWoredas[woredaIndex]=updatedWoreda;
             
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            alert('Woreda updated successfully');
+            toast.success('Woreda updated successfully');
             return updatedWoreda;
             
 
         }catch(error){
+            toast.error('Failed to update woreda');
             return rejectWithValue(error.message)
         }
     }
@@ -118,9 +120,10 @@ export const deleteWoreda=createAsyncThunk(
                 return rejectWithValue('Woreda not found');
             }
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            alert('Woreda deleted successfully');
+            toast.success('Woreda deleted successfully');
             return storedWoredas
         }catch(error){
+            toast.error('Failed to delete woreda');
             return rejectWithValue(error.message);
         }
     }
@@ -144,9 +147,10 @@ export const deleteBunch=createAsyncThunk(
                 return rejectWithValue('Woredas not found');
             }
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            alert('Woredas deleted successfully');
+            toast.success('Woredas deleted successfully');
             return storedWoredas;
         }catch(error){
+            toast.error('Failed to delete');
             return rejectWithValue(error.message);
         }
     }

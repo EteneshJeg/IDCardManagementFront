@@ -1,4 +1,5 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const createZone=createAsyncThunk(
     'zone/create',
@@ -34,10 +35,11 @@ export const createZone=createAsyncThunk(
             }
             storedZones.push(newZone);
             localStorage.setItem('zone',JSON.stringify(storedZones));
-            alert('Zone saved successfully');
+            toast.success('Zone saved successfully');
             return newZone;
 
         }catch(error){
+            toast.error('Failed to save zone');
             return rejectWithValue(error.message);
         }
     }
@@ -88,10 +90,10 @@ export const updateZone=createAsyncThunk(
             }
             storedZones[zoneIndex]=updatedZone;
             localStorage.setItem('zone',JSON.stringify(storedZones));
-            alert('Zone successfully updated');
+            toast.success('Zone successfully updated');
             return updatedZone;
         }catch(error){
-
+            toast.error('Failed to update zone');
         }
     }
 )
@@ -115,10 +117,11 @@ export const deleteZone=createAsyncThunk(
             return rejectWithValue('Zone not found');
          }
         localStorage.setItem('zone',JSON.stringify(storedZones));
-        alert('Zone deleted successfully');
+        toast.success('Zone deleted successfully');
         return storedZones;
               
         }catch(error){
+            toast.error('Failed to delete zone');
             console.log(error.message);
         }
     }
@@ -147,9 +150,10 @@ export const deleteBunch=createAsyncThunk(
             }
 
             localStorage.setItem('zone',JSON.stringify(storedZones));
-            alert('Delete successful');
+            toast.success('Delete successful');
             return storedZones
         }catch(error){
+            toast.success('Failed to delete');
             return rejectWithValue(error.message);
         }
     }

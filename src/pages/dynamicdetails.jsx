@@ -1,3 +1,4 @@
+
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import Footer from "../components/Footer"
@@ -5,8 +6,25 @@ import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 
 import { createOrganizationInfo,getOrganizationInfo } from "../features/organizationSlice"
+import { toast } from "react-toastify"
 
 export default function DynamicDetails(){
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "/assets/js/scripts.bundle.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.KTApp && typeof window.KTApp.init === "function") {
+        window.KTApp.init();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script); 
+    };
+  }, []);
+  
     const [isUpdating,setIsUpdating]=useState(false);
     const dispatch=useDispatch();
     const {organizationInfo}=useSelector((state)=>state.organization);
@@ -88,24 +106,46 @@ export default function DynamicDetails(){
         reader.readAsDataURL(file);
     }
 }
+
+
+const validateForm=(formData)=>{
+
+
+
+      if(formData.email&&!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)){
+
+          toast.error('Email format is incorrect');
+
+          return false;
+
+      }
+
+      else if(formData.phone_number&&!/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(formData.phone_number)){
+
+        toast.error('Phone format is incorrect');
+
+          return false;
+
+      }
+
+      else return true;
+
+    }
   
 
     const handleCreateInformation=(e)=>{
         e.preventDefault();
         console.log('creating')
-        dispatch(createOrganizationInfo({FormData:formData[0]}));
+        if(validateForm(formData[0])){
+
+          dispatch(createOrganizationInfo({FormData:formData[0]}));
+          
+        }
         
     }
     return(
         <>
-        <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-            <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-            
-            <div className="app-wrapper" id="kt_app_wrapper">
-                <Sidebar />
-                
-                        <div className="main-content">
-                        <Header />
+       
                         <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
                     <div
                       id="kt_app_toolbar_container"
@@ -223,12 +263,7 @@ export default function DynamicDetails(){
         
                     </div>
                     </div>
-                  <Footer/>
-                        </div>
-        
-                </div>
-                </div>
-                </div>
+                  
         </>
     )
 }

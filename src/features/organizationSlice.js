@@ -31,6 +31,8 @@ export const createOrganizationInfo = createAsyncThunk(
           tin_number: FormData?.tin_number || storedOrganizationInfo[0]?.tin_number,
           abbreviation: FormData?.abbreviation || storedOrganizationInfo[0]?.abbreviation,
         };
+
+        
   
         if (storedOrganizationInfo.length === 0) {
           // If no organization exists, add the new one
@@ -39,16 +41,17 @@ export const createOrganizationInfo = createAsyncThunk(
         } else {
           // Update the first organization in the array
           storedOrganizationInfo[0] = newOrg;
-          console.log(' updated');
+          console.log('pushed');
         }
-  
+        console.log(storedOrganizationInfo);
         localStorage.setItem('organizationInfo', JSON.stringify(storedOrganizationInfo));
        
-        console.log(newOrg);
+        toast.success('Organization infromation saved');  //this isn't showing
   
         return newOrg;
         
       } catch (error) {
+        toast.error('Organization infromation was not saved');
         return rejectWithValue(error);
       }
     }

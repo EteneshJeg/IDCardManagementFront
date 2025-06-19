@@ -4,12 +4,28 @@ import Footer from "../components/Footer"
 
 import { useState,useEffect } from "react"
 import { useDispatch,useSelector } from "react-redux"
+import { toast } from "react-toastify"
 
 import { createZone,getZone,updateZone,deleteZone,deleteBunch } from "../features/zoneSlice"
 import { getRegion } from "../features/regionSlice"
 
 
 export default function Zone(){
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "/assets/js/scripts.bundle.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.KTApp && typeof window.KTApp.init === "function") {
+        window.KTApp.init();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script); 
+    };
+  }, []);
     const dispatch=useDispatch();
     const {zone}=useSelector((state=>state.zone));
     const [startSelection,setStartSelection]=useState(false);
@@ -143,7 +159,7 @@ useEffect(() => {
 
     const handleSaveZone = () => {    
             if (!formData.name || !formData.region ) {
-                alert('There are missing fields');
+                toast.error('There are missing fields');
                 return;
             } else {
                 
@@ -171,14 +187,8 @@ useEffect(() => {
         }
     
     return(
-       <div id="kt_app_body" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-toolbar-enabled="true" className="app-default">
-              <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-              <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-                <Header />
-                <div className="app-wrapper" id="kt_app_wrapper">
-                  <Sidebar />
-                  <div className="app-main flex-column flex-row-fluid" id="kt_app_main">
-                    <div className="d-flex flex-column flex-column-fluid">
+      <>
+       
                       <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
                       <div
                         id="kt_app_toolbar_container"
@@ -226,7 +236,7 @@ useEffect(() => {
 }
                   onClick={handleDeleteBunch}
                 >
-                  Delete Zone
+                  Delete Selected
                 </a>
               </div>
               {isModalOpen && (
@@ -341,26 +351,19 @@ useEffect(() => {
 						</div>
                     </div>
                     <div className="card-body pt-2">
-                        <table className="table table-striped gy-7 gs-7" id="kt_table_widget_4_table">
+                        <table className="table table-striped align-middle table-row-dashed fs-6 gy-3" id="kt_table_widget_4_table">
                         <thead>
 															{/*begin::Table row*/}
                                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                                       <th className="min-w-100px">
-  {Object.keys(selectedUsers).length !== zoneData.length ? (
-    <i
-      className="bi bi-circle"
-      onClick={handleSelectAll}
-      style={{ cursor: 'pointer' }}
-      title="Select All"
-    ></i>
-  ) : (
-    <i
-      className="bi bi-check-circle-fill"
-      onClick={handleSelectAll}
-      style={{ cursor: 'pointer' }}
-      title="Deselect All"
-    ></i>
-  )}
+  <input
+  type="checkbox"
+  checked={Object.keys(selectedUsers).length === zoneData.length}
+  onChange={handleSelectAll}
+  title={Object.keys(selectedUsers).length === zoneData.length ? 'Deselect All' : 'Select All'}
+  style={{ cursor: 'pointer' }}
+/>
+
 </th>
                                         <th className="min-w-100px">#</th>
                                         <th className="text-start min-w-100px">Name</th>
@@ -385,8 +388,8 @@ useEffect(() => {
                               return (
                                 <tr key={index} data-kt-table-widget-4="subtable_template">
                                   <td >
-                                      {!selectedUsers[row.id]?<i className="bi bi-circle" onClick={()=>{handleSelectedRows(row.id)}}></i>:
-                                        <i className="bi bi-check-circle-fill" onClick={()=>{handleSelectedRows(row.id)}}></i>     }
+                                    <input type="checkbox" checked={!!selectedUsers[row.id]} onChange={()=>handleSelectedRows(row.id)} />
+                                      
                                     </td>
                                     <td className="text-start">
                                               {index+1}
@@ -398,7 +401,7 @@ useEffect(() => {
                                       {row.region}
                                     </td>
                                     <td className="text-start">
-                                    <span className="badge py-3 px-4 fs-7 badge-light-primary" onClick={()=>{setIsShowModalOpen(true),setSelectedUser(row)}}> <i className="bi bi-eye-fill"></i></span>
+                                    <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={()=>{setIsShowModalOpen(true),setSelectedUser(row)}}> <i className="bi bi-eye-fill fs-4"></i></button>
 
                                     {isShowModalOpen && (
                           
@@ -439,7 +442,7 @@ useEffect(() => {
                           
                         )}
             
-            <span className="badge py-3 px-4 fs-7 badge-light-warning" onClick={()=>{setIsEditModalOpen(true),setSelectedUser(row)}}><i className="bi bi-pencil-fill"></i></span>
+            <button className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2" onClick={()=>{setIsEditModalOpen(true),setSelectedUser(row)}}><i className="bi bi-pencil-fill"></i></button>
                         {isEditModalOpen && (
                                             <div
                                               className="modal fade show"
@@ -500,7 +503,7 @@ useEffect(() => {
                                               </div>
                                             </div>
                                           )}
-            <span className="badge py-3 px-4 fs-7 badge-light-danger" onClick={()=>{setSelectedUser(row),setIsDeleteModalOpen(true)}}><i className="bi bi-trash"></i></span>
+            <button className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onClick={()=>{setSelectedUser(row),setIsDeleteModalOpen(true)}}><i className="bi bi-trash-fill"></i></button>
                                                                   {isDeleteModalOpen && (
                                                         <div
                                                           className="modal fade show"
@@ -557,29 +560,38 @@ useEffect(() => {
                                                       )}
                                 </tbody>
                         </table>
+                        <div className="pagination d-flex justify-content-between align-items-center mt-5">
+                      <div>
+                        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
+                        {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
+                        {filteredData.length} entries
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button 
+                          className="btn btn-sm btn-icon btn-light-primary"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                          disabled={currentPage === 1}
+                        >
+                          <i className="bi bi-chevron-left"></i>
+                        </button>
+                        <span className="px-3 d-flex align-items-center">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button 
+                          className="btn btn-sm btn-icon btn-light-primary"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
+                          disabled={currentPage === totalPages || totalPages === 0}
+                        >
+                          <i className="bi bi-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
                     </div>
                 </div>
-
-                <ul className="pagination pagination-circle">
-    <button onClick={prevPage} disabled={currentPage === 1}>
-                            <i className="bi bi-chevron-double-left"></i>
-                            </button>
-                            <span> Page {currentPage} of {totalPages} </span>
-                            <button onClick={nextPage} disabled={currentPage === totalPages}>
-                            <i className="bi bi-chevron-double-right"></i>
-                            </button>
-</ul>
             </div>
             </div>
             </div>
-            <Footer/>
-                    </div>
-                    </div>
-                                    
-                    
-              </div>
-              </div>
-              </div>
-        </div>
+           
+        </>
     )
 }

@@ -1,49 +1,63 @@
+
 /* Root wrapper */
 
 #root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  width: 100%;
+ 
 }
+#kt_app_root, #kt_app_page, #kt_app_main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+#kt_app_content, #kt_app_content_container {
+    overflow: scroll; /* or auto or scroll depending on the desired behavior */
+}
+
+.kt_app_content {
+  flex-shrink: 0;
+}
+
 .system-title{
   padding: 20px;
 }
 
 
-#kt_app_wrapper {
-  display: flex;
-  flex: 1;
-  height: calc(100vh - 70px); 
-  overflow: hidden;
-}
+
 
 /* Sidebar */
-.app-sidebar {
-  width: 250px;
-  background-color: #0d4473;
-  color: white;
-  height: 100%;
-  overflow-y: auto;
-  position: sticky;
-  top: 0;
+#kt_app_sidebar{
+ background-color: #38b6ff; 
+ color:white;
 }
+#kt_app_sidebar .menu-title{
+  color: white;
+}
+.card-body {
+  overflow-x: auto;
+}
+
 
 /* Main content area */
-.main-content {
-  flex-grow: 1;
-  background-color: #f9f9f9;
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Toolbar */
-.app-toolbar {
-  background-color: white;
-  border-bottom: 1px solid #e4e6ef;
+#kt_app_footer{
+  margin-top: 0;
+}
+.tab-pane {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.card-body {
+  align-items: start !important;
 }
 .page-flexed{
   display: flex;
@@ -65,13 +79,6 @@
   background: #f4f6f9;
   min-height: 700px; /* or set based on your content */
 }
-.tab-pane {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
-.card-body {
-  align-items: start !important;
-}
 
 .template,
 .template-settings {
@@ -91,6 +98,12 @@
 
 .template-settings {
   flex: 0 0 350px;
+}
+.text-start{
+  padding-left: 20px;
+}
+.pagination{
+  margin-top: 20px;
 }
 
 
@@ -172,7 +185,7 @@ button.btn-primary {
 }
 
 .collapsable[open] {
-  background-color: transparent;  /* Maintain transparency when open */
+  background-color: transparent;  
   border-color: #3b82f6;
 }
 
@@ -183,8 +196,8 @@ button.btn-primary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: transparent;  /* Set background to transparent here too */
-  border-bottom: 1px solid #ccc;
+  background-color: transparent;  
+  
 }
 .collapsable .field::after {
   content: '▾';
@@ -226,6 +239,23 @@ button.btn-primary {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+.collapsable input[type="radio"] {
+  appearance: none; 
+  height: 10px;
+  width: 10px;
+  border-radius: 10px;
+  border: 2px solid #aaa;
+  background-color: #fff;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* When checked */
+.collapsable input[type="radio"]:checked {
+  background-color: #1d858b; 
+  border-color: #1d858b;
+}
+
 
 
 

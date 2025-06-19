@@ -1,3 +1,4 @@
+
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -208,7 +209,7 @@ export default function EmployeeDashboard() {
                   field_label:'Job Category',
                   field_name:'job_title_category',
               },
-              salary_id:{
+              salary_amount:{
                 text_positionx:400,
                   text_positiony:140,
                   text_font_size:18,
@@ -216,7 +217,7 @@ export default function EmployeeDashboard() {
                   text_font_type:'arial',
                   gap:200,
                   field_label:'Salary ID',
-                  field_name:'salary_id',
+                  field_name:'salary_amount',
               },
               marital_status:{
                 text_positionx:400,
@@ -610,7 +611,7 @@ export default function EmployeeDashboard() {
               field_label:'Job Category',
               field_name:'job_title_category',
           },
-          salary_id:{
+          salary_amount:{
             text_positionx:400,
               text_positiony:140,
               text_font_size:18,
@@ -618,7 +619,7 @@ export default function EmployeeDashboard() {
               text_font_type:'arial',
               gap:200,
               field_label:'Salary ID',
-              field_name:'salary_id',
+              field_name:'salary_amount',
           },
           marital_status:{
             text_positionx:400,
@@ -1010,7 +1011,7 @@ export default function EmployeeDashboard() {
               field_label:'Job Category',
               field_name:'job_title_category',
           },
-          salary_id:{
+          salary_amount:{
             text_positionx:400,
               text_positiony:140,
               text_font_size:18,
@@ -1018,7 +1019,7 @@ export default function EmployeeDashboard() {
               text_font_type:'arial',
               gap:200,
               field_label:'Salary ID',
-              field_name:'salary_id',
+              field_name:'salary_amount',
           },
           marital_status:{
             text_positionx:400,
@@ -1280,7 +1281,7 @@ export default function EmployeeDashboard() {
                       organization_unit:false,
                       job_position:false,
                       job_title_category:false,
-                      salary_id:false,
+                      salary_amount:false,
                       marital_status:false,
                       nation:false,
                       employment_id:false,
@@ -1387,20 +1388,12 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
     console.log(userProfile)
 
     return (
-        <>
-            
-                <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-                    <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
-                        <div className="app-wrapper" id="kt_app_wrapper">
-                            <Sidebar />
-                            <div className="main-content">
-                                <Header />
-                                {/* Toolbar */}
-                                <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
+       <>
+                      <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
                                     <div className="app-container container-xxl d-flex flex-stack">
                                         <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
                                             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-                                                Employee Dashboard
+                                                 Dashboard
                                             </h1>
                                             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
                                                 <li className="breadcrumb-item text-muted">
@@ -1409,16 +1402,16 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
                                                 <li className="breadcrumb-item">
                                                     <span className="bullet bg-gray-400 w-5px h-2px"></span>
                                                 </li>
-                                                <li className="breadcrumb-item text-muted">Employee Dashboard</li>
+                                                <li className="breadcrumb-item text-muted"> Dashboard</li>
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Content */}
-                                <div id="kt_app_content" className="app-content flex-column-fluid">
-                                {logged && String(role).toLowerCase() === "employee" ? (
-  <div className="app-container container-xxl">
+                        <div id="kt_app_content" className="app-content flex-column-fluid">
+          
+            {logged && String(role).toLowerCase() === "employee" ? (
+  <div id="kt_app_content_container" className="app-container container-xxl">
+            <div className="row g-5 g-xl-10">
     
     <ul className="nav nav-tabs nav-line-tabs mb-5 fs-6" id="myTab" role="tablist">
       <li className="nav-item" role="presentation">
@@ -1440,9 +1433,9 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
             
           <div className="id" >
             <div className="front">
-            <Stage width={700} height={500} >
+            <Stage width={700} height={600} >
               <Layer>
-                <KonvaImage width={700} height={500} image={backObj} />
+                <KonvaImage width={700} height={600} image={backObj} />
                 {image &&enableField['front']?.['photo']&& (
                                   <>
                                  <Circle
@@ -1559,9 +1552,9 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
             </Stage>
             </div>
             <div className="back">
-              <Stage width={700} height={500} >
+              <Stage width={700} height={600} >
                             <Layer>
-                              <KonvaImage width={700} height={500} image={backObjBack} />
+                              <KonvaImage width={700} height={600} image={backObjBack} />
                               {image &&enableField['back']?.['photo']&& (
                                                 <>
                                                <Circle
@@ -1695,9 +1688,9 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
         <div id="badges">
           <div className="badge">
             
-            <Stage className="stage" width={700} height={500}>
+            <Stage className="stage" width={700} height={600}>
                       <Layer>
-                        <KonvaImage width={700} height={500} image={backObjBadge} />
+                        <KonvaImage width={700} height={600} image={backObjBadge} />
                          {image &&enableField['badge']?.['photo'] &&(
                                       <Image
                                         x={templates['badge']?.imagePosition?.x || 50}
@@ -1806,17 +1799,14 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
         </div>
       </div>
     </div>
-
-                                </div>):( <h1>Log in as employee</h1>)}
- 
 </div>
-
-                                <Footer />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-        </>
+                                </div>):String(role).toLowerCase()==='human resources'?( <div id="kt_app_content" className="app-content flex-column-fluid">
+                    <h1>Welcome to HR Dashboard</h1>
+                </div>):(<div id="kt_app_content" className="app-content flex-column-fluid">
+                    <h1>Welcome to IT Staff Dashboard</h1>
+                </div>)}
+            </div>
+           
+          </>     
     );
 }

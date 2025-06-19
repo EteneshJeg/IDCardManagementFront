@@ -235,7 +235,7 @@ export default function IdManagement() {
               field_label:'Job Category',
               field_name:'job_title_category',
           },
-          salary_id:{
+          salary_amount:{
             text_positionx:400,
               text_positiony:140,
               text_font_size:18,
@@ -243,7 +243,7 @@ export default function IdManagement() {
               text_font_type:'arial',
               gap:200,
               field_label:'Salary ID',
-              field_name:'salary_id',
+              field_name:'salary_amount',
           },
           marital_status:{
             text_positionx:400,
@@ -637,7 +637,7 @@ export default function IdManagement() {
           field_label:'Job Category',
           field_name:'job_title_category',
       },
-      salary_id:{
+      salary_amount:{
         text_positionx:400,
           text_positiony:140,
           text_font_size:18,
@@ -645,7 +645,7 @@ export default function IdManagement() {
           text_font_type:'arial',
           gap:200,
           field_label:'Salary ID',
-          field_name:'salary_id',
+          field_name:'salary_amount',
       },
       marital_status:{
         text_positionx:400,
@@ -1037,7 +1037,7 @@ export default function IdManagement() {
           field_label:'Job Category',
           field_name:'job_title_category',
       },
-      salary_id:{
+      salary_amount:{
         text_positionx:400,
           text_positiony:140,
           text_font_size:18,
@@ -1045,7 +1045,7 @@ export default function IdManagement() {
           text_font_type:'arial',
           gap:200,
           field_label:'Salary ID',
-          field_name:'salary_id',
+          field_name:'salary_amount',
       },
       marital_status:{
         text_positionx:400,
@@ -1307,7 +1307,7 @@ export default function IdManagement() {
                   organization_unit:false,
                   job_position:false,
                   job_title_category:false,
-                  salary_id:false,
+                  salary_amount:false,
                   marital_status:false,
                   nation:false,
                   employment_id:false,
@@ -1463,7 +1463,7 @@ export default function IdManagement() {
   const handleCreateId=()=>{
 
       dispatch(generateId({Id:id,UserInfo:userProfile,FormData:extractData}));
-      handleDownload();
+      
       setIsCreateModalOpen(false)
       
   }
@@ -1545,14 +1545,7 @@ useEffect(()=>{
 
   return (
     <>
-    <div className="d-flex flex-column flex-root app-root" id="kt_app_root">
-    <div className="app-page flex-column flex-column-fluid" id="kt_app_page">
     
-    <div className="app-wrapper" id="kt_app_wrapper">
-        <Sidebar />
-
-        <div className="main-content">
-        <Header />
           {/* Toolbar */}
           <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
             <div
@@ -1613,7 +1606,7 @@ useEffect(()=>{
       {/* Card Body */}
       <div className="card-body pt-4 pb-4" style={{ backgroundColor: '#fff' }}>
         <div className="mb-3">
-          {['en_name', 'title', 'date_of_birth', 'joined_date', 'job_title_category', 'salary_id', 'marital_status', 'nation', 
+          {['en_name', 'title', 'date_of_birth', 'joined_date', 'job_title_category', 'salary_amount', 'marital_status', 'nation', 
             'job_position_start_date', 'job_position_end_date', 'address', 'house_number', 'region', 'zone', 'woreda', 
             'id_issue_date', 'id_expire_date'].map((field) => (
             <p key={field} style={{ margin: '8px 0', fontSize: '1rem' }}>
@@ -2052,6 +2045,7 @@ useEffect(()=>{
               Generate ID
             </button>
 
+            <button className="btn btn-primary" style={{width:'150px'}} onClick={handleDownload}>Print ID</button>
 </div>
 
 
@@ -2067,14 +2061,7 @@ useEffect(()=>{
   
 </div>
 
-         <Footer/>
-        </div>
-						
-						
-      </div>
-      
-    </div>
-    </div>
+         
       
       
     </>

@@ -1,4 +1,5 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 export const createMaritalStatus=createAsyncThunk(
     'maritalstatus/create',
@@ -31,7 +32,7 @@ export const createMaritalStatus=createAsyncThunk(
             const isMaritalStatusRegistered=storedMaritalStatuses.some(storedMaritalStatus=>storedMaritalStatus.name===FormData.name)
 
             if(isMaritalStatusRegistered){
-                alert('Status is already registered');
+                toast.error('Status is already registered');
                 return;
             }
             
@@ -46,9 +47,10 @@ export const createMaritalStatus=createAsyncThunk(
             }
             storedMaritalStatuses.push(newMaritalStatus);
             localStorage.setItem('maritalstatus',JSON.stringify(storedMaritalStatuses));
-            alert('Marital Status has been successfully added');
+            toast.success('Marital Status has been successfully added');
             return newMaritalStatus;
         }catch(error){
+            toast.error('Failed to register marital status');
             return rejectWithValue(error.message);
         }
     }
@@ -102,10 +104,11 @@ export const updateMaritalStatus=createAsyncThunk(
             storedMaritalStatuses[maritalStatusIndex]=updatedMaritalStatus;
             console.log( storedMaritalStatuses[maritalStatusIndex])
             localStorage.setItem('maritalstatus',JSON.stringify(storedMaritalStatuses));
-            alert('Marital Status has been successfully updated');
+            toast.success('Marital Status has been successfully updated');
             return updatedMaritalStatus;
 
         }catch(error){
+            toast.error('Failed to update marital status');
             return rejectWithValue(error.message);
         }
     }
@@ -129,10 +132,11 @@ export const deleteMaritalStatus=createAsyncThunk(
                 return rejectWithValue('Salary not deleted');
             }
             localStorage.setItem('maritalstatus',JSON.stringify(storedMaritalStatuses));
-            alert('Marital Status has been successfully deleted');
+            toast.success('Marital Status has been successfully deleted');
             return storedMaritalStatuses;
 
         }catch(error){
+            toast.error('Failed to delete marital status');
             return rejectWithValue(error.message);
         }
     }
@@ -158,9 +162,10 @@ export const deleteBunch=createAsyncThunk(
                 return rejectWithValue('Delete not successful');
             }
             localStorage.setItem('maritalstatus',JSON.stringify(storedMaritalStatuses));
-            alert('Delete successful');
+            toast.success('Delete successful');
             return storedMaritalStatuses;
         }catch(error){
+            toast.error("Failed to delete");
             return rejectWithValue(error.message);
         }
     }
