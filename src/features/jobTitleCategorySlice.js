@@ -1,14 +1,42 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+const API_BASE_URL = "http://localhost:8000/api/job-title-categories";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+// Helper for error handling
+const handleApiError = (error, rejectWithValue) => {
+  if (error.response) {
+    return rejectWithValue(error.response.data);
+  } else if (error.request) {
+    return rejectWithValue("No response from server");
+  } else {
+    return rejectWithValue(error.message);
+  }
+};
 
 // ========== ASYNC THUNKS ==========
 export const fetchJobTitleCategories = createAsyncThunk(
   "jobTitleCategories/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const data = JSON.parse(localStorage.getItem("job_title_categories")) || [];
-      return data;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.get("/",{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      console.log(response.data.data)
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -17,25 +45,15 @@ export const addJobTitleCategory = createAsyncThunk(
   "jobTitleCategories/add",
   async (formData, { rejectWithValue }) => {
     try {
-      if (!formData.name) {
-        return rejectWithValue("Name is required");
-      }
-
-      const stored = JSON.parse(localStorage.getItem("job_title_categories")) || [];
-      const id = stored.length ? Math.max(...stored.map(item => item.id)) + 1 : 1;
-
-      const newCategory = {
-        id,
-        name: formData.name,
-        description: formData.description || '',
-        parent: formData.parent || null
-      };
-
-      stored.push(newCategory);
-      localStorage.setItem("job_title_categories", JSON.stringify(stored));
-      return newCategory;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.post("/", formData,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -44,24 +62,15 @@ export const updateJobTitleCategory = createAsyncThunk(
   "jobTitleCategories/update",
   async ({ id, formData }, { rejectWithValue }) => {
     try {
-      if (!formData.name) {
-        return rejectWithValue("Name is required");
-      }
-
-      const stored = JSON.parse(localStorage.getItem("job_title_categories")) || [];
-      const index = stored.findIndex(item => item.id === id);
-      if (index === -1) return rejectWithValue("Category not found");
-
-      const updatedCategory = { 
-        ...stored[index], 
-        ...formData 
-      };
-
-      stored[index] = updatedCategory;
-      localStorage.setItem("job_title_categories", JSON.stringify(stored));
-      return updatedCategory;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.put(`/${id}`, formData,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -70,12 +79,15 @@ export const deleteJobTitleCategory = createAsyncThunk(
   "jobTitleCategories/delete",
   async (id, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_title_categories")) || [];
-      const updated = stored.filter(item => item.id !== id);
-      localStorage.setItem("job_title_categories", JSON.stringify(updated));
+      let token=JSON.parse(localStorage.getItem('token'));
+      await api.delete(`/${id}`,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
       return id;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -84,12 +96,10 @@ export const deleteBunchCategories = createAsyncThunk(
   "jobTitleCategories/deleteBunch",
   async (ids, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_title_categories")) || [];
-      const updated = stored.filter(item => !ids.includes(item.id));
-      localStorage.setItem("job_title_categories", JSON.stringify(updated));
+      await Promise.all(ids.map((id) => api.delete(`/${id}`)));
       return ids;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -98,56 +108,90 @@ export const deleteBunchCategories = createAsyncThunk(
 const jobTitleCategoriesSlice = createSlice({
   name: "jobTitleCategories",
   initialState: {
-    jobTitleCategories: [],
+    data: [], // <== Ensure this is defined as an array!
     status: "idle",
-    error: null
+    error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchJobTitleCategories.pending, (state) => {
         state.status = "loading";
+        state.error = null;
       })
       .addCase(fetchJobTitleCategories.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.jobTitleCategories = action.payload;
+        state.data = action.payload;
       })
       .addCase(fetchJobTitleCategories.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       })
+
+      .addCase(addJobTitleCategory.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
       .addCase(addJobTitleCategory.fulfilled, (state, action) => {
-        state.jobTitleCategories.push(action.payload);
+        state.status = "succeeded";
+        if (!Array.isArray(state.data)) {
+          state.data = []; // safeguard if somehow data is undefined or corrupted
+        }
+        state.data.push(action.payload);
+      })
+      .addCase(addJobTitleCategory.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+
+      .addCase(updateJobTitleCategory.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
       })
       .addCase(updateJobTitleCategory.fulfilled, (state, action) => {
-        const index = state.jobTitleCategories.findIndex(
-          (item) => item.id === action.payload.id
-        );
+        state.status = "succeeded";
+        const index = state.data.findIndex((item) => item.id === action.payload.id);
         if (index !== -1) {
-          state.jobTitleCategories[index] = action.payload;
+          state.data[index] = action.payload;
         }
       })
-      .addCase(deleteJobTitleCategory.fulfilled, (state, action) => {
-        state.jobTitleCategories = state.jobTitleCategories.filter(
-          (item) => item.id !== action.payload
-        );
+      .addCase(updateJobTitleCategory.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
       })
+
+      .addCase(deleteJobTitleCategory.fulfilled, (state, action) => {
+        state.data = state.data.filter((item) => item.id !== action.payload);
+      })
+
       .addCase(deleteBunchCategories.fulfilled, (state, action) => {
-        state.jobTitleCategories = state.jobTitleCategories.filter(
-          (item) => !action.payload.includes(item.id)
-        );
-      });
-  }
+        state.data = state.data.filter((item) => !action.payload.includes(item.id));
+      })
+
+      // Generic matchers to handle pending and rejected states for all async thunks
+      .addMatcher(
+        (action) => action.type.endsWith("/pending"),
+        (state) => {
+          state.status = "loading";
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.status = "failed";
+          state.error = action.payload;
+        }
+      );
+  },
 });
 
 // ========== SELECTORS ==========
-export const selectAllJobTitleCategories = (state) => 
-  state.jobTitleCategory?.jobTitleCategories ?? [];
+export const selectAllJobTitleCategories = (state) =>
+  state.jobTitleCategories?.data || [];
 
-export const selectCategoriesStatus = (state) => 
-  state.jobTitleCategories.status;
+export const selectCategoriesStatus = (state) => state.jobTitleCategories.status;
 
-export const selectCategoriesError = (state) => 
-  state.jobTitleCategories.error;
+export const selectCategoriesError = (state) => state.jobTitleCategories.error;
 
 export default jobTitleCategoriesSlice.reducer;

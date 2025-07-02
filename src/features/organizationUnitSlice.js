@@ -1,28 +1,62 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+const API_BASE_URL = "http://localhost:8000/api/organization-units";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
+
+// Helper function to handle errors
+const handleApiError = (error, rejectWithValue) => {
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    return rejectWithValue(error.response.data);
+  } else if (error.request) {
+    // The request was made but no response was received
+    return rejectWithValue("No response from server");
+  } else {
+    // 
+    // Something happened in setting up the request
+    return rejectWithValue(error.message);
+  }
+};
 // Async Thunks
 export const fetchOrganizationUnits = createAsyncThunk(
   "organizationUnits/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const data = JSON.parse(
-        localStorage.getItem("organizationUnits") || "[]"
-      );
-      return data;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.get("/",{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
 
 export const getOrganiztionUnitInfo = createAsyncThunk(
   "organizationUnits/getInfo",
-  async (_, { rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
-      const data = JSON.parse(localStorage.getItem("organizationInfo") || "{}");
-      return data;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.get(`/${id}`,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -31,27 +65,16 @@ export const addOrganizationUnit = createAsyncThunk(
   "organizationUnits/add",
   async (formData, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(
-        localStorage.getItem("organizationUnits") || "[]"
-      );
-      const maxId = stored.length
-        ? Math.max(...stored.map(item => item.id))
-        : 0;
-      const id = maxId + 1;
-
-      const newUnit = {
-        id,
-        ...formData,
-        status: "active"
-      };
-
-      localStorage.setItem(
-        "organizationUnits",
-        JSON.stringify([...stored, newUnit])
-      );
-      return newUnit;
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.post("/", formData,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+       console.error("Full API error:", error.response?.data);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -60,21 +83,15 @@ export const updateOrganizationUnit = createAsyncThunk(
   "organizationUnits/update",
   async ({ id, formData }, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(
-        localStorage.getItem("organizationUnits") || "[]"
-      );
-      const index = stored.findIndex(item => item.id === id);
-
-      if (index === -1) return rejectWithValue("Unit not found");
-
-      const updated = stored.map(
-        (item, i) => (i === index ? { ...item, ...formData } : item)
-      );
-
-      localStorage.setItem("organizationUnits", JSON.stringify(updated));
-      return { id, ...formData };
+      let token=JSON.parse(localStorage.getItem('token'));
+      const response = await api.put(`/${id}`, formData,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -83,14 +100,15 @@ export const deleteOrganizationUnit = createAsyncThunk(
   "organizationUnits/delete",
   async (id, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(
-        localStorage.getItem("organizationUnits") || "[]"
-      );
-      const filtered = stored.filter(item => item.id !== id);
-      localStorage.setItem("organizationUnits", JSON.stringify(filtered));
+      let token=JSON.parse(localStorage.getItem('token'));
+      await api.delete(`/${id}`,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
       return id;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
@@ -99,17 +117,14 @@ export const deleteBunchUnits = createAsyncThunk(
   "organizationUnits/deleteBunch",
   async (ids, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(
-        localStorage.getItem("organizationUnits") || "[]"
-      );
-      const filtered = stored.filter(item => !ids.includes(item.id));
-      localStorage.setItem("organizationUnits", JSON.stringify(filtered));
+      await Promise.all(ids.map(id => api.delete(`/${id}`)));
       return ids;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return handleApiError(error, rejectWithValue);
     }
   }
 );
+
 
 // Slice Configuration
 const organizationUnitSlice = createSlice({
@@ -128,7 +143,9 @@ const organizationUnitSlice = createSlice({
       })
       .addCase(fetchOrganizationUnits.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = Array.isArray(action.payload.data)
+        ? action.payload.data
+        : [];
       })
       .addCase(fetchOrganizationUnits.rejected, (state, action) => {
         state.status = "failed";

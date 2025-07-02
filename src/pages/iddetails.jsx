@@ -281,17 +281,27 @@ export default function IdDetails() {
   }, []);
 
   useEffect(() => {
-    dispatch(getTemplate()).then((data) => {
-      const dataitem = data.payload
-      console.log(dataitem)
-      if (!Array.isArray(dataitem) && Object.keys(dataitem).length != 0) {
-        setNewTemplates(dataitem);
-        console.log(newTemplates)
+  dispatch(getTemplate()).then((action) => {
+    const dataitem = action.payload;
+
+    if (dataitem && typeof dataitem === 'object') {
+      setNewTemplates(dataitem);
+
+      const keys = Object.keys(dataitem);
+      if (keys.length === 0) {
+        console.log("No templates found.");
+      } else {
+        console.log("Loaded templates:", dataitem);
+        setSelectedTemplate(keys[0]); // optional: auto-select first template
       }
+    } else {
+      console.warn("Invalid template payload.");
+    }
+  }).catch((error) => {
+    console.error("Error loading templates:", error);
+  });
+}, [dispatch]);
 
-
-    });
-  }, []);
 
 
 

@@ -97,7 +97,7 @@ export default function OrganizationUnit() {
   }, []);
   const dispatch = useDispatch();
   const organizationUnits = useSelector(selectAllOrganizationUnits);
-
+  const { items, status, error } = useSelector(state => state.organizationUnits);
   // State management
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -108,20 +108,15 @@ export default function OrganizationUnit() {
   const [startSelection, setStartSelection] = useState(false);
   const [formData, setFormData] = useState({
     en_name: '',
-    motto: '',
-    mission: '',
-    vision: '',
-    core_value: '',
-    logo: '',
-    address: '',
-    website: '',
-    email: '',
-    phone_number: '',
-    fax_number: '',
-    po_box: '',
-    tin_number: '',
-    abbreviation: '',
-    status: 'active'
+    en_acronym: '',
+    location: '',
+    is_root_unit: false,
+    is_category: false,
+    synchronize_status: '',
+    organization_id: '',
+    parent: '',
+    reports_to: '',
+    chairman: ''
   });
   const [searchTerm, setSearchTerm] = useState("");
    const [selectedFilter, setSelectedFilter] = useState("show all");
@@ -149,8 +144,8 @@ export default function OrganizationUnit() {
 
   // Handlers
   const handleSaveUnit = () => {
-    if (!formData.en_name || !formData.abbreviation) {
-        toast.error("English Name and Abbreviation are required");
+    if (!formData.en_name || !formData.en_acronym) {
+        toast.error("English Name and Acronym are required");
         return;
       }
 
@@ -192,21 +187,16 @@ export default function OrganizationUnit() {
 
   const resetForm = () => {
     setFormData({
-      en_name: '',
-      motto: '',
-      mission: '',
-      vision: '',
-      core_value: '',
-      logo: '',
-      address: '',
-      website: '',
-      email: '',
-      phone_number: '',
-      fax_number: '',
-      po_box: '',
-      tin_number: '',
-      abbreviation: '',
-      status: 'active'
+        en_name: '',
+        en_acronym: '',
+        location: '',
+        is_root_unit: false,
+        is_category: false,
+        synchronize_status: '',
+        organization_id: '',
+        parent: '',
+        reports_to: '',
+        chairman: ''
     });
   };
 
@@ -221,6 +211,10 @@ export default function OrganizationUnit() {
       return updated;
     });
   };
+
+  if (status === 'loading') return <div className="text-center py-5">Loading organization units...</div>;
+  if (status === 'failed') return <div className="alert alert-danger">Error: {error}</div>;
+  
 
   return (
     <>
@@ -291,17 +285,20 @@ export default function OrganizationUnit() {
                     </div>
                   </div>
 
+                  
+
                   <div className="card-body pt-2">
                     <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                       <thead>
                         <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                           <th className="min-w-50px"></th>
-                          <th className="min-w-100px">#</th>
+                          <th className="min-w-100px">S.N.</th>
                           <th>English Name</th>
-                          <th>Abbreviation</th>
-                          <th>Address</th>
-                          <th>Phone Number</th>
-                          <th>Status</th>
+                          <th>Acronym</th>
+                          <th>Location</th>
+                          <th>Root Unit</th>
+                          <th>Category</th>
+                          <th>Sync Status</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -321,14 +318,11 @@ export default function OrganizationUnit() {
                             </td>
                             <td>{index+1}</td>
                             <td>{unit.en_name || '-'}</td>
-                            <td>{unit.abbreviation || '-'}</td>
-                            <td>{unit.address || '-'}</td>
-                            <td>{unit.phone_number || '-'}</td>
-                            <td>
-                              <span className={`badge badge-${unit.status === 'active' ? 'success' : 'danger'}`}>
-                                {unit.status}
-                              </span>
-                            </td>
+                            <td>{unit.en_acronym || '-'}</td>
+                            <td>{unit.location || '-'}</td>
+                            <td>{unit.is_root_unit ? 'Yes' : 'No'}</td>
+                            <td>{unit.is_category ? 'Yes' : 'No'}</td>
+                            <td>{unit.synchronize_status || '-'}</td>
                             <td>
                               <button 
                                 className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" 
@@ -416,47 +410,66 @@ export default function OrganizationUnit() {
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Abbreviation</label>
+                  <label className="form-label">English Acronym</label>
                   <input 
                     type="text" 
                     className="form-control" 
-                    name="abbreviation" 
-                    value={formData.abbreviation}
+                    name="en_acronym" 
+                    value={formData.en_acronym}
                     onChange={handleChange} 
                     required 
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Address</label>
+                  <label className="form-label">Location</label>
                   <input 
                     type="text" 
                     className="form-control" 
-                    name="address" 
-                    value={formData.address}
+                    name="location" 
+                    value={formData.location}
+                    onChange={handleChange} 
+                  />
+                </div>
+                <div className="mb-3 form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    name="is_root_unit"
+                    checked={formData.is_root_unit}
+                    onChange={(e) => setFormData({...formData, is_root_unit: e.target.checked})}
+                  />
+                  <label className="form-check-label">Is Root Unit</label>
+                </div>
+
+                <div className="mb-3 form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    name="is_category"
+                    checked={formData.is_category}
+                    onChange={(e) => setFormData({...formData, is_category: e.target.checked})}
+                  />
+                  <label className="form-check-label">Is Category</label>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Synchronize Status</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    name="synchronize_status" 
+                    value={formData.synchronize_status}
                     onChange={handleChange} 
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Phone Number</label>
+                  <label className="form-label">Organization ID</label>
                   <input 
                     type="text" 
                     className="form-control" 
-                    name="phone_number" 
-                    value={formData.phone_number}
+                    name="organization_id" 
+                    value={formData.organization_id}
                     onChange={handleChange} 
                   />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Status</label>
-                  <select 
-                    className="form-select" 
-                    name="status" 
-                    value={formData.status}
-                    onChange={handleChange}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
                 </div>
               </div>
               <div className="modal-footer">
@@ -493,54 +506,63 @@ export default function OrganizationUnit() {
                     />
                   </div>
 
-                  {/* Abbreviation */}
                   <div className="mb-3">
-                    <label className="form-label">Abbreviation</label>
+                    <label className="form-label">English Acronym*</label>
                     <input
                       type="text"
                       className="form-control"
-                      name="abbreviation"
-                      value={formData.abbreviation}
+                      name="en_acronym"
+                      value={formData.en_acronym}
                       onChange={handleChange}
                       required
                     />
                   </div>
 
-                  {/* Address */}
-                  <div className="mb-3">
-                    <label className="form-label">Address</label>
+                 <div className="mb-3">
+                    <label className="form-label">Location</label>
                     <input
                       type="text"
                       className="form-control"
-                      name="address"
-                      value={formData.address}
+                      name="location"
+                      value={formData.location}
                       onChange={handleChange}
                     />
                   </div>
 
-                  {/* Phone Number */}
-                  <div className="mb-3">
-                    <label className="form-label">Phone Number</label>
+                  <div className="mb-3 form-check">
                     <input
-                      type="tel"
-                      className="form-control"
-                      name="phone"
-                      value={formData.phone}
+                      type="checkbox"
+                      className="form-check-input"
+                      name="is_root_unit"
+                      checked={formData.is_root_unit}
                       onChange={handleChange}
                     />
+                    <label className="form-check-label">Is Root Unit</label>
                   </div>
 
                   {/* Status (Updated to your logic) */}
-                  <div className="mb-3">
-                    <label className="form-label">Status</label>
+                   <div className="mb-3 form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        name="is_category"
+                        checked={formData.is_category}
+                        onChange={handleChange}
+                      />
+                      <label className="form-check-label">Is Category</label>
+                    </div>
+                    <div className="mb-3">
+                    <label className="form-label">Synchronize Status</label>
                     <select
                       className="form-select"
-                      name="status"
-                      value={formData.status}
+                      name="synchronize_status"
+                      value={formData.synchronize_status}
                       onChange={handleChange}
                     >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="">Select Status</option>
+                      <option value="synced">Synced</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
                     </select>
                   </div>
                 </div>
@@ -567,25 +589,37 @@ export default function OrganizationUnit() {
                 <div className="mb-3">
                   <label className="form-label fw-semibold">English Name</label>
                   <div className="form-control form-control-solid">
-                    {selectedUnit?.en_name}
+                    {selectedUnit?.en_name || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Abbreviation</label>
+                  <label className="form-label fw-semibold">English Acronym</label>
                   <div className="form-control form-control-solid">
-                    {selectedUnit?.abbreviation}
+                    {selectedUnit?.en_acronym || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Address</label>
+                  <label className="form-label fw-semibold">Location</label>
                   <div className="form-control form-control-solid">
-                    {selectedUnit?.address}
+                    {selectedUnit?.location || '-'}
+                  </div>
+                </div>
+                 <div className="mb-3">
+                  <label className="form-label fw-semibold">Is Root Unit</label>
+                  <div className="form-control form-control-solid">
+                    {selectedUnit?.is_root_unit ? 'Yes' : 'No'}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Phone Number</label>
+                  <label className="form-label fw-semibold">Is Category</label>
                   <div className="form-control form-control-solid">
-                    {selectedUnit?.phone_number}
+                    {selectedUnit?.is_category ? 'Yes' : 'No'}
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Sync Status</label>
+                  <div className="form-control form-control-solid">
+                    {selectedUnit?.synchronize_status || '-'}
                   </div>
                 </div>
               </div>

@@ -166,32 +166,28 @@ export const saveTemplate=createAsyncThunk(
 )
 
 export const getTemplate = createAsyncThunk(
-    'template/get',
-    async (_, { rejectWithValue }) => {
-      try {
-        
-        let storedTemplates = localStorage.getItem('templates');
-        
-        if (!storedTemplates || storedTemplates.length === 0) {
-            storedTemplates = {};
-            return storedTemplates;
-          }
-  
-        const templates = JSON.parse(storedTemplates);
-        console.log(templates)
-  
-      
-        if (typeof templates !== 'object' || Array.isArray(templates)) {
-          return rejectWithValue('Invalid template format in localStorage');
-        }
-  
-        return templates;  
-      } catch (error) {
-        
-        return rejectWithValue(error.message || 'Failed to load templates');
+  'template/get',
+  async (_, { rejectWithValue }) => {
+    try {
+      let storedTemplates = localStorage.getItem('templates');
+
+      if (!storedTemplates || storedTemplates.length === 0) {
+        return {}; // return empty object if none
       }
+
+      const templates = JSON.parse(storedTemplates);
+
+      if (typeof templates !== 'object' || Array.isArray(templates)) {
+        return rejectWithValue('Invalid template format in localStorage');
+      }
+
+      return templates;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to load templates');
     }
-  );
+  }
+);
+
 
 
 
