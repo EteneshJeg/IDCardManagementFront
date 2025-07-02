@@ -28,7 +28,7 @@ export default function MaritalStatus(){
      const [filteredData,setFilteredData]=useState([]);
      
      
-        const { maritalstatus } = useSelector((state) => state.marital || {});
+        const { maritalstatus } = useSelector((state) => state.maritalstatus || {});
         const [startSelection,setStartSelection]=useState(false);
         const [maritalStatusData,setMaritalStatusData]=useState([]);
         const [searchItem,setSearch]=useState('');

@@ -1,13 +1,69 @@
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import axios from 'axios';
+
 
 export const signin=createAsyncThunk(
     'user/signin',
     async(FormData,{rejectWithValue})=>{
         
         try{
+            await axios.post('http://localhost:8000/api/login',FormData).then(response=>{
+                localStorage.setItem('token',JSON.stringify(response.data.token));
+                console.log(response.data.token);
+                 
+
             
-            let userData = JSON.parse(localStorage.getItem('userdata'));
+                console.log("Success",response.data)}
+            )
+            .catch(error=>console.log("Error",error.data));
+            let token=JSON.parse(localStorage.getItem('token'));
+
+            let userlist=await axios.get('http://localhost:8000/api/users',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            });
+            console.log(userlist);
+            let data=userlist.data
+            console.log(data);
+            const match=data.filter(key=>{
+                return key.email===FormData.email?key.id:null
+            })
+            console.log(match);
+            const form={
+                id:match[0].id,
+                name:match[0].name,
+                profile_image:match[0].profile_image,
+                active:match[0].active, //accessible or not
+                first_time:false
+
+            }
+            const id=match[0].id;
+            console.log(id)
+            if(match[0].first_time){
+                await axios.put(`http://localhost:8000/api/users/${id}`,form,{
+                    headers:{
+                        Authorization:`Bearer ${token}`
+                    }
+                }).then(response=>{
+                console.log(response.data);
+                
+                return;
+            }).catch(error=>{
+                console.log(error);
+                console.log(error.response);
+                
+                return;
+            })
+            }
+            else{
+                console.log('not first time');
+            }
+            
+            /*let userdata=await axios.post('http://localhost:8000/api/login',Form);
+            let userData=userdata.data;
+            //let userData = JSON.parse(localStorage.getItem('userdata'));
             console.log(userData)
             if(!Array.isArray(userData)){
                 userData=[userData]
@@ -46,7 +102,7 @@ export const signin=createAsyncThunk(
                     toast.error('Email not found');
                     return rejectWithValue('email not found');
                 }
-            }
+            }*/
             
         }catch(error){
                 return rejectWithValue(error.message);
@@ -54,11 +110,44 @@ export const signin=createAsyncThunk(
     }
 );
 
+export const signout=createAsyncThunk(
+    'user/signout',
+    async(_,{rejectWithValue})=>{
+        try{
+            const token=JSON.parse(localStorage.getItem('token'));
+             await axios.post('http://127.0.0.1:8000/api/logout',FormData,{
+               headers: {
+                    Authorization: `Bearer ${token}`
+                    }
+             }).then(response=>{
+                localStorage.setItem('token',JSON.stringify(response.data.token));
+                console.log(response.data.token);
+                console.log("Success",response.data)})
+            .catch(error=>console.log("Error",error.response.data));
+        }catch(error){
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
 export const getUser=createAsyncThunk(
     'user/get',
     async(_,{rejectWithValue})=>{
         try{
-            const userData = JSON.parse(localStorage.getItem('userdata'));
+            let token=JSON.parse(localStorage.getItem('token'));
+            console.log(localStorage.getItem('token')); 
+            let response=await axios.get('http://localhost:8000/api/users',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            console.log(response)
+            let data=response.data;
+            console.log(data);
+            let returneddata=Array.isArray(data)?data:[data];
+            console.log(returneddata)
+            return returneddata;
+            /*const userData = JSON.parse(localStorage.getItem('userdata'));
 
             if (!userData) {
                 return rejectWithValue('No user found in localStorage');
@@ -66,7 +155,7 @@ export const getUser=createAsyncThunk(
             else{
                
                 return userData;
-            }
+            }*/
         }catch(error){
                 return rejectWithValue(error.message);
         }
@@ -77,11 +166,41 @@ export const addUser = createAsyncThunk(
     'user/add',
     
 
-    async ({FormData,Date}, {  rejectWithValue }) => {
-        let userId;
+    async ({rawForm,Date}, {  rejectWithValue }) => {
+        
         
         try {
-            let storedUsers;
+             console.log(rawForm);
+            let token=JSON.parse(localStorage.getItem('token'));
+            let form={
+                name:rawForm.name,
+                email:rawForm.email,
+                password:rawForm.password,
+                profile_image:rawForm.profile_image,
+                active:1, //accessible or not
+                first_time:0 //change on login
+            }
+            let formdata=new FormData();
+            for(let key in form){
+                formdata.append(key,form[key]);
+            }
+            console.log(formdata)
+
+            await axios.post('http://localhost:8000/api/users',formdata,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success('User saved successfully');
+                return;
+            }).catch(error=>{
+                console.log(error);
+                console.log(error.response);
+                toast.error("Failed to save user");
+                return;
+            })
+            /*let storedUsers;
             try {
                 storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
             } catch (e) {
@@ -129,7 +248,7 @@ export const addUser = createAsyncThunk(
             storedUsers.push(user); 
             localStorage.setItem('userdata', JSON.stringify(storedUsers)); 
             toast.success('User successfully added:', user);
-            return user;
+            return user;*/
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -139,12 +258,34 @@ export const addUser = createAsyncThunk(
 export const updateUser = createAsyncThunk(
     'user/update',
     async ({ Id, FormData }, { rejectWithValue }) => {
-        let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
+        /*let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
         if (!Array.isArray(storedUsers)) {
             storedUsers = []; 
-        }
+        }*/
         try {
-            const userIndex = storedUsers.findIndex(storedUser => {
+            let form={
+                name:FormData.name,
+                email:FormData.email,
+                password:FormData.password,
+                profile_image:FormData.profile_image,
+                active:true,
+                first_time:true
+            }
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.put(`http://localhost:8000/api/users/${Id}`,form,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("User updated");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to update user");
+                return;
+            })
+            /*const userIndex = storedUsers.findIndex(storedUser => {
                 return String(storedUser.id).trim() === String(Id).trim();  
             });
             if (userIndex === -1) {
@@ -163,7 +304,7 @@ export const updateUser = createAsyncThunk(
             localStorage.setItem('userdata', JSON.stringify(storedUsers));
             toast.success('Update successful');
 
-            return updatedUser;
+            return updatedUser;*/
         } catch (error) {
             return rejectWithValue(error.message || 'Update failed');
         }
@@ -175,14 +316,30 @@ export const deleteUser = createAsyncThunk(
     'user/delete',
     async (Id, { rejectWithValue }) => {
         try {
-            let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
+            console.log(Id);
+            let id=(Id.id);
+            console.log(id);
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.delete(`http://localhost:8000/api/users/${id}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success('Delete Successful');
+                console.log(response);
+            })
+            .catch(error=>{
+                console.log(error);
+            })
+            /*let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
             storedUsers = storedUsers.filter(storedUser => { 
                 return storedUser.id !== Id.id; 
             });
 
             localStorage.setItem('userdata', JSON.stringify(storedUsers));
             toast.success('Delete successful');
-            return storedUsers; 
+            return storedUsers; */
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -247,8 +404,8 @@ const userSlice=createSlice({
         builder
         .addCase(signin.fulfilled,(state,action)=>{
             state.logged=true;
-            state.role = action.payload.role;
-            state.email = action.payload.email;
+            //state.role = action.payload.role;
+            //state.email = action.payload.email;
         })
         .addCase(signin.rejected,(state)=>{
             state.logged=false;

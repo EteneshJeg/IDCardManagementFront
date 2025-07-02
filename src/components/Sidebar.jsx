@@ -233,6 +233,18 @@ useEffect(() => {
 												
 											</div>
 
+											<div className="menu-item">
+												
+												<a className="menu-link" href="/rolemanagement">
+													<span className="menu-bullet">
+														<span className="bullet bullet-dot"></span>
+													</span>
+													<span className="menu-title">Role Settings</span>
+												</a>
+												
+											</div>
+
+											
 										</div>
 			  
 								</div>

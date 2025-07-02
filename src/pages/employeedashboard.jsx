@@ -1316,7 +1316,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
        
 
     const logged = useSelector((state) => state.user.logged);
-    const role = useSelector((state) => state.user.role);
+    const role = "human resources"//useSelector((state) => state.user.role);
     const email=useSelector((state)=>state.user.email);
 
     useEffect(()=>{

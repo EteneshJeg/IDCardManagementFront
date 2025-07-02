@@ -37,11 +37,11 @@ export default function Zone(){
     const [selectedUsers,setSelectedUsers]=useState({});
     const [formData,setFormData]=useState({
         name:'',
-        code:'',
+        region_id:'',
     })
     const [selectedUser,setSelectedUser]=useState({
         name:'',
-        code:'',
+        region_id:'',
     })
 
        const [isModalOpen,setIsModalOpen]=useState(false);
@@ -154,15 +154,27 @@ useEffect(() => {
 
     const handleChange=(e)=>{
         setFormData({...formData,[e.target.name]:e.target.value});
+        console.log(e.target.name,e.target.value);
         
     }
 
     const handleSaveZone = () => {    
-            if (!formData.name || !formData.region ) {
+      
+            if (!formData.name || !formData.region_id ) {
                 toast.error('There are missing fields');
                 return;
-            } else {
-                
+            } 
+           
+            else {
+                const matchedRegion=region.find(reg=>{
+                  console.log(reg.id);
+                  console.log(formData.region_id);
+                  return reg.id===Number(formData.region_id)});
+                  console.log(matchedRegion);
+                if(!matchedRegion){
+                  toast.error('Invalid region code detected');
+                  return;
+                }
                 dispatch(createZone({ FormData: formData}));
                
             }
@@ -269,10 +281,10 @@ useEffect(() => {
                               <br/>
                               <div className="col-md-6">
                                   <label className="form-label fw-semibold required">Region </label>
-                                  <select className="form-select" name="region"  onChange={handleChange}>
+                                  <select className="form-select" name="region_id"  onChange={handleChange}>
                                     <option value="">Select</option>
                                     {region.map((data)=>{
-                                        return <option key={data.code} value={data.name}>{data.name}</option>
+                                        return <option key={data.id} value={data.id}>{data.name}</option>
                                     })}
                                   </select>
                               </div>
@@ -328,7 +340,7 @@ useEffect(() => {
                                 >
                                     <option value="show all">Show all</option>
                                   {region.map((data)=>{
-                                    return <option key={data.code} value={data.name}>{data.name}</option>
+                                    return <option key={data.id} value={data.name}>{data.name}</option>
                                 })}
                                 </select>
 															{/*end::Destination*/}
@@ -398,7 +410,7 @@ useEffect(() => {
                                       {row.name}
                                     </td>
                                     <td className="text-start">
-                                      {row.region}
+                                      {row.region_id}
                                     </td>
                                     <td className="text-start">
                                     <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={()=>{setIsShowModalOpen(true),setSelectedUser(row)}}> <i className="bi bi-eye-fill fs-4"></i></button>
@@ -417,7 +429,7 @@ useEffect(() => {
                                     <br/>
                                     <div className="field-value">
                                         <label className="field">Region</label>
-                                            <p>{selectedUser.region}</p>
+                                            <p>{selectedUser.region_id}</p>
                                     </div>
                                     <br/>
                                                                                 
@@ -473,10 +485,10 @@ useEffect(() => {
                                                               <br/>
                                                               <div className="col-md-6">
                                                                   <label className="form-label fw-semibold">Region</label>
-                                                                  <select className="form-select" name="region"  onChange={handleChange}>
+                                                                  <select className="form-select" name="region_id"  onChange={handleChange}>
                                                                     <option value="">Select</option>
                                                                     {region.map((data)=>{
-                                                                        return <option key={data.code} value={data.name}>{data.name}</option>
+                                                                        return <option key={data.id} value={data.id}>{data.name}</option>
                                                                     })}
                                                                 </select>
                                                               </div>

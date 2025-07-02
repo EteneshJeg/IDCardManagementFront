@@ -133,6 +133,16 @@ export const generateIdBunch = createAsyncThunk(
   }
 );
 
+export const saveIdDetails=createAsyncThunk(
+  'iddetails/save',
+  async({DetailData},{rejectWithValue})=>{
+    try{
+
+    }catch(error){
+      
+    }
+  }
+)
 
 export const saveTemplate=createAsyncThunk(
     'template/save',
@@ -191,7 +201,8 @@ const idSlice=createSlice({
         idCards:[],
         id_issue_date:'',
         id_expire_date:'',
-        templates:[]
+        templates:[],
+        details:[]
     },
     reducers:{},
     extraReducers:(builder)=>{
@@ -202,8 +213,6 @@ const idSlice=createSlice({
             .addCase(saveTemplate.fulfilled,(state,action)=>{
                 state.templates=[...state.templates,action.payload]
             })
-            
-
     }
     
 }

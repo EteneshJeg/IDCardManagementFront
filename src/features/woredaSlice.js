@@ -5,7 +5,21 @@ export const createWoreda=createAsyncThunk(
     'woreda/create',
     async({FormData},{rejectWithValue})=>{
         try{
-            let woredaId;
+             let token=JSON.parse(localStorage.getItem('token'));
+            await axios.post('http://localhost:8000/api/woreda',FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("Woreda saved");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to save woreda");
+                return;
+            })
+            /*let woredaId;
             let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             console.log(storedWoredas);
             
@@ -43,7 +57,7 @@ export const createWoreda=createAsyncThunk(
             storedWoredas.push(newWoreda);
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
             toast.success ('Woreda saved successfully');
-            return newWoreda;
+            return newWoreda;*/
         }catch(error){
             return rejectWithValue(error.message);
         }
@@ -54,8 +68,19 @@ export const getWoreda=createAsyncThunk(
     'woreda/get',
     async(_,{rejectWithValue})=>{
         try{
-            
-            let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            console.log(localStorage.getItem('token')); 
+            let response=await axios.get('http://localhost:8000/api/woreda',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            let data=response.data.data;
+            console.log(data);
+            let returneddata=Array.isArray(data)?data:[data];
+            console.log(returneddata)
+            return returneddata;
+            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             console.log(storedWoredas);
             
             if (!Array.isArray(storedWoredas)) {
@@ -63,7 +88,7 @@ export const getWoreda=createAsyncThunk(
             }
             if(storedWoredas){
                 return storedWoredas;
-            }
+            }*/
         }catch(error){
             return rejectWithValue(error.message);
         }
@@ -74,7 +99,21 @@ export const updateWoreda=createAsyncThunk(
     'woreda/update',
     async({Id,FormData},{rejectWithValue})=>{
         try{
-            let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.put(`http://localhost:8000/api/woreda/${Id}`,FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("Woreda updated");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to update woreda");
+                return;
+            })
+            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             
             if (!Array.isArray(storedWoredas)) {
                 storedWoredas = [storedWoredas];
@@ -94,7 +133,7 @@ export const updateWoreda=createAsyncThunk(
             
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
             toast.success('Woreda updated successfully');
-            return updatedWoreda;
+            return updatedWoreda;*/
             
 
         }catch(error){
@@ -108,7 +147,20 @@ export const deleteWoreda=createAsyncThunk(
     'woreda/delete',
     async({Id},{rejectWithValue})=>{
         try{
-            let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.delete(`http://localhost:8000/api/woreda/${Id}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success('Delete Successful');
+                console.log(response);
+            })
+            .catch(error=>{
+                console.log(error);
+            })
+            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             
             if (!Array.isArray(storedWoredas)) {
                 storedWoredas = [storedWoredas];
@@ -121,7 +173,7 @@ export const deleteWoreda=createAsyncThunk(
             }
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
             toast.success('Woreda deleted successfully');
-            return storedWoredas
+            return storedWoredas*/
         }catch(error){
             toast.error('Failed to delete woreda');
             return rejectWithValue(error.message);

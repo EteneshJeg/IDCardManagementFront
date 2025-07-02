@@ -35,121 +35,123 @@ export default function EmployeeManagement() {
       document.body.removeChild(script);
     };
   }, []);
-  
+
   const dispatch = useDispatch();
 
-  const [zoneInfo,setZoneInfo]=useState();
-  const [woredaInfo,setWoredaInfo]=useState();
-  const [regionInfo,setRegionInfo]=useState();
-  const [maritalInfo,setMaritalInfo]=useState();
-  const [jobPositionInfo,setJobPositionInfo]=useState();
-  const [jobTitleCatInfo,setJobTitleCatInfo]=useState();
-  const [organizationUnitInfo,setOrganizationUnitInfo]=useState();
+  const [zoneInfo, setZoneInfo] = useState();
+  const [woredaInfo, setWoredaInfo] = useState();
+  const [regionInfo, setRegionInfo] = useState();
+  const [maritalInfo, setMaritalInfo] = useState();
+  const [jobPositionInfo, setJobPositionInfo] = useState();
+  const [jobTitleCatInfo, setJobTitleCatInfo] = useState();
+  const [organizationUnitInfo, setOrganizationUnitInfo] = useState();
+
+  const [profilePhoto, setProfilePhoto] = useState();
 
   useEffect(() => {
-        dispatch(getZone())
-          .then((data) => {
-              console.log(data);
-            const dataitem = data.payload;
-              console.log(dataitem)
-            
-            const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-            setZoneInfo(normalizedData);
-          })
-          .catch((error) => {
-            console.log('Error fetching data', error);
-          });
-      }, [dispatch]);
-       
-useEffect(() => {
-      dispatch(getRegion())
-        .then((data) => {
-            console.log(data);
-          const dataitem = data.payload;
-            console.log(dataitem)
-          
-          const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-          setRegionInfo(normalizedData);
-        })
-        .catch((error) => {
-          console.log('Error fetching data', error);
-        });
-    }, [dispatch]);
+    dispatch(getZone())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
 
-    useEffect(() => {
-        dispatch(getWoreda())
-          .then((data) => {
-              console.log(data);
-            const dataitem = data.payload;
-              console.log(dataitem)
-            
-            const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-            setWoredaInfo(normalizedData);
-          })
-          .catch((error) => {
-            console.log('Error fetching data', error);
-          });
-      }, [dispatch]);
-       
-useEffect(() => {
-      dispatch(getMaritalStatus())
-        .then((data) => {
-            console.log(data);
-          const dataitem = data.payload;
-            console.log(dataitem)
-          
-          const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-          setMaritalInfo(normalizedData);
-        })
-        .catch((error) => {
-          console.log('Error fetching data', error);
-        });
-    }, [dispatch]);
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setZoneInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
 
-    useEffect(() => {
-        dispatch(fetchOrganizationUnits())
-          .then((data) => {
-              console.log(data);
-            const dataitem = data.payload;
-              console.log(dataitem)
-            
-            const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-            setOrganizationUnitInfo(normalizedData);
-          })
-          .catch((error) => {
-            console.log('Error fetching data', error);
-          });
-      }, [dispatch]);
-       
-useEffect(() => {
-      dispatch(fetchJobPositions())
-        .then((data) => {
-            console.log(data);
-          const dataitem = data.payload;
-            console.log(dataitem)
-          
-          const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-          setJobPositionInfo(normalizedData);
-        })
-        .catch((error) => {
-          console.log('Error fetching data', error);
-        });
-    }, [dispatch]);
+  useEffect(() => {
+    dispatch(getRegion())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
 
-    useEffect(() => {
-      dispatch(fetchJobTitleCategories())
-        .then((data) => {
-            console.log(data);
-          const dataitem = data.payload;
-            console.log(dataitem)
-          
-          const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-          setJobTitleCatInfo(normalizedData);
-        })
-        .catch((error) => {
-          console.log('Error fetching data', error);
-        });
-    }, [dispatch]);
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setRegionInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(getWoreda())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setWoredaInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(getMaritalStatus())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setMaritalInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchOrganizationUnits())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setOrganizationUnitInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchJobPositions())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setJobPositionInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchJobTitleCategories())
+      .then((data) => {
+        console.log(data);
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setJobTitleCatInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      });
+  }, [dispatch]);
 
 
   const [selectedUsers, setSelectedUsers] = useState({});
@@ -173,20 +175,20 @@ useEffect(() => {
     email: '',
     photo: '',
     phone_number: '',
-    organization_unit: '',
-    job_position: '',
-    job_title_category: '',
-    salary_amount: '',
-    marital_status: '',
+    organization_unit_id: '',
+    job_position_id: '',
+    job_title_category_id: '',
+    salary_id: '',
+    marital_status_id: '',
     nation: '',
     employment_id: '',
     job_position_start_date: '',
     job_position_end_date: '',
     address: '',
     house_number: '',
-    region: '',
-    zone: '',
-    woreda: '',
+    region_id: '',
+    zone_id: '',
+    woreda_id: '',
     status: '',
     id_issue_date: '',
     id_expire_date: '',
@@ -202,19 +204,20 @@ useEffect(() => {
     email: FormData?.email || "",
     photo: FormData?.photo || "",
     phone_number: FormData?.phone_number || "",
-    organization_unit: FormData?.organization_unit || "",
-    job_position: FormData?.job_position || "",
-    job_title_category: FormData?.job_title_category || "",
-    salary_amount: FormData?.salary_amount || "",
-    marital_status: FormData?.marital_status || "",
+    organization_unit_id: FormData?.organization_unit_id || "",
+    job_position_id: FormData?.job_position_id || "",
+    job_title_category_id: FormData?.job_title_category_id || "",
+    salary_id: FormData?.salary_id || "",
+    marital_status_id: FormData?.marital_status_id || "",
     nation: FormData?.nation || "",
     employment_id: FormData?.employment_id || "",
     job_position_start_date: FormData?.job_position_start_date || "",
     job_position_end_date: FormData?.job_position_end_date || "",
     address: FormData?.address || "",
     house_number: FormData?.house_number || "",
-    region: FormData?.region || "",
-    zone: FormData?.zone || "",
+    region_id: FormData?.region_id || "",
+    woreda_id: FormData?.woreda_id || "",
+    zone_id: FormData?.zone_id || "",
   });
 
   useEffect(() => {
@@ -222,7 +225,7 @@ useEffect(() => {
 
   }, []);
 
-  
+
 
   const [employeeProfile, setEmployeeProfile] = useState([]);
   const [selectedUser, setSelectedUser] = useState({});
@@ -231,11 +234,13 @@ useEffect(() => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const totalPages = Math.ceil(employeeProfile.length / itemsPerPage);
+  const totalPages = Math.ceil((employeeProfile?.length || 0) / itemsPerPage);
+
 
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
-  const currentdata = employeeProfile.slice(firstItemIndex, lastItemIndex);
+  const currentdata = (employeeProfile || []).slice(firstItemIndex, lastItemIndex);
+
   const [extractData, setExtractData] = useState([]);
 
   const nextPage = () => {
@@ -253,9 +258,9 @@ useEffect(() => {
   }
 
   const handleChange = (e) => {
-    setProfileData({ ...profileData, [e.target.name]: [e.target.value] });
-    setFormData({ ...formData, [e.target.name]: [e.target.value] });
-    console.log(formData);
+    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    //console.log(formData);
   }
 
   useEffect(() => {
@@ -274,15 +279,28 @@ useEffect(() => {
 
   useEffect(() => {
     dispatch(getProfile())
-      .then((data) => {
-        const dataitem = data.payload;
-        setEmployeeProfile(dataitem)
-        console.log(employeeProfile);
+      .then((action) => {
+        if (action.meta.requestStatus === 'fulfilled') {
+          // If payload is an array with data
+          if (Array.isArray(action.payload) && action.payload.length > 0) {
+            setEmployeeProfile(action.payload[0]?.data);
+            setProfilePhoto(action.payload[0]?.data.photo_url);
+            console.log("Profiles:", action.payload[0]?.data);
+          } else {
+            // Handle empty or unexpected payload gracefully
+            setEmployeeProfile(null);
+            console.log("No profile data available");
+          }
+        } else {
+          console.error("Fetch failed:", action.payload);
+        }
       })
       .catch((error) => {
-        console.log('Error fetching data', error);
+        console.error('Unexpected error', error);
       });
+
   }, [dispatch, profiles]);
+
   useEffect(() => {
     if (selectedFilter === "show all") {
       setFilteredData(employeeProfile);
@@ -298,7 +316,7 @@ useEffect(() => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photo: reader.result });
+        setFormData({ ...formData, photo: file });
       }
       reader.readAsDataURL(file);
     }
@@ -363,7 +381,7 @@ useEffect(() => {
   }
 
   const handleDeleteProfile = (id) => {
-    console.log('to delete',id);
+    console.log('to delete', id);
     dispatch(deleteProfile({ Id: id }));
     setIsDeleteModalOpen(false);
   }
@@ -604,7 +622,7 @@ useEffect(() => {
 
                   <fieldset>
                     <legend>Profile Details</legend>
-                    <img src={formData.photo} />
+                    {formData.photo ? <img src={formData.photo || ""} /> : null}
                     <input type="file" onChange={imageUploader}></input>
                     <form className="p-5 bg-white rounded shadow-sm">
                       <div className="row g-4">
@@ -655,52 +673,53 @@ useEffect(() => {
 
                         {/* Organization Unit */}
                         <div className="col-md-6">
-                           <label className="form-label fw-semibold">Organization Unit</label>
-                          <select className="form-select" name="organization_unit" onChange={handleChange}>
+                          <label className="form-label fw-semibold">Organization Unit</label>
+                          <select className="form-select" name="organization_unit_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {organizationUnitInfo.map((data)=>{
+                            {organizationUnitInfo.map((data) => {
                               return <option>{data.en_name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Job Position */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Job Position</label>
-                          <select className="form-select" name="job_position" onChange={handleChange}>
+                          <select className="form-select" name="job_position_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {jobPositionInfo.map((data)=>{
+                            {jobPositionInfo.map((data) => {
                               return <option>{data.position_code}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Job Title Category */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Job Title Category</label>
-                          <select className="form-select" name="job_title_category" onChange={handleChange}>
+                          <select className="form-select" name="job_title_category_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {jobTitleCatInfo.map((data)=>{
+                            {jobTitleCatInfo.map((data) => {
                               return <option>{data.name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Salary Amount */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Salary Amount</label>
-                          <input type="text" name="salary_amount" className="form-control" onChange={handleChange} />
+                          <input type="text" name="salary_id" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Marital Status */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Marital Status</label>
-                          <select className="form-select" name="marital_status" onChange={handleChange}>
+                          <select className="form-select" name="marital_status_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {maritalInfo.map((data)=>{
+                            {maritalInfo.map((data) => {
+                              console.log(maritalInfo)
                               return <option>{data.name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Nation */}
@@ -742,34 +761,35 @@ useEffect(() => {
                         {/* Region */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Region</label>
-                          <select className="form-select" name="region" onChange={handleChange}>
+                          <select className="form-select" name="region_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {regionInfo.map((data)=>{
+                            {regionInfo.map((data) => {
                               return <option>{data.name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Zone */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Zone</label>
-                          <select className="form-select" name="zone" onChange={handleChange}>
+                          <select className="form-select" name="zone_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {zoneInfo.map((data)=>{
+                            {zoneInfo.map((data) => {
+                              console.log(zoneInfo)
                               return <option>{data.name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
 
                         {/* Woreda */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Woreda</label>
-                          <select className="form-select" name="woreda" onChange={handleChange}>
+                          <select className="form-select" name="woreda_id" onChange={handleChange}>
                             <option value="">Select...</option>
-                            {woredaInfo.map((data)=>{
+                            {woredaInfo.map((data) => {
                               return <option>{data.name}</option>
                             })}
-                            </select>
+                          </select>
                         </div>
                       </div>
 
@@ -927,12 +947,18 @@ useEffect(() => {
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
                         <input
-  type="checkbox"
-  checked={Object.keys(selectedUsers).length === employeeProfile.length}
-  onChange={handleSelectAll}
-  title={Object.keys(selectedUsers).length === employeeProfile.length ? 'Deselect All' : 'Select All'}
-  style={{ cursor: 'pointer' }}
-/>
+                          type="checkbox"
+                          cchecked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
+
+                          onChange={handleSelectAll}
+                          title={
+                            Object.keys(selectedUsers).length === (employeeProfile?.length || 0)
+                              ? 'Deselect All'
+                              : 'Select All'
+                          }
+
+                          style={{ cursor: 'pointer' }}
+                        />
                       </th>
                       <th className="min-w-100px">#</th>
                       <th className="text-start min-w-100px">Profile Picture</th>
@@ -955,18 +981,18 @@ useEffect(() => {
                     {Array.isArray(employeeProfile) ? (
                       currentdata.length > 0 ? (
                         currentdata.filter((row) => {
-                          console.log(row);
+                          // console.log(row);
                           const matchSearch = searchItem.toLowerCase() === ''
                             ? true
                             : String(row.en_name).toLowerCase().includes(searchItem.toLowerCase());
 
-                          console.log(matchSearch)
+                          //console.log(matchSearch)
                           const matchFilter =
                             selectedFilter === 'show all' ||
                             row.id_status?.toLowerCase() === selectedFilter.toLowerCase();
-                          console.log(row.id_status)
+                          /*console.log(row.id_status)
                           console.log(selectedFilter);
-                          console.log(matchFilter)
+                          console.log(matchFilter)*/
 
                           return matchSearch && matchFilter
                         })
@@ -975,14 +1001,14 @@ useEffect(() => {
                             return (
                               <tr key={index} data-kt-table-widget-4="subtable_template">
                                 <td >
-                                  <input type="checkbox" checked={!!selectedUsers[row.id]} onChange={()=>handleSelectedRows(row.id)} />
+                                  <input type="checkbox" checked={!!selectedUsers[row.id]} onChange={() => handleSelectedRows(row.id)} />
                                 </td>
                                 <td className="text-start">
                                   {index + 1}
                                 </td>
                                 <td className="text-start pe-4">
                                   <img
-                                    src={row.photo}
+                                    src={row.photo_url}
                                     width="100"
                                     height="100"
                                     alt="User"
@@ -1006,16 +1032,19 @@ useEffect(() => {
                                   {row.phone_number}
                                 </td>
                                 <td className="text-start">
-                                  {row.organization_unit}
+                                  {row.organization_unit_id}
                                 </td>
                                 <td className="text-start">
-                                  {row.job_position}
+                                  {row.job_position_id}
                                 </td>
 
                                 <td className="text-start">
-                                  <span className={`badge badge-${row.id_status.toLowerCase() === 'active' ? 'success' : 'danger'}`}>{row.id_status}</span>
-                                  
+                                  <span className={`badge badge-${row.id_status && row.id_status.toLowerCase() === 'valid' ? 'success' : 'danger'
+                                    }`}>
+                                    {row.id_status || 'Unknown'}
+                                  </span>
                                 </td>
+
                                 <td className="text-start">
                                   <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.employment_id}`, '_blank')}> <i className="bi bi-eye-fill fs-4"></i></button>
 
@@ -1129,34 +1158,34 @@ useEffect(() => {
                                                 {/* Organization Unit */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Organization Unit</label>
-                                                 <select className="form-select" name="organization_unit" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {organizationUnitInfo.map((data)=>{
-                              return <option>{data.en_name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="organization_unit_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {organizationUnitInfo.map((data) => {
+                                                      return <option>{data.en_name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Job Position */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Position</label>
-                                                  <select className="form-select" name="job_position" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {jobPositionInfo.map((data)=>{
-                              return <option>{data.position_code}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="job_position_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {jobPositionInfo.map((data) => {
+                                                      return <option>{data.position_code}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Job Title Category */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Title Category</label>
-                                                  <select className="form-select" name="job_title_category" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {jobTitleCatInfo.map((data)=>{
-                              return <option>{data.name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="job_title_category_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {jobTitleCatInfo.map((data) => {
+                                                      return <option>{data.name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Salary Amount */}
@@ -1165,7 +1194,7 @@ useEffect(() => {
                                                   <input
                                                     type="text"
                                                     className="form-control"
-                                                    name="salary_amount"
+                                                    name="salary_id"
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1173,12 +1202,12 @@ useEffect(() => {
                                                 {/* Marital Status */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Marital Status</label>
-                                                  <select className="form-select" name="marital_status" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {maritalInfo.map((data)=>{
-                              return <option>{data.name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="marital_status_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {maritalInfo.map((data) => {
+                                                      return <option>{data.name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Nation */}
@@ -1251,34 +1280,34 @@ useEffect(() => {
                                                 {/* Region */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Region</label>
-                                                  <select className="form-select" name="region" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {regionInfo.map((data)=>{
-                              return <option>{data.name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="region_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {regionInfo.map((data) => {
+                                                      return <option>{data.name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Zone */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Zone</label>
-                                                  <select className="form-select" name="zone" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {zoneInfo.map((data)=>{
-                              return <option>{data.name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="zone_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {zoneInfo.map((data) => {
+                                                      return <option>{data.name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
 
                                                 {/* Woreda */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Woreda</label>
-                                                  <select className="form-select" name="woreda" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {woredaInfo.map((data)=>{
-                              return <option>{data.name}</option>
-                            })}
-                            </select>
+                                                  <select className="form-select" name="woreda_id" onChange={handleChange}>
+                                                    <option value="">Select...</option>
+                                                    {woredaInfo.map((data) => {
+                                                      return <option>{data.name}</option>
+                                                    })}
+                                                  </select>
                                                 </div>
                                               </div>
                                             </form>
@@ -1360,39 +1389,40 @@ useEffect(() => {
                   </tbody>
                   {/*end::Table body*/}
                 </table>
-                
+
                 {/*end::Table*/}
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
-                      <div>
-                        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
-                        {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
-                        {filteredData.length} entries
-                      </div>
-                      <div className="d-flex gap-2">
-                        <button 
-                          className="btn btn-sm btn-icon btn-light-primary"
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-                          disabled={currentPage === 1}
-                        >
-                          <i className="bi bi-chevron-left"></i>
-                        </button>
-                        <span className="px-3 d-flex align-items-center">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <button 
-                          className="btn btn-sm btn-icon btn-light-primary"
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-                          disabled={currentPage === totalPages || totalPages === 0}
-                        >
-                          <i className="bi bi-chevron-right"></i>
-                        </button>
-                      </div>
-                    </div>
+                  <div>
+                    Showing {Math.min((currentPage - 1) * itemsPerPage + 1, (filteredData?.length || 0))} to{' '}
+                    {Math.min(currentPage * itemsPerPage, (filteredData?.length || 0))} of{' '}
+                    {(filteredData?.length || 0)} entries
+                  </div>
+
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-sm btn-icon btn-light-primary"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                    <span className="px-3 d-flex align-items-center">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      className="btn btn-sm btn-icon btn-light-primary"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                    >
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
               {/*end::Card body*/}
             </div>
           </div>
-          
+
         </div>
       </div>
 

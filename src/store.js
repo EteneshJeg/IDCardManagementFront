@@ -11,6 +11,7 @@ import zoneReducer from './features/zoneSlice'
 import woredaReducer from './features/woredaSlice'
 import salaryReducer from './features/salarySlice'
 import maritalStatusReducer from './features/maritalStatusSlice'
+import roleReducer from './features/roleSlice'
 
 
 const store = configureStore({
@@ -26,7 +27,8 @@ const store = configureStore({
     zone:zoneReducer,
     woreda:woredaReducer,
     salary:salaryReducer,
-    maritalStatus:maritalStatusReducer
+    maritalStatus:maritalStatusReducer,
+    role:roleReducer
 
 
 

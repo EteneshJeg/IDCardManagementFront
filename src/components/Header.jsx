@@ -2,9 +2,12 @@ import { useEffect,useState } from "react"
 
 
 import { getOrganizationInfo } from "../features/organizationSlice";
+import { signout } from "../features/userSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
+
 export default function Header(){
- 
+ const navigate=useNavigate();
   const [logo,setLogo]=useState();
 	const dispatch=useDispatch();
 	const {organizationInfo}=useSelector((state)=>state.organization);
@@ -27,6 +30,12 @@ export default function Header(){
 			setLogo(data.payload[0]?.logo);
 		})
 	},[organizationInfo]);
+
+  const handleSignout=()=>{
+    dispatch(signout());
+    navigate('/login');
+    
+  }
     return(
         
       <div id="kt_app_header" className="app-header">
@@ -490,7 +499,7 @@ export default function Header(){
                 {/*begin::Menu item*/}
                 <div className="menu-item px-5">
                   <a
-                    href="/"
+                    onClick={handleSignout}
                     className="menu-link px-5"
                   >
                     Sign Out

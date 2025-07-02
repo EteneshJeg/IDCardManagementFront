@@ -34,11 +34,11 @@ export default function Woreda(){
         const [selectedUsers,setSelectedUsers]=useState({});
         const [formData,setFormData]=useState({
             name:'',
-            code:'',
+            zone_id:'',
         })
         const [selectedUser,setSelectedUser]=useState({
             name:'',
-            code:'',
+            zone_id:'',
         })
     
            const [isModalOpen,setIsModalOpen]=useState(false);
@@ -155,7 +155,7 @@ export default function Woreda(){
         }
     
         const handleSaveWoreda = () => {    
-                if (!formData.name || !formData.zone ) {
+                if (!formData.name || !formData.zone_id ) {
                     toast.error('There are missing fields');
                     return;
                 } else {
@@ -265,10 +265,10 @@ export default function Woreda(){
                                     <br/>
                                     <div className="col-md-6">
                                         <label className="form-label fw-semibold required">Zone </label>
-                                        <select className="form-select" name="zone"  onChange={handleChange}>
+                                        <select className="form-select" name="zone_id"  onChange={handleChange}>
                                             <option value="">Select</option>
                                             {zone.map((data)=>{
-                                                return <option key={data.code} value={data.name}>{data.name}</option>
+                                                return <option key={data.id} value={data.id}>{data.name}</option>
                                             })}
                                         </select>
                                     </div>
@@ -392,7 +392,7 @@ export default function Woreda(){
                                       {row.name}
                                     </td>
                                     <td className="text-start">
-                                      {row.zone}
+                                      {row.zone_id}
                                     </td>
                                     <td className="text-start">
                                     <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={()=>{setIsShowModalOpen(true),setSelectedUser(row)}}> <i className="bi bi-eye-fill fs-4"></i></button>
@@ -411,7 +411,7 @@ export default function Woreda(){
                                     <br/>
                                     <div className="field-value">
                                         <label className="field">Zone</label>
-                                            <p>{selectedUser.zone}</p>
+                                            <p>{selectedUser.zone_id}</p>
                                     </div>
                                     <br/>
                                                                                 
@@ -467,10 +467,10 @@ export default function Woreda(){
                                                               <br/>
                                                               <div className="col-md-6">
                                                                   <label className="form-label fw-semibold">Zone</label>
-                                                                  <select className="form-select" name="zone"  onChange={handleChange}>
+                                                                  <select className="form-select" name="zone_id"  onChange={handleChange}>
                                                                     <option value="">Select</option>
                                                                     {zone.map((data)=>{
-                                                                        return <option key={data.code} value={data.name}>{data.name}</option>
+                                                                        return <option key={data.id} value={data.id}>{data.name}</option>
                                                                     })}
                                                                 </select>
                                                               </div>

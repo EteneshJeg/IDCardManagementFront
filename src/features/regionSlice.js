@@ -5,7 +5,21 @@ export const createRegion=createAsyncThunk(
     'region/create',
     async({FormData},{rejectWithValue})=>{
         try{
-            let regionId;
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.post('http://localhost:8000/api/regions',FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("Region saved");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to save region");
+                return;
+            })
+            /*let regionId;
             let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
             console.log(storedRegions);
             
@@ -45,7 +59,7 @@ export const createRegion=createAsyncThunk(
             storedRegions.push(newRegion);
             localStorage.setItem('region',JSON.stringify(storedRegions));
             toast.success('Region saved successfully');
-            return newRegion;
+            return newRegion;*/
         }catch(error){
             toast.error('Failed to save region');
             return rejectWithValue(error.message);
@@ -57,15 +71,26 @@ export const getRegion=createAsyncThunk(
     'region/get',
     async(_,{rejectWithValue})=>{
         try{
-            
-            let storedRegions=JSON.parse(localStorage.getItem('region'))||[];
+            let token=JSON.parse(localStorage.getItem('token'));
+            console.log(localStorage.getItem('token')); 
+            let response=await axios.get('http://localhost:8000/api/regions',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            let data=response.data.data;
+            console.log(data);
+            let returneddata=Array.isArray(data)?data:[data];
+            console.log(returneddata)
+            return returneddata;
+            /*let storedRegions=JSON.parse(localStorage.getItem('region'))||[];
         if(!Array.isArray(storedRegions)){
             storedRegions=[];
         }
         if(storedRegions){
             return storedRegions;
         }
-       
+       */
        }catch(error){
             return rejectWithValue(error.message);
         }
@@ -76,8 +101,21 @@ export const updateRegion=createAsyncThunk(
     'region/update',
     async({Id,FormData},{rejectWithValue})=>{
         try{
-            
-            let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.put(`http://localhost:8000/api/regions/${Id}`,FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("Region updated");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to update region");
+                return;
+            })
+            /*let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
             console.log(storedRegions);
             
             if (!Array.isArray(storedRegions)) {
@@ -107,7 +145,7 @@ export const updateRegion=createAsyncThunk(
                 localStorage.setItem('region',JSON.stringify(storedRegions));
                 toast.success('Region Updated Successfully');
                 return updatedRegion
-            }
+            }*/
 
         }catch(error){
             toast.error('Failed to update');
@@ -120,7 +158,20 @@ export const deleteRegion=createAsyncThunk(
     'region/delete',
     async({Id},{rejectWithValue})=>{
         try{
-            let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.delete(`http://localhost:8000/api/regions/${Id}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success('Delete Successful');
+                console.log(response);
+            })
+            .catch(error=>{
+                console.log(error);
+            })
+            /*let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
             console.log(storedRegions);
             
             if (!Array.isArray(storedRegions)) {
@@ -138,7 +189,7 @@ export const deleteRegion=createAsyncThunk(
         console.log(storedRegions)
         localStorage.setItem('region',JSON.stringify(storedRegions));
         toast.success('Region deleted successfully');
-        return storedRegions;
+        return storedRegions;*/
 
         }catch(error){
             toast.error('Failed to delete region');

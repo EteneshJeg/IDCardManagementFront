@@ -5,7 +5,24 @@ export const createZone=createAsyncThunk(
     'zone/create',
     async({FormData},{rejectWithValue})=>{
         try{
-            let zoneId;
+            console.log(FormData);
+            let token=JSON.parse(localStorage.getItem('token'));
+            
+            await axios.post('http://localhost:8000/api/zones',FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success('Zone saved successfully');
+                return;
+            }).catch(error=>{
+                console.log(error);
+                console.log(error.response);
+                toast.error("Failed to save zone");
+                return;
+            })
+            /*let zoneId;
             let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
             console.log(storedZones);
             
@@ -36,7 +53,7 @@ export const createZone=createAsyncThunk(
             storedZones.push(newZone);
             localStorage.setItem('zone',JSON.stringify(storedZones));
             toast.success('Zone saved successfully');
-            return newZone;
+            return newZone;*/
 
         }catch(error){
             toast.error('Failed to save zone');
@@ -49,7 +66,28 @@ export const getZone=createAsyncThunk(
     'zone/get',
     async(_,{rejectWithValue})=>{
         try{
-            
+            let token=JSON.parse(localStorage.getItem('token'));
+            console.log(localStorage.getItem('token')); 
+            let response=await axios.get('http://localhost:8000/api/zones',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            let data=response.data.data;
+            console.log(data);
+            let returneddata=Array.isArray(data)?data:[data];
+            console.log(returneddata)
+            return returneddata;
+            /*let token=JSON.parse(localStorage.getItem('token'));
+            console.log(localStorage.getItem('token')); 
+            let response=await axios.get('http://localhost:8000/api/zones',{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            });
+            let dataitem=response.data;
+            console.log(dataitem);*/
+
             let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
             console.log(storedZones);
             
@@ -69,7 +107,21 @@ export const updateZone=createAsyncThunk(
     'zone/update',
     async({Id,FormData},{rejectWithValue})=>{
         try{
-            let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.put(`http://localhost:8000/api/zones/${Id}`,FormData,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            }).then(response=>{
+                console.log(response.data);
+                toast.success("Zone updated");
+                return;
+            }).catch(error=>{
+                console.log(error.response);
+                toast.error("Failed to update zone");
+                return;
+            })
+            /*let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
             console.log(storedZones);
             
             if (!Array.isArray(storedZones)) {
@@ -91,7 +143,7 @@ export const updateZone=createAsyncThunk(
             storedZones[zoneIndex]=updatedZone;
             localStorage.setItem('zone',JSON.stringify(storedZones));
             toast.success('Zone successfully updated');
-            return updatedZone;
+            return updatedZone;*/
         }catch(error){
             toast.error('Failed to update zone');
         }
@@ -102,7 +154,20 @@ export const deleteZone=createAsyncThunk(
     'zone/delete',
     async({Id},{rejectWithValue})=>{
         try{
-            let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
+            let token=JSON.parse(localStorage.getItem('token'));
+            await axios.delete(`http://localhost:8000/api/zones/${Id}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success('Delete Successful');
+                console.log(response);
+            })
+            .catch(error=>{
+                console.log(error);
+            })
+            /*let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
             console.log(storedZones);
             
             console.log(Id)
@@ -118,7 +183,7 @@ export const deleteZone=createAsyncThunk(
          }
         localStorage.setItem('zone',JSON.stringify(storedZones));
         toast.success('Zone deleted successfully');
-        return storedZones;
+        return storedZones;*/
               
         }catch(error){
             toast.error('Failed to delete zone');

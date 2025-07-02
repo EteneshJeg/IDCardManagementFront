@@ -35,7 +35,7 @@ const [formData, setFormData] = useState({
 useEffect(() => {
 	console.log(logged)
 	console.log(role)
-    if (logged && role) {
+    if (logged ) {
         const lowerRole = String(role).toLowerCase();
 
         navigate("/dashboard");
