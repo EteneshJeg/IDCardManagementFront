@@ -118,13 +118,17 @@ const jobTitleCategoriesSlice = createSlice({
       .addCase(fetchJobTitleCategories.pending, (state) => {
         state.status = "loading";
         state.error = null;
+        
       })
       .addCase(fetchJobTitleCategories.fulfilled, (state, action) => {
         state.status = "succeeded";
+        
         state.data = action.payload;
+        console.log(state.data)
       })
       .addCase(fetchJobTitleCategories.rejected, (state, action) => {
         state.status = "failed";
+        
         state.error = action.payload;
       })
 
@@ -188,7 +192,8 @@ const jobTitleCategoriesSlice = createSlice({
 
 // ========== SELECTORS ==========
 export const selectAllJobTitleCategories = (state) =>
-  state.jobTitleCategories?.data || [];
+  state.jobTitleCategory?.data || [];
+
 
 export const selectCategoriesStatus = (state) => state.jobTitleCategories.status;
 

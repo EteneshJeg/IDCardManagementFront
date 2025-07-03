@@ -9,7 +9,6 @@ import organizationUnitReducer from "./features/organizationUnitSlice";
 import regionReducer from './features/regionSlice';
 import zoneReducer from './features/zoneSlice'
 import woredaReducer from './features/woredaSlice'
-import salaryReducer from './features/salarySlice'
 import maritalStatusReducer from './features/maritalStatusSlice'
 import roleReducer from './features/roleSlice'
 
@@ -26,7 +25,6 @@ const store = configureStore({
     region:regionReducer,
     zone:zoneReducer,
     woreda:woredaReducer,
-    salary:salaryReducer,
     maritalStatus:maritalStatusReducer,
     role:roleReducer
 
