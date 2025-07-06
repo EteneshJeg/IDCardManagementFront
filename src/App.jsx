@@ -22,9 +22,10 @@ import MaritalStatus from './pages/MaritalStatusManagement';
 import Region from './pages/RegionManagement';
 import Zone from './pages/ZoneManagement';
 import Woreda from './pages/WoredaManagement';
-import Role from './pages/rolemanagement';
+import Role from './pages/Roles';
 
 import { Navigate } from 'react-router-dom';
+import PermissionsPage from './pages/Permissions';
 
 
 
@@ -56,7 +57,8 @@ function App() {
         <Route path="regionmanagement" element={<Region />} />
         <Route path="zonemanagement" element={<Zone />} />
         <Route path="woredamanagement" element={<Woreda />} />
-        <Route path="rolemanagement" element={<Role/>} />
+        <Route path="roles" element={<Role/>} />
+        <Route path="/permissions" element={<PermissionsPage/>} />
       </Route>
     </Routes>
       <ToastContainer />

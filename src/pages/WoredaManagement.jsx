@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
@@ -14,15 +14,43 @@ import {
 } from "../features/woredaSlice";
 import { getZone } from "../features/zoneSlice";
 
-   // SVG Close Icon
-  const CloseIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
-      <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
-    </svg> )
-
-
-
+// SVG Close Icon
+const CloseIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      opacity="0.5"
+      x="6"
+      y="17.3137"
+      width="16"
+      height="2"
+      rx="1"
+      transform="rotate(-45 6 17.3137)"
+      fill="currentColor"
+    />
+    <rect
+      x="7.41422"
+      y="6"
+      width="16"
+      height="2"
+      rx="1"
+      transform="rotate(45 7.41422 6)"
+      fill="currentColor"
+    />
+  </svg>
+);
+const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
 
 export default function Woreda() {
   useEffect(() => {
@@ -49,6 +77,8 @@ export default function Woreda() {
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [filteredData, setFilteredData] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     name: "",
     zone_id: "",
@@ -57,6 +87,15 @@ export default function Woreda() {
     name: "",
     zone_id: "",
   });
+
+  // Create a zone map for ID to name lookup
+  const zoneMap = useMemo(() => {
+    const map = {};
+    zone.forEach((z) => {
+      map[z.id] = z.name;
+    });
+    return map;
+  }, [zone]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShowModalOpen, setIsShowModalOpen] = useState(false);
@@ -86,9 +125,9 @@ export default function Woreda() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getWoreda())
       .then((data) => {
-        console.log(data);
         const dataitem = data.payload;
         console.log(dataitem);
 
@@ -97,13 +136,15 @@ export default function Woreda() {
       })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch, woreda]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getZone())
       .then((data) => {
-        console.log(data);
+        // console.log(data);
         const dataitem = data.payload;
         console.log(dataitem);
 
@@ -112,23 +153,25 @@ export default function Woreda() {
       })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
     console.log("userdata type check:", Array.isArray(zone), zone);
-  }, []);
+  }, [zone]);
 
   useEffect(() => {
     if (selectedFilter === "show all") {
       setFilteredData(woredaData);
     } else {
       const filtered = woredaData.filter(
-        (data) => data.zone?.toLowerCase() === selectedFilter.toLowerCase()
+        (data) =>
+          zoneMap[data.zone_id]?.toLowerCase() === selectedFilter.toLowerCase()
       );
       setFilteredData(filtered);
     }
-  }, [selectedFilter, woredaData]);
+  }, [selectedFilter, woredaData, zoneMap]);
   console.log(selectedFilter);
 
   const handleSelectedRows = (rowId) => {
@@ -306,7 +349,6 @@ export default function Woreda() {
 
                   {/* Modal Footer */}
                   <div className="modal-footer">
-                 
                     <button
                       type="button"
                       className="btn btn-primary"
@@ -410,23 +452,25 @@ export default function Woreda() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          checked={
-                            Object.keys(selectedUsers).length ===
-                            woredaData.length
-                          }
-                          onChange={handleSelectAll}
-                          title={
-                            Object.keys(selectedUsers).length ===
-                            woredaData.length
-                              ? "Deselect All"
-                              : "Select All"
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
+                        <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={
+                                Object.keys(selectedUsers).length ===
+                                woredaData.length
+                              }
+                              onChange={handleSelectAll}
+                              title={
+                                Object.keys(selectedUsers).length ===
+                                woredaData.length
+                                  ? "Deselect All"
+                                  : "Select All"
+                              }
+                              style={{ cursor: "pointer" }}
+                            />
+                            S.N.
+                        </div>
                       </th>
-                      <th className="min-w-100px">S.N.</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Zone</th>
                       <th className="text-start min-w-100px">Action</th>
@@ -434,7 +478,13 @@ export default function Woreda() {
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                    {Array.isArray(woredaData) ? (
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader /> {/* Use the loader here */}
+                        </td>
+                      </tr>
+                    ) : Array.isArray(woredaData) ? (
                       currentdata.length > 0 ? (
                         currentdata
                           .filter((row) => {
@@ -446,7 +496,7 @@ export default function Woreda() {
                                     .includes(searchItem);
                             const matchFilter =
                               selectedFilter === "show all" ||
-                              row.zone?.toLowerCase() ===
+                              zoneMap[row.zone_id]?.toLowerCase() ===
                                 selectedFilter.toLowerCase();
 
                             return matchSearch && matchFilter;
@@ -458,18 +508,23 @@ export default function Woreda() {
                                 data-kt-table-widget-4="subtable_template"
                               >
                                 <td>
-                                  <input
-                                    type="checkbox"
-                                    checked={!!selectedUsers[row.id]}
-                                    onChange={() => handleSelectedRows(row.id)}
-                                  />
+                                  <div className="d-flex align-items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedUsers[row.id]}
+                                        onChange={() => handleSelectedRows(row.id)}
+                                      />
+                                              {index + 1}
+                                  </div>
                                 </td>
-                                <td className="text-start">{index + 1}</td>
                                 <td className="text-start">{row.name}</td>
-                                <td className="text-start">{row.zone_id}</td>
+                                {/* Fixed: Display zone name instead of ID */}
+                                <td className="text-start">
+                                  {zoneMap[row.zone_id] || "-"}
+                                </td>
                                 <td className="text-start">
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
                                     onClick={() => {
                                       setIsShowModalOpen(true),
                                         setSelectedUser(row);
@@ -527,22 +582,23 @@ export default function Woreda() {
                                                 Zone
                                               </label>
                                               <div className="form-control form-control-solid">
-                                                {selectedUser?.zone_id || "-"}
+                                                {/* Fixed: Show zone name in view modal */}
+                                                {zoneMap[
+                                                  selectedUser?.zone_id
+                                                ] || "-"}
                                               </div>
                                             </div>
                                           </div>
 
                                           {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                         
-                                          </div>
+                                          <div className="modal-footer"></div>
                                         </div>
                                       </div>
                                     </div>
                                   )}
 
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                                     onClick={() => {
                                       setIsEditModalOpen(true),
                                         setSelectedUser(row);
@@ -566,17 +622,18 @@ export default function Woreda() {
                                             <h5 className="modal-title">
                                               Edit Woreda
                                             </h5>
-                                             <div
+                                            <div
                                               className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() => setIsEditModalOpen(false)}
+                                              onClick={() =>
+                                                setIsEditModalOpen(false)
+                                              }
                                             >
                                               <span className="svg-icon svg-icon-1">
                                                 {/* Replace with your actual CloseIcon component */}
                                                 <CloseIcon />
                                               </span>
+                                            </div>
                                           </div>
-                                          </div>
-                                         
 
                                           <fieldset>
                                             <legend className="text-start">
@@ -646,7 +703,7 @@ export default function Woreda() {
                                     </div>
                                   )}
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
                                     onClick={() => {
                                       setSelectedUser(row),
                                         setIsDeleteModalOpen(true);
@@ -706,7 +763,6 @@ export default function Woreda() {
                                             >
                                               Delete Permanently
                                             </button>
-                                        
                                           </div>
                                         </div>
                                       </div>

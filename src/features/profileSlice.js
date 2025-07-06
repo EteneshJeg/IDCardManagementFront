@@ -54,20 +54,22 @@ const prepareFormData = (formData) => {
     email: formData.email || "",
     photo: formData.photo || "",
     phone_number: formData.phone_number || "",
-    organization_unit_id: 1,
-    job_position_id: 1,
-    job_title_category_id: 1,
-    salary_id: 1,
-    martial_status_id: 1,
+    organization_unit_id: formData.organization_unit_id || "",
+    job_position_id: formData.job_position_id || "",
+    job_title_category_id: formData.job_title_category_id || "",
+    salary_id: formData.salary_id || "",
+    martial_status_id: formData.martial_status_id || "",
     nation: formData.nation || "",
     employment_id: formData.employment_id || "",
     job_position_start_date: cleanDateInput(formData.job_position_start_date)||null,
     job_position_end_date: cleanDateInput(formData.job_position_end_date)||null,
     address: formData.address || "",
     house_number: formData.house_number || "",
-    region_id: 1,
-    woreda_id: 1,
-    zone_id: 1,
+    region_id: formData.region_id || "",
+    woreda_id: formData.woreda_id || "",
+    zone_id: formData.zone_id || "",
+    id_status:false,
+    status:true
   };
 };
             const form=prepareFormData(formData);
@@ -214,7 +216,7 @@ export const getProfile=createAsyncThunk(
 
 export const updateProfile=createAsyncThunk(
     'profile/update',
-    async({Id,FormData},{rejectWithValue})=>{
+    async({Id,rawForm},{rejectWithValue})=>{
         try{
             let token=JSON.parse(localStorage.getItem('token')); 
             const cleanDateInput = (value) => {
@@ -231,36 +233,61 @@ export const updateProfile=createAsyncThunk(
   // Return full ISO datetime string (MySQL-compatible)
   return parsed.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
 };
-            const prepareFormData = (FormData) => {
+
+console.log("Raw joined_date:", rawForm.joined_date);
+console.log("Cleaned:", cleanDateInput(rawForm.joined_date));
+
+            const prepareFormData = (rawForm) => {
   return {
-    en_name: FormData.en_name || "",
-    title: FormData.title || "",
-    sex: 'male',
-    date_of_birth: cleanDateInput(FormData.date_of_birth)||null,
-    joined_date: cleanDateInput(FormData.joined_date)||null,
-    email: FormData.email || "",
-    photo: FormData.photo || "",
-    phone_number: FormData.phone_number || "",
-    organization_unit_id: 1,
-    job_position_id: 1,
-    job_title_category_id: 1,
-    salary_id: 1,
-    martial_status_id: 1,
-    nation: FormData.nation || "",
-    employment_id: FormData.employment_id || "",
-    job_position_start_date: cleanDateInput(FormData.job_position_start_date)||null,
-    job_position_end_date: cleanDateInput(FormData.job_position_end_date)||null,
-    address: FormData.address || "",
-    house_number: FormData.house_number || "",
-    region_id: 1,
-    woreda_id: 1,
-    zone_id: 1,
-    id_status:'null',
-    status:'valid'
+    en_name: formData.en_name || "",
+    title: formData.title || "",
+    sex: formData.sex || "",
+    date_of_birth: cleanDateInput(formData.date_of_birth)||null,
+    joined_date: cleanDateInput(formData.joined_date)||null,
+    email: formData.email || "",
+    photo: formData.photo || "",
+    phone_number: formData.phone_number || "",
+    organization_unit_id: formData.organization_unit_id || "",
+    job_position_id: formData.job_position_id || "",
+    job_title_category_id: formData.job_title_category_id || "",
+    salary_id: formData.salary_id || "",
+    martial_status_id: formData.martial_status_id || "",
+    nation: formData.nation || "",
+    employment_id: formData.employment_id || "",
+    job_position_start_date: cleanDateInput(formData.job_position_start_date)||null,
+    job_position_end_date: cleanDateInput(formData.job_position_end_date)||null,
+    address: formData.address || "",
+    house_number: formData.house_number || "",
+    region_id: formData.region_id || "",
+    woreda_id: formData.woreda_id || "",
+    zone_id: formData.zone_id || "",
+    id_status:false,
+    status:true
   };
 };
-            const form=prepareFormData(FormData);
-            let response=await axios.put(`http://localhost:8000/api/employees/${Id}`,form,{
+            const form=prepareFormData(rawForm);
+
+            let formData = new FormData();
+formData.append('_method', 'PUT');
+
+for (const key in form) {
+  if (Object.hasOwnProperty.call(form, key)) {
+    const value = form[key];
+
+    // ✅ Skip null or undefined values
+    if (value === null || value === undefined || value === '') continue;
+
+    if (value instanceof File) {
+      formData.append(key, value, value.name);
+    } else if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0');
+    } else {
+      formData.append(key, value);
+    }
+  }
+}
+
+            let response=await axios.post(`http://localhost:8000/api/employees/${Id}`,formData,{
                 headers:{
                     Authorization:`Bearer ${token}`
                 }
@@ -332,7 +359,7 @@ export const updateProfile=createAsyncThunk(
             toast.success('Update successful');
             return updatedProfile;*/
         }catch(error){
-            return rejectWithValue(error);
+            return rejectWithValue(error.message);
         }
     }
 )

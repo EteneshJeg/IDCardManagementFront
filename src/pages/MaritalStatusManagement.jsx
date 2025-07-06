@@ -2,8 +2,8 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 
-import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useState, useEffect, useMemo } from "react";
+import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
@@ -14,13 +14,44 @@ import {
   deleteBunch,
 } from "../features/maritalStatusSlice";
 
+// SVG Close Icon
+const CloseIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      opacity="0.5"
+      x="6"
+      y="17.3137"
+      width="16"
+      height="2"
+      rx="1"
+      transform="rotate(-45 6 17.3137)"
+      fill="currentColor"
+    />
+    <rect
+      x="7.41422"
+      y="6"
+      width="16"
+      height="2"
+      rx="1"
+      transform="rotate(45 7.41422 6)"
+      fill="currentColor"
+    />
+  </svg>
+);
 
-   // SVG Close Icon
-  const CloseIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
-      <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
-    </svg> )
+const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
 
 export default function MaritalStatus() {
   useEffect(() => {
@@ -38,15 +69,28 @@ export default function MaritalStatus() {
       document.body.removeChild(script);
     };
   }, []);
+  
   const dispatch = useDispatch();
-  const [filteredData, setFilteredData] = useState([]);
 
-  const { maritalstatus } = useSelector((state) => state.maritalstatus || {});
+  // Fixed selector to match Redux store key
+  const maritalStatusState = useSelector(
+    (state) => state.maritalStatus || {}, // Ensure this matches your Redux store key
+    shallowEqual
+  );
+  
+  // Memoized selector results
+  const { data: maritalStatuses = [], status } = useMemo(() => {
+    return {
+      data: maritalStatusState.data || [],
+      status: maritalStatusState.status || "idle"
+    };
+  }, [maritalStatusState]);
+
   const [startSelection, setStartSelection] = useState(false);
-  const [maritalStatusData, setMaritalStatusData] = useState([]);
   const [searchItem, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [selectedUsers, setSelectedUsers] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -57,31 +101,34 @@ export default function MaritalStatus() {
     name: "",
     description: "",
   });
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Memoized filtered data
+  const filteredData = useMemo(() => {
+    return maritalStatuses.filter(item => {
+      const matchesSearch = searchItem === "" || 
+        item.name?.toLowerCase().includes(searchItem.toLowerCase());
+      const matchesFilter = selectedFilter === "show all" || 
+        item.status?.toLowerCase() === selectedFilter.toLowerCase();
+      return matchesSearch && matchesFilter;
+    });
+  }, [maritalStatuses, searchItem, selectedFilter]);
+
+  // Reset current page when data changes
   useEffect(() => {
-    if (selectedFilter === "show all") {
-      setFilteredData(maritalStatusData);
-    } else {
-      const filtered = maritalStatusData.filter(
-        (data) => data.role?.toLowerCase() === selectedFilter.toLowerCase()
-      );
-      setFilteredData(filtered);
-    }
-  }, [selectedFilter, maritalStatusData]);
+    setCurrentPage(1);
+  }, [filteredData]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isShowModalOpen, setIsShowModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const itemsPerPage = 5;
-
-  const totalPages = Math.ceil(maritalStatusData.length / itemsPerPage);
-
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const [currentPage, setCurrentPage] = useState(1);
-  const lastItemIndex = currentPage * itemsPerPage;
-  const firstItemIndex = lastItemIndex - itemsPerPage;
-  const currentdata = Array.isArray(maritalStatusData)
-    ? maritalStatusData.slice(firstItemIndex, lastItemIndex)
-    : [maritalStatusData].slice(firstItemIndex, lastItemIndex);
+  
+  // Calculate pagination safely
+  const currentdata = useMemo(() => {
+    const lastItemIndex = currentPage * itemsPerPage;
+    const firstItemIndex = lastItemIndex - itemsPerPage;
+    return filteredData.slice(firstItemIndex, lastItemIndex);
+  }, [filteredData, currentPage, itemsPerPage]);
 
   const nextPage = () => {
     if (currentPage < totalPages) {
@@ -96,27 +143,14 @@ export default function MaritalStatus() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getMaritalStatus())
-      .then((data) => {
-        console.log(data);
-        const dataitem = data.payload;
-        console.log(dataitem);
-
-        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
-        setMaritalStatusData(normalizedData);
-      })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
-  }, [dispatch, maritalstatus]);
-
-  useEffect(() => {
-    console.log(
-      "userdata type check:",
-      Array.isArray(maritalStatusData),
-      maritalStatusData
-    );
-  }, [maritalStatusData]);
+        toast.error("Failed to load data");
+      })
+      .finally(() => setIsLoading(false));
+  }, [dispatch]);
 
   const handleSelectedRows = (rowId) => {
     setSelectedUsers((prev) => {
@@ -142,16 +176,16 @@ export default function MaritalStatus() {
   };
 
   const handleSelectAll = () => {
-    if (Object.keys(selectedUsers).length === maritalStatusData.length) {
+    if (Object.keys(selectedUsers).length === maritalStatuses.length) {
       setSelectedUsers({});
-      setStartSelection({});
+      setStartSelection(false);
     } else {
       const newSelected = {};
-      maritalStatusData.forEach((user) => {
-        newSelected[user.id] = true; // Assuming each user has a unique ID
+      maritalStatuses.forEach((user) => {
+        newSelected[user.id] = true;
       });
       setSelectedUsers(newSelected);
-      setStartSelection(newSelected);
+      setStartSelection(true);
     }
   };
 
@@ -164,25 +198,74 @@ export default function MaritalStatus() {
       toast.error("There are missing fields");
       return;
     } else {
-      dispatch(createMaritalStatus({ FormData: formData }));
+      dispatch(createMaritalStatus({ FormData: formData }))
+        .unwrap()
+        .then(() => {
+          toast.success("Marital status created successfully");
+          dispatch(getMaritalStatus());
+          setFormData({ id: "", name: "", description: "" });
+        })
+        .catch((error) => {
+          toast.error(`Error: ${error.message}`);
+        });
     }
     setIsModalOpen(false);
   };
 
   const handleUpdateMaritalStatus = (Id) => {
-    dispatch(updateMaritalStatus({ Id: Id, FormData: formData }));
+    dispatch(updateMaritalStatus({ Id, FormData: formData }))
+      .unwrap()
+      .then(() => {
+        toast.success("Marital status updated successfully");
+        dispatch(getMaritalStatus());
+        setFormData({ id: "", name: "", description: "" });
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
     setIsEditModalOpen(false);
   };
 
   const handleDeleteMaritalStatus = (Id) => {
-    dispatch(deleteMaritalStatus({ Id: Id }));
+    dispatch(deleteMaritalStatus({ Id }))
+      .unwrap()
+      .then(() => {
+        toast.success("Marital status deleted successfully");
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
     setIsDeleteModalOpen(false);
+    setDeletingId(null);
   };
 
   const handleDeleteBunch = () => {
-    console.log(selectedUsers);
-    dispatch(deleteBunch({ Id: selectedUsers }));
+    const ids = Object.keys(selectedUsers);
+    dispatch(deleteBunch({ Id: ids }))
+      .unwrap()
+      .then(() => {
+        toast.success("Selected items deleted successfully");
+        setSelectedUsers({});
+        setStartSelection(false);
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
   };
+  
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isShowModalOpen, setIsShowModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Reset form when add modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      setFormData({ id: "", name: "", description: "" });
+    }
+  }, [isModalOpen]);
+
   return (
     <>
       <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
@@ -228,7 +311,7 @@ export default function MaritalStatus() {
               className={
                 Object.keys(selectedUsers).length > 0
                   ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                  : "hide"
+                  : "d-none"
               }
               onClick={handleDeleteBunch}
             >
@@ -251,7 +334,6 @@ export default function MaritalStatus() {
                       onClick={() => setIsModalOpen(false)}
                     >
                       <span className="svg-icon svg-icon-1">
-                        {/* Replace with your actual CloseIcon component */}
                         <CloseIcon />
                       </span>
                     </div>
@@ -270,6 +352,7 @@ export default function MaritalStatus() {
                         onChange={handleChange}
                         required
                         placeholder="Marital status name"
+                        value={formData.name}
                       />
                     </div>
 
@@ -284,13 +367,13 @@ export default function MaritalStatus() {
                         onChange={handleChange}
                         required
                         placeholder="Marital status description"
+                        value={formData.description}
                       />
                     </div>
                   </div>
 
                   {/* Modal Footer */}
                   <div className="modal-footer">
-                  
                     <button
                       type="button"
                       className="btn btn-primary"
@@ -323,10 +406,6 @@ export default function MaritalStatus() {
                 <div className="card-toolbar">
                   {/*begin::Filters*/}
                   <div className="d-flex flex-stack flex-wrap gap-4">
-                    {/*begin::Destination*/}
-
-                    {/*end::Destination*/}
-
                     {/*begin::Search*/}
                     <div className="position-relative my-1">
                       {/*begin::Svg Icon | path: icons/duotune/general/gen021.svg*/}
@@ -378,23 +457,26 @@ export default function MaritalStatus() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          checked={
-                            Object.keys(selectedUsers).length ===
-                            maritalStatusData.length
-                          }
-                          onChange={handleSelectAll}
-                          title={
-                            Object.keys(selectedUsers).length ===
-                            maritalStatusData.length
-                              ? "Deselect All"
-                              : "Select All"
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
+                         <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={
+                                Object.keys(selectedUsers).length ===
+                                maritalStatuses.length && maritalStatuses.length > 0
+                              }
+                              onChange={handleSelectAll}
+                              disabled={maritalStatuses.length === 0}
+                              title={
+                                Object.keys(selectedUsers).length ===
+                                maritalStatuses.length
+                                  ? "Deselect All"
+                                  : "Select All"
+                              }
+                              style={{ cursor: "pointer" }}
+                            />
+                            S.N.
+                          </div>
                       </th>
-                      <th className="min-w-100px">S.N.</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Description</th>
                       <th className="text-start min-w-100px">Action</th>
@@ -402,297 +484,278 @@ export default function MaritalStatus() {
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                    {Array.isArray(maritalStatusData) ? (
-                      currentdata.length > 0 ? (
-                        currentdata
-                          .filter((row) => {
-                            const matchSearch =
-                              searchItem.toLowerCase() === ""
-                                ? row
-                                : String(row.name)
-                                    .toLowerCase()
-                                    .includes(searchItem);
-                            const matchFilter =
-                              selectedFilter === "show all" ||
-                              row.name?.toLowerCase() ===
-                                selectedFilter.toLowerCase();
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan="8" className="text-center">
+                            <Loader />
+                          </td>
+                        </tr>
+                      ) : maritalStatuses.length > 0 ? (
+                        currentdata.map((item, index) => {
+                          if (!item) return null;
+                          return (
+                            <tr
+                              key={item.id}
+                              data-kt-table-widget-4="subtable_template"
+                            >
+                              <td>
+                                <div className="d-flex align-items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedUsers[item.id]}
+                                        onChange={() => handleSelectedRows(item.id)}
+                                      />
+                                      {(currentPage - 1) * itemsPerPage + index + 1}
+                                </div>
+                              </td>
+                              <td className="text-start">{item.name}</td>
+                              <td className="text-start">
+                                {item.description}
+                              </td>
+                              <td className="text-start">
+                                <button
+                                  className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                  onClick={() => {
+                                    setIsShowModalOpen(true);
+                                    setSelectedUser(item);
+                                  }}
+                                >
+                                  {" "}
+                                  <i className="bi bi-eye-fill fs-4"></i>
+                                </button>
 
-                            return matchSearch && matchFilter;
-                          })
-                          .map((row, index) => {
-                            return (
-                              <tr
-                                key={row.id}
-                                data-kt-table-widget-4="subtable_template"
-                              >
-                                <td>
-                                  <input
-                                    type="checkbox"
-                                    checked={!!selectedUsers[row.id]}
-                                    onChange={() => handleSelectedRows(row.id)}
-                                  />
-                                </td>
-                                <td className="text-start">{index + 1}</td>
-                                <td className="text-start">{row.name}</td>
-                                <td className="text-start">
-                                  {row.description}
-                                </td>
-                                <td className="text-start">
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2"
-                                    onClick={() => {
-                                      setIsShowModalOpen(true),
-                                        setSelectedUser(row);
+                                {isShowModalOpen && selectedUser && (
+                                  <div
+                                    className="modal fade show d-block"
+                                    tabIndex="-1"
+                                    role="dialog"
+                                    style={{
+                                      backgroundColor: "rgba(0,0,0,0.1)",
                                     }}
                                   >
-                                    {" "}
-                                    <i className="bi bi-eye-fill fs-4"></i>
-                                  </button>
-
-                                  {isShowModalOpen && (
                                     <div
-                                      className="modal fade show d-block"
-                                      tabIndex="-1"
-                                      role="dialog"
-                                      style={{
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
+                                      className="modal-dialog modal-dialog-centered"
+                                      role="document"
                                     >
-                                      <div
-                                        className="modal-dialog modal-dialog-centered"
-                                        role="document"
-                                      >
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
+                                      <div className="modal-content">
+                                        {/* Modal Header */}
+                                        <div className="modal-header">
+                                          <h5 className="modal-title">
+                                            Marital Status Details
+                                          </h5>
+                                          <div
+                                            className="btn btn-icon btn-sm btn-icon-primary"
+                                            onClick={() =>
+                                              setIsShowModalOpen(false)
+                                            }
+                                            style={{ cursor: "pointer" }}
+                                          >
+                                            <span className="svg-icon svg-icon-1">
+                                              <CloseIcon />
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Modal Body */}
+                                        <div className="modal-body">
+                                          <div className="mb-3">
+                                            <label className="form-label fw-semibold">
+                                              Marital Status Name
+                                            </label>
+                                            <div className="form-control form-control-solid">
+                                              {selectedUser?.name || "-"}
+                                            </div>
+                                          </div>
+
+                                          <div className="mb-3">
+                                            <label className="form-label fw-semibold">
+                                              Marital Status Description
+                                            </label>
+                                            <div className="form-control form-control-solid">
+                                              {selectedUser?.description ||
+                                                "-"}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Modal Footer */}
+                                        <div className="modal-footer"></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <button
+                                  className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                  onClick={() => {
+                                    setIsEditModalOpen(true);
+                                    setFormData(item);
+                                  }}
+                                >
+                                  <i className="bi bi-pencil-fill"></i>
+                                </button>
+                                {isEditModalOpen && (
+                                  <div
+                                    className="modal fade show"
+                                    tabIndex="-1"
+                                    style={{
+                                      display: "block",
+                                      backgroundColor: "rgba(0,0,0,0.1)",
+                                    }}
+                                  >
+                                    <div className="modal-dialog">
+                                      <div className="modal-content">
+                                        {/* Modal Header */}
+                                        <div className="modal-header">
+                                          <h5 className="modal-title">
+                                            Edit Marital Status
+                                          </h5>
+                                          <div
+                                            className="btn btn-icon btn-sm btn-active-icon-primary"
+                                            onClick={() =>
+                                              setIsEditModalOpen(false)
+                                            }
+                                            style={{ cursor: "pointer" }}
+                                          >
+                                            <span className="svg-icon svg-icon-1">
+                                              <CloseIcon />
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Modal Body */}
+                                        <div className="modal-body">
+                                          <div className="mb-3">
+                                            <label className="form-label fw-semibold">
+                                              Marital Status Name
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className="form-control"
+                                              name="name"
+                                              onChange={handleChange}
+                                              required
+                                              placeholder="Marital Status Name"
+                                              value={formData.name || ""}
+                                            />
+                                          </div>
+
+                                          <div className="mb-3">
+                                            <label className="form-label fw-semibold">
+                                              Marital Status Description
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className="form-control"
+                                              name="description"
+                                              onChange={handleChange}
+                                              required
+                                              placeholder="Marital Status Description"
+                                              value={formData.description || ""}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        {/* Modal Footer */}
+                                        <div className="modal-footer">
+                                          <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={() =>
+                                              handleUpdateMaritalStatus(
+                                                formData.id
+                                              )
+                                            }
+                                          >
+                                            Save changes
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <button
+                                  className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                  onClick={() => {
+                                    setDeletingId(item.id);
+                                    setIsDeleteModalOpen(true);
+                                  }}
+                                >
+                                  <i className="bi bi-trash-fill"></i>
+                                </button>
+                                {isDeleteModalOpen && (
+                                  <div
+                                    className="modal fade show"
+                                    tabIndex="-1"
+                                    style={{
+                                      display: "block",
+                                      backgroundColor: "rgba(0,0,0,0.1)",
+                                    }}
+                                  >
+                                    <div className="modal-dialog">
+                                      <div className="modal-content text-center">
+                                        {/* Modal Header */}
+                                        <div className="modal-header">
+                                          <h5 className="modal-title">
+                                            Confirm Deletion
+                                          </h5>
+                                          <div
+                                            className="btn btn-icon btn-sm btn-active-icon-primary"
+                                            onClick={() => {
+                                              setIsDeleteModalOpen(false);
+                                              setDeletingId(null);
+                                            }}
+                                            style={{ cursor: "pointer" }}
+                                          >
+                                            <span className="svg-icon svg-icon-1">
+                                              <CloseIcon />
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Modal Body */}
+                                        <div className="modal-body">
+                                          <fieldset>
+                                            <legend>
                                               Marital Status Details
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsShowModalOpen(false)
-                                              }
-                                              style={{ cursor: "pointer" }}
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace with your CloseIcon component */}
-                                                <CloseIcon />
-                                              </span>
-                                            </div>
-                                          </div>
+                                            </legend>
+                                            <p>
+                                              Are you sure you want to delete
+                                              this Marital Status?
+                                            </p>
+                                          </fieldset>
+                                        </div>
 
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Marital Status Name
-                                              </label>
-                                              <div className="form-control form-control-solid">
-                                                {selectedUser?.name || "-"}
-                                              </div>
-                                            </div>
-
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Marital Status Description
-                                              </label>
-                                              <div className="form-control form-control-solid">
-                                                {selectedUser?.description ||
-                                                  "-"}
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                         
-                                          </div>
+                                        {/* Modal Footer */}
+                                        <div className="modal-footer justify-content-center">
+                                          <button
+                                            type="button"
+                                            className="btn btn-danger"
+                                            onClick={() =>
+                                              handleDeleteMaritalStatus(
+                                                deletingId
+                                              )
+                                            }
+                                          >
+                                            Delete
+                                          </button>
                                         </div>
                                       </div>
                                     </div>
-                                  )}
-
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2"
-                                    onClick={() => {
-                                      setIsEditModalOpen(true),
-                                        setSelectedUser(row);
-                                    }}
-                                  >
-                                    <i className="bi bi-pencil-fill"></i>
-                                  </button>
-                                  {isEditModalOpen && (
-                                    <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      style={{
-                                        display: "block",
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              Edit Marital Status
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsEditModalOpen(false)
-                                              }
-                                              style={{ cursor: "pointer" }}
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace with your actual CloseIcon component */}
-                                                <CloseIcon />
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Marital Status Name
-                                              </label>
-                                              <input
-                                                type="text"
-                                                className="form-control"
-                                                name="name"
-                                                onChange={handleChange}
-                                                required
-                                                placeholder="Marital Status Name"
-                                                value={selectedUser?.name || ""}
-                                              />
-                                            </div>
-
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Marital Status Description
-                                              </label>
-                                              <input
-                                                type="text"
-                                                className="form-control"
-                                                name="description"
-                                                onChange={handleChange}
-                                                required
-                                                placeholder="Marital Status Description"
-                                                value={
-                                                  selectedUser?.description ||
-                                                  ""
-                                                }
-                                              />
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                         
-                                            <button
-                                              type="button"
-                                              className="btn btn-primary"
-                                              onClick={() =>
-                                                handleUpdateMaritalStatus(
-                                                  selectedUser.id
-                                                )
-                                              }
-                                            >
-                                              Save changes
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
-                                    onClick={() => {
-                                      setSelectedUser(row),
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                  >
-                                    <i className="bi bi-trash-fill"></i>
-                                  </button>
-                                  {isDeleteModalOpen && (
-                                    <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      style={{
-                                        display: "block",
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content text-center">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              Confirm Deletion
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsDeleteModalOpen(false)
-                                              }
-                                              style={{ cursor: "pointer" }}
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace with your CloseIcon component */}
-                                                <CloseIcon />
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <fieldset>
-                                              <legend>
-                                                Marital Status Details
-                                              </legend>
-                                              <p>
-                                                Are you sure you want to delete
-                                                this Marital Status?
-                                              </p>
-                                            </fieldset>
-                                          </div>
-
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer justify-content-center">
-                                            <button
-                                              type="button"
-                                              className="btn btn-danger"
-                                              onClick={() =>
-                                                handleDeleteMaritalStatus(
-                                                  selectedUser.id
-                                                )
-                                              }
-                                            >
-                                              Delete
-                                            </button>
-                                         
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
-                          <td colSpan="8">No data available</td>
+                          <td colSpan="8" className="text-center">
+                            No data available
+                          </td>
                         </tr>
-                      )
-                    ) : (
-                      <tr>
-                        <td colSpan="8">No users found</td>
-                      </tr>
-                    )}
+                      )}
                   </tbody>
                 </table>
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
@@ -709,9 +772,7 @@ export default function MaritalStatus() {
                   <div className="d-flex gap-2">
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
+                      onClick={prevPage}
                       disabled={currentPage === 1}
                     >
                       <i className="bi bi-chevron-left"></i>
@@ -721,9 +782,7 @@ export default function MaritalStatus() {
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
+                      onClick={nextPage}
                       disabled={currentPage === totalPages || totalPages === 0}
                     >
                       <i className="bi bi-chevron-right"></i>

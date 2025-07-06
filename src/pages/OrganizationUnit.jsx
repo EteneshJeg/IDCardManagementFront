@@ -79,6 +79,14 @@ const CloseButton = ({ onClose }) => (
   </button>
 );
 
+const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
+
 export default function OrganizationUnit() {
   useEffect(() => {
     const script = document.createElement("script");
@@ -106,6 +114,7 @@ export default function OrganizationUnit() {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [selectedUnits, setSelectedUnits] = useState({});
   const [startSelection, setStartSelection] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     en_name: '',
     en_acronym: '',
@@ -113,7 +122,7 @@ export default function OrganizationUnit() {
     is_root_unit: false,
     is_category: false,
     synchronize_status: '',
-    organization_id: '',
+    organization_id: '1',
     parent: '',
     reports_to: '',
     chairman: ''
@@ -122,7 +131,9 @@ export default function OrganizationUnit() {
    const [selectedFilter, setSelectedFilter] = useState("show all");
 
   useEffect(() => {
-    dispatch(fetchOrganizationUnits());
+    setIsLoading(true);
+    dispatch(fetchOrganizationUnits())
+    .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   // Filtering and pagination
@@ -193,7 +204,7 @@ export default function OrganizationUnit() {
         is_root_unit: false,
         is_category: false,
         synchronize_status: '',
-        organization_id: '',
+        organization_id: '1',
         parent: '',
         reports_to: '',
         chairman: ''
@@ -204,17 +215,29 @@ export default function OrganizationUnit() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSelectAll = () => {
+  if (Object.keys(selectedUnits).length === organizationUnits.length) {
+    setSelectedUnits({});
+  } else {
+    const newSelected = {};
+    organizationUnits.forEach(unit => {
+      newSelected[unit.id] = true;
+    });
+    setSelectedUnits(newSelected);
+  }
+};
+
   const handleSelectedRows = (rowId) => {
     setSelectedUnits(prev => {
       const updated = { ...prev, [rowId]: !prev[rowId] };
+      if(!updated[rowId]) {
+        delete updated[rowId];
+      }
       setStartSelection(Object.values(updated).some(v => v));
       return updated;
     });
   };
 
-  if (status === 'loading') return <div className="text-center py-5">Loading organization units...</div>;
-  if (status === 'failed') return <div className="alert alert-danger">Error: {error}</div>;
-  
 
   return (
     <>
@@ -238,7 +261,7 @@ export default function OrganizationUnit() {
                     Add Organization Unit
                   </button>
                   <button 
-                    className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${!startSelection && 'd-none'}`} 
+                    className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${Object.keys(selectedUnits).length === 0 && 'd-none'}`} 
                     onClick={handleDeleteBunch}
                   >
                     Delete Selected
@@ -291,8 +314,17 @@ export default function OrganizationUnit() {
                     <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                       <thead>
                         <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
-                          <th className="min-w-50px"></th>
-                          <th className="min-w-100px">S.N.</th>
+                          <th className="min-w-100px">
+                            <div className="d-flex align-items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={Object.keys(selectedUnits).length === organizationUnits.length}
+                                onChange={handleSelectAll}
+                                style={{ cursor: "pointer" }}
+                              />
+                              S.N.
+                            </div>
+                          </th>
                           <th>English Name</th>
                           <th>Acronym</th>
                           <th>Location</th>
@@ -303,20 +335,29 @@ export default function OrganizationUnit() {
                         </tr>
                       </thead>
                       <tbody className="fw-bold text-gray-600">
-                        {currentData.filter((data)=>{
+                        {isLoading ? (
+                          <tr>
+                            <td colSpan="8" className="text-center">
+                              <Loader /> {/* Use the loader here */}
+                            </td>
+                          </tr>
+                        ) :
+                        currentData.filter((data)=>{
                           const matchFilter=selectedFilter === 'show all' ||
                             data.status?.toLowerCase() === selectedFilter.toLowerCase();
                             return matchFilter;
                         }).map((unit,index) => (
                           <tr key={unit.id}>
                             <td>
-                              <input 
-                                type="checkbox" 
-                                checked={!!selectedUnits[unit.id]}
-                                onChange={() => handleSelectedRows(unit.id)} 
-                              />
+                              <div className="d-flex align-items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={!!selectedUnits[unit.id]}
+                                  onChange={() => handleSelectedRows(unit.id)}
+                                />
+                                {index + 1}
+                              </div>
                             </td>
-                            <td>{index+1}</td>
                             <td>{unit.en_name || '-'}</td>
                             <td>{unit.en_acronym || '-'}</td>
                             <td>{unit.location || '-'}</td>
@@ -325,7 +366,7 @@ export default function OrganizationUnit() {
                             <td>{unit.synchronize_status || '-'}</td>
                             <td>
                               <button 
-                                className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" 
+                                className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" 
                                 onClick={() => {
                                   setSelectedUnit(unit);
                                   setIsShowModalOpen(true);
@@ -334,7 +375,7 @@ export default function OrganizationUnit() {
                                 <i className="bi bi-eye-fill"></i>
                               </button>
                               <button 
-                                className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2" 
+                                className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" 
                                 onClick={() => {
                                   setFormData(unit);
                                   setSelectedUnit(unit);
@@ -344,7 +385,7 @@ export default function OrganizationUnit() {
                                 <i className="bi bi-pencil-fill"></i>
                               </button>
                               <button 
-                                className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" 
+                                className="btn btn-icon btn-bg-light btn-color-danger btn-sm" 
                                 onClick={() => {
                                   setSelectedUnit(unit);
                                   setIsDeleteModalOpen(true);
@@ -467,8 +508,8 @@ export default function OrganizationUnit() {
                     type="text" 
                     className="form-control" 
                     name="organization_id" 
-                    value={formData.organization_id}
-                    onChange={handleChange} 
+                    value="1"
+                    disabled
                   />
                 </div>
               </div>
@@ -565,6 +606,16 @@ export default function OrganizationUnit() {
                       <option value="failed">Failed</option>
                     </select>
                   </div>
+                  <div className="mb-3">
+                    <label className="form-label">Organization ID</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={formData.organization_id} 
+                      disabled 
+                    />
+                  </div>
+
                 </div>
 
                 {/* Modal Footer */}
@@ -620,6 +671,12 @@ export default function OrganizationUnit() {
                   <label className="form-label fw-semibold">Sync Status</label>
                   <div className="form-control form-control-solid">
                     {selectedUnit?.synchronize_status || '-'}
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Organization ID</label>
+                  <div className="form-control form-control-solid">
+                    {selectedUnit?.organization_id || '-'}
                   </div>
                 </div>
               </div>

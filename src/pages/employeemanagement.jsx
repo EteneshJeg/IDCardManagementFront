@@ -45,10 +45,13 @@ export default function EmployeeManagement() {
   const [jobPositionInfo, setJobPositionInfo] = useState();
   const [jobTitleCatInfo, setJobTitleCatInfo] = useState();
   const [organizationUnitInfo, setOrganizationUnitInfo] = useState();
+  const [isLoading, setIsLoading] = useState(true);
+  
 
   const [profilePhoto, setProfilePhoto] = useState();
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getZone())
       .then((data) => {
         console.log(data);
@@ -60,10 +63,12 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getRegion())
       .then((data) => {
         console.log(data);
@@ -75,10 +80,12 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getWoreda())
       .then((data) => {
         console.log(data);
@@ -90,10 +97,12 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getMaritalStatus())
       .then((data) => {
         console.log(data);
@@ -105,14 +114,16 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(fetchOrganizationUnits())
       .then((data) => {
         console.log(data);
-        const dataitem = data.payload;
+        const dataitem = data.payload.data;
         console.log(dataitem)
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
@@ -120,10 +131,14 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
+
+
   useEffect(() => {
+    setIsLoading(true);
     dispatch(fetchJobPositions())
       .then((data) => {
         console.log(data);
@@ -135,10 +150,12 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(fetchJobTitleCategories())
       .then((data) => {
         console.log(data);
@@ -150,7 +167,8 @@ export default function EmployeeManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
 
@@ -284,7 +302,7 @@ export default function EmployeeManagement() {
           // If payload is an array with data
           if (Array.isArray(action.payload) && action.payload.length > 0) {
             setEmployeeProfile(action.payload[0]?.data);
-            setProfilePhoto(action.payload[0]?.data.photo_url);
+            setProfilePhoto(action.payload[0]?.data?.photo_url);
             console.log("Profiles:", action.payload[0]?.data);
           } else {
             // Handle empty or unexpected payload gracefully
@@ -376,7 +394,7 @@ export default function EmployeeManagement() {
 
   const handleUpdateProfile = (id) => {
     console.log(id);
-    dispatch(updateProfile({ Id: id, FormData: formData }));
+    dispatch(updateProfile({ Id: id, rawForm: formData }));
     setIsEditModalOpen(false);
   }
 
@@ -536,6 +554,14 @@ export default function EmployeeManagement() {
 
   }
 
+const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
+
 
   return (
     <>
@@ -677,7 +703,7 @@ export default function EmployeeManagement() {
                           <select className="form-select" name="organization_unit_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {organizationUnitInfo.map((data) => {
-                              return <option>{data.en_name}</option>
+                              return <option value={data.id}>{data.en_name}</option>
                             })}
                           </select>
                         </div>
@@ -688,7 +714,7 @@ export default function EmployeeManagement() {
                           <select className="form-select" name="job_position_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {jobPositionInfo.map((data) => {
-                              return <option>{data.position_code}</option>
+                              return <option value={data.id}>{data.job_description}</option>
                             })}
                           </select>
                         </div>
@@ -699,7 +725,7 @@ export default function EmployeeManagement() {
                           <select className="form-select" name="job_title_category_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {jobTitleCatInfo.map((data) => {
-                              return <option>{data.name}</option>
+                              return <option value={data.id}>{data.name}</option>
                             })}
                           </select>
                         </div>
@@ -717,7 +743,7 @@ export default function EmployeeManagement() {
                             <option value="">Select...</option>
                             {maritalInfo.map((data) => {
                               console.log(maritalInfo)
-                              return <option>{data.name}</option>
+                              return <option value={data.id}>{data.name}</option>
                             })}
                           </select>
                         </div>
@@ -764,7 +790,7 @@ export default function EmployeeManagement() {
                           <select className="form-select" name="region_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {regionInfo.map((data) => {
-                              return <option>{data.name}</option>
+                              return <option value={data.id}>{data.name}</option>
                             })}
                           </select>
                         </div>
@@ -776,7 +802,7 @@ export default function EmployeeManagement() {
                             <option value="">Select...</option>
                             {zoneInfo.map((data) => {
                               console.log(zoneInfo)
-                              return <option>{data.name}</option>
+                              return <option value={data.id}>{data.name}</option>
                             })}
                           </select>
                         </div>
@@ -787,7 +813,7 @@ export default function EmployeeManagement() {
                           <select className="form-select" name="woreda_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {woredaInfo.map((data) => {
-                              return <option>{data.name}</option>
+                              return <option value={data.id}>{data.name}</option>
                             })}
                           </select>
                         </div>
@@ -946,21 +972,22 @@ export default function EmployeeManagement() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          cchecked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
+                        <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="checkbox"
+                              cchecked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
 
-                          onChange={handleSelectAll}
-                          title={
-                            Object.keys(selectedUsers).length === (employeeProfile?.length || 0)
-                              ? 'Deselect All'
-                              : 'Select All'
-                          }
+                              onChange={handleSelectAll}
+                              title={
+                                Object.keys(selectedUsers).length === (employeeProfile?.length || 0)
+                                  ? 'Deselect All'
+                                  : 'Select All'
+                              }
 
-                          style={{ cursor: 'pointer' }}
-                        />
+                              style={{ cursor: 'pointer' }}
+                            />      S.N.
+                        </div>
                       </th>
-                      <th className="min-w-100px">#</th>
                       <th className="text-start min-w-100px">Profile Picture</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Employment ID</th>
@@ -978,7 +1005,14 @@ export default function EmployeeManagement() {
                   {/*begin::Table body*/}
                   <tbody className="fw-bold text-gray-600">
 
-                    {Array.isArray(employeeProfile) ? (
+                    {isLoading ? (
+                        <tr>
+                          <td colSpan="8" className="text-center">
+                            <Loader />
+                          </td>
+                        </tr>
+                      ) :
+                    Array.isArray(employeeProfile) ? (
                       currentdata.length > 0 ? (
                         currentdata.filter((row) => {
                           // console.log(row);
@@ -1001,10 +1035,12 @@ export default function EmployeeManagement() {
                             return (
                               <tr key={index} data-kt-table-widget-4="subtable_template">
                                 <td >
-                                  <input type="checkbox" checked={!!selectedUsers[row.id]} onChange={() => handleSelectedRows(row.id)} />
-                                </td>
-                                <td className="text-start">
-                                  {index + 1}
+                                  <div className="d-flex align-items-center gap-2">
+                                      <input type="checkbox" 
+                                      checked={!!selectedUsers[row.id]} 
+                                      onChange={() => handleSelectedRows(row.id)} />
+                                          {index + 1}
+                                  </div>
                                 </td>
                                 <td className="text-start pe-4">
                                   <img
@@ -1080,6 +1116,7 @@ export default function EmployeeManagement() {
                                                   <input
                                                     type="text"
                                                     className="form-control"
+                                                    value={selectedUser?.en_name || ""}
                                                     name="en_name"
                                                     onChange={handleChange}
                                                     required
@@ -1092,6 +1129,7 @@ export default function EmployeeManagement() {
                                                   <input
                                                     type="text"
                                                     className="form-control"
+                                                    value={selectedUser?.title || ""}
                                                     name="title"
                                                     onChange={handleChange}
                                                   />
@@ -1103,6 +1141,7 @@ export default function EmployeeManagement() {
                                                   <select
                                                     className="form-select"
                                                     name="gender"
+                                                    value={selectedUser?.sex || ""}
                                                     onChange={handleChange}
                                                   >
                                                     <option value="">Select</option>
@@ -1118,6 +1157,7 @@ export default function EmployeeManagement() {
                                                     type="date"
                                                     className="form-control"
                                                     name="date_of_birth"
+                                                    value={selectedUser?.date_of_birth || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1128,6 +1168,7 @@ export default function EmployeeManagement() {
                                                   <input
                                                     type="date"
                                                     className="form-control"
+                                                    value={selectedUser?.joined_date || ""}
                                                     name="joined_date"
                                                     onChange={handleChange}
                                                   />
@@ -1140,6 +1181,7 @@ export default function EmployeeManagement() {
                                                     type="email"
                                                     className="form-control"
                                                     name="email"
+                                                    value={selectedUser?.email || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1151,6 +1193,7 @@ export default function EmployeeManagement() {
                                                     type="tel"
                                                     className="form-control"
                                                     name="phone_number"
+                                                    value={selectedUser?.phone_number || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1158,7 +1201,7 @@ export default function EmployeeManagement() {
                                                 {/* Organization Unit */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Organization Unit</label>
-                                                  <select className="form-select" name="organization_unit_id" onChange={handleChange}>
+                                                  <select className="form-select" name="organization_unit_id" value={selectedUser?.organization_unit_id || ""} onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {organizationUnitInfo.map((data) => {
                                                       return <option>{data.en_name}</option>
@@ -1169,7 +1212,7 @@ export default function EmployeeManagement() {
                                                 {/* Job Position */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Position</label>
-                                                  <select className="form-select" name="job_position_id" onChange={handleChange}>
+                                                  <select className="form-select" name="job_position_id" value={selectedUser?.job_position_id || ""}onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {jobPositionInfo.map((data) => {
                                                       return <option>{data.position_code}</option>
@@ -1180,7 +1223,7 @@ export default function EmployeeManagement() {
                                                 {/* Job Title Category */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Title Category</label>
-                                                  <select className="form-select" name="job_title_category_id" onChange={handleChange}>
+                                                  <select className="form-select" name="job_title_category_id" value={selectedUser?.job_title_category_id || ""}onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {jobTitleCatInfo.map((data) => {
                                                       return <option>{data.name}</option>
@@ -1194,6 +1237,7 @@ export default function EmployeeManagement() {
                                                   <input
                                                     type="text"
                                                     className="form-control"
+                                                    value={selectedUser?.salary_id || ""}
                                                     name="salary_id"
                                                     onChange={handleChange}
                                                   />
@@ -1202,7 +1246,7 @@ export default function EmployeeManagement() {
                                                 {/* Marital Status */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Marital Status</label>
-                                                  <select className="form-select" name="marital_status_id" onChange={handleChange}>
+                                                  <select className="form-select" name="marital_status_id" value={selectedUser?.marital_status_id || ""} onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {maritalInfo.map((data) => {
                                                       return <option>{data.name}</option>
@@ -1217,6 +1261,7 @@ export default function EmployeeManagement() {
                                                     type="text"
                                                     className="form-control"
                                                     name="nation"
+                                                    value={selectedUser?.nation || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1228,6 +1273,7 @@ export default function EmployeeManagement() {
                                                     type="text"
                                                     className="form-control"
                                                     name="employment_id"
+                                                    value={selectedUser?.employment_id || ""}
                                                     onChange={handleChange}
                                                     required
                                                   />
@@ -1240,6 +1286,7 @@ export default function EmployeeManagement() {
                                                     type="date"
                                                     className="form-control"
                                                     name="job_position_start_date"
+                                                    value={selectedUser?.job_position_start_date || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1251,6 +1298,7 @@ export default function EmployeeManagement() {
                                                     type="date"
                                                     className="form-control"
                                                     name="job_position_end_date"
+                                                    value={selectedUser?.job_position_end_date || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1262,6 +1310,7 @@ export default function EmployeeManagement() {
                                                     type="text"
                                                     className="form-control"
                                                     name="address"
+                                                    value={selectedUser?.address || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1273,6 +1322,7 @@ export default function EmployeeManagement() {
                                                     type="text"
                                                     className="form-control"
                                                     name="house_number"
+                                                    value={selectedUser?.house_number || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1280,7 +1330,7 @@ export default function EmployeeManagement() {
                                                 {/* Region */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Region</label>
-                                                  <select className="form-select" name="region_id" onChange={handleChange}>
+                                                  <select className="form-select" name="region_id" value={selectedUser?.region_id || ""} onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {regionInfo.map((data) => {
                                                       return <option>{data.name}</option>
@@ -1291,7 +1341,7 @@ export default function EmployeeManagement() {
                                                 {/* Zone */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Zone</label>
-                                                  <select className="form-select" name="zone_id" onChange={handleChange}>
+                                                  <select className="form-select" name="zone_id" value={selectedUser?.zone_id || ""} onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {zoneInfo.map((data) => {
                                                       return <option>{data.name}</option>
@@ -1302,7 +1352,7 @@ export default function EmployeeManagement() {
                                                 {/* Woreda */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Woreda</label>
-                                                  <select className="form-select" name="woreda_id" onChange={handleChange}>
+                                                  <select className="form-select" name="woreda_id" value={selectedUser?.woreda_id || ""} onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {woredaInfo.map((data) => {
                                                       return <option>{data.name}</option>

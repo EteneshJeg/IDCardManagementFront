@@ -4,35 +4,50 @@ import { getOrganizationInfo } from "../features/organizationSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 export default function Sidebar() {
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.KTDrawer) {
-      window.KTDrawer.createInstances();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.KTMenu) {
-      window.KTMenu.createInstances();
-    }
-  }, []);
-
   const [logo, setLogo] = useState();
+  const [isMinimized, setIsMinimized] = useState(false);
   const dispatch = useDispatch();
   const { organizationInfo } = useSelector((state) => state.organization);
 
+  // Initialize sidebar toggle functionality
+  useEffect(() => {
+    // Initialize KT components
+    if (typeof window !== "undefined" && window.KTApp) {
+      window.KTApp.init();
+    }
+
+    // Initialize toggle specifically
+    if (typeof window !== "undefined" && window.KTToggle) {
+      window.KTToggle.init();
+    }
+
+    // Check localStorage for minimized state
+    const savedState = localStorage.getItem('kt_sidebar_minimized');
+    if (savedState === 'on') {
+      document.body.classList.add('app-sidebar-minimize');
+      setIsMinimized(true);
+    }
+  }, []);
+
+  // Toggle handler with state sync
+  const handleSidebarToggle = () => {
+    document.body.classList.toggle('app-sidebar-minimize');
+    const minimized = document.body.classList.contains('app-sidebar-minimize');
+    setIsMinimized(minimized);
+    localStorage.setItem('kt_sidebar_minimized', minimized ? 'on' : 'off');
+  };
+
+  // Fetch organization info
   useEffect(() => {
     dispatch(getOrganizationInfo()).then((data) => {
-      console.log(data);
-      console.log(data.payload);
-      console.log(data.payload[0]?.en_name);
       setLogo(data.payload[0]?.logo);
     });
-  }, [organizationInfo]);
+  }, [dispatch, organizationInfo]);
 
   return (
     <div
       id="kt_app_sidebar"
-      className="app-sidebar flex-column"
+      className={`app-sidebar flex-column ${isMinimized ? 'minimized' : ''}`}
       data-kt-drawer="true"
       data-kt-drawer-name="app-sidebar"
       data-kt-drawer-activate="{default: true, lg: false}"
@@ -41,12 +56,23 @@ export default function Sidebar() {
       data-kt-drawer-direction="start"
       data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle"
     >
-      <div className="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
+      <div
+        className="app-sidebar-logo px-6 border-0 !border-none !shadow-none"
+        id="kt_app_sidebar_logo"
+        style={{ borderBottom: "none" }}
+      >
         <Link to="/">
           {logo ? (
-            <img src={logo} className="h-25px app-sidebar-logo-default" />
+            <img 
+              src={logo} 
+              className={`h-25px app-sidebar-logo-default ${isMinimized ? 'minimized-logo' : ''}`}
+              alt="Organization Logo"
+            />
           ) : (
-            <img alt="Logo" className="h-25px app-sidebar-logo-default" />
+            <div className={`logo-placeholder ${isMinimized ? 'minimized' : ''}`}>
+              <div className="placeholder-box" />
+              {!isMinimized && <span>Organization Logo</span>}
+            </div>
           )}
         </Link>
 
@@ -57,8 +83,9 @@ export default function Sidebar() {
           data-kt-toggle-state="active"
           data-kt-toggle-target="body"
           data-kt-toggle-name="app-sidebar-minimize"
+          onClick={handleSidebarToggle}
         >
-          <span className="svg-icon svg-icon-2 rotate-180">
+          <span className={`svg-icon svg-icon-2 ${isMinimized ? 'rotated' : ''}`}>
             <svg
               width="24"
               height="24"
@@ -79,7 +106,8 @@ export default function Sidebar() {
           </span>
         </div>
       </div>
-      <div className="app-sidebar-menu overflow-hidden flex-column-fluid">
+      
+      <div className={`app-sidebar-menu overflow-hidden flex-column-fluid ${isMinimized ? 'minimized' : ''}`}>
         <div
           id="kt_app_sidebar_menu_wrapper"
           className="app-sidebar-wrapper hover-scroll-overlay-y my-5"
@@ -149,11 +177,12 @@ export default function Sidebar() {
                     </svg>
                   </span>
                 </span>
-                <Link to="/dashboard">
+                <Link to="/dashboard" className="menu-title-link">
                   <span className="menu-title">Dashboard</span>
                 </Link>
               </span>
             </div>
+            
             <div className="menu-item pt-5">
               <div className="menu-content">
                 <span className="menu-heading fw-bold text-uppercase fs-7">
@@ -161,162 +190,159 @@ export default function Sidebar() {
                 </span>
               </div>
             </div>
+            
+            <div className="menu-item menu-accordion" data-kt-menu-trigger="click">
+              <span className="menu-link">
+                <span className="menu-icon">
+                  <span className="svg-icon svg-icon-2">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        opacity="0.3"
+                        d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.1 12 6.5 13.1 5.9 14.7C5.6 15.3 6.2 16 7.4 16H13.3Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </span>
+                <span className="menu-title">User management</span>
+                <span className="menu-arrow"></span>
+              </span>
+
+              <div className="menu-sub menu-sub-accordion">
+                <div className="menu-item">
+                  <Link to="/usermanagement" className="menu-link">
+                    <span className="menu-title">Users</span>
+                  </Link>
+                </div>
+
+                <div className="menu-item">
+                  <Link to="/roles" className="menu-link">
+                    <span className="menu-title">Roles</span>
+                  </Link>
+                </div>
+
+                <div className="menu-item">
+                  <Link to="/permissions" className="menu-link">
+                    <span className="menu-title">Permissions</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="menu-item">
+              <Link to="/employeemanagement" className="menu-link">
+                <span className="menu-icon">
+                  <span className="svg-icon svg-icon-2">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        opacity="0.3"
+                        d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.10001 12 6.49999 13.1 5.89999 14.7C5.59999 15.3 6.19999 16 7.39999 16H13.3Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </span>
+                <span className="menu-title">Employee management</span>
+              </Link>
+            </div>
+
             <div
               data-kt-menu-trigger="click"
               className="menu-item menu-accordion"
             >
-              <div className="menu-item">
-                <Link to="/usermanagement" className="menu-link">
-                  <span className="menu-icon">
-                    {" "}
-                    <span className="svg-icon svg-icon-2">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          opacity="0.3"
-                          d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.10001 12 6.49999 13.1 5.89999 14.7C5.59999 15.3 6.19999 16 7.39999 16H13.3Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </span>
+              <span className="menu-link">
+                <span className="menu-icon">
+                  <span className="svg-icon svg-icon-2">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        opacity="0.3"
+                        d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.10001 12 6.49999 13.1 5.89999 14.7C5.59999 15.3 6.19999 16 7.39999 16H13.3Z"
+                        fill="currentColor"
+                      />
+                    </svg>
                   </span>
-                  <span className="menu-title">User management</span>
-                </Link>
-              </div>
-
-              <div className="menu-item">
-                <Link to="/employeemanagement" className="menu-link">
-                  <span className="menu-icon">
-                    {" "}
-                    <span className="svg-icon svg-icon-2">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          opacity="0.3"
-                          d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.10001 12 6.49999 13.1 5.89999 14.7C5.59999 15.3 6.19999 16 7.39999 16H13.3Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </span>
-                  </span>
-                  <span className="menu-title">Employee management</span>
-                </Link>
-              </div>
-
-              <div
-                data-kt-menu-trigger="click"
-                className="menu-item menu-accordion"
-              >
-                <span className="menu-link">
-                  <span className="menu-icon">
-                    {" "}
-                    <span className="svg-icon svg-icon-2">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M20 14H18V10H20C20.6 10 21 10.4 21 11V13C21 13.6 20.6 14 20 14ZM21 19V17C21 16.4 20.6 16 20 16H18V20H20C20.6 20 21 19.6 21 19ZM21 7V5C21 4.4 20.6 4 20 4H18V8H20C20.6 8 21 7.6 21 7Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          opacity="0.3"
-                          d="M17 22H3C2.4 22 2 21.6 2 21V3C2 2.4 2.4 2 3 2H17C17.6 2 18 2.4 18 3V21C18 21.6 17.6 22 17 22ZM10 7C8.9 7 8 7.9 8 9C8 10.1 8.9 11 10 11C11.1 11 12 10.1 12 9C12 7.9 11.1 7 10 7ZM13.3 16C14 16 14.5 15.3 14.3 14.7C13.7 13.2 12 12 10.1 12C8.10001 12 6.49999 13.1 5.89999 14.7C5.59999 15.3 6.19999 16 7.39999 16H13.3Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </span>
-                  </span>
-                  <span className="menu-title">Dynamic Settings</span>
-                  <span className="menu-arrow"></span>
                 </span>
+                <span className="menu-title">Dynamic Settings</span>
+                <span className="menu-arrow"></span>
+              </span>
 
-                <div className="menu-sub menu-sub-accordion">
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/iddetails">
-                      
-                      <span className="menu-title">Template Details</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/dynamicdetails">
-                   
-                      <span className="menu-title">
-                        {" "}
-                        Organization Information
-                      </span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/organization-unit">
-                  
-                      <span className="menu-title"> Organization Units</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/job-position">
-                     
-                      <span className="menu-title"> Job Positions</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/job-title-category">
-                  
-                      <span className="menu-title"> Job Title Categories</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/maritalstatusmanagement">
-                     
-                      <span className="menu-title"> Marital Statuses</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/regionmanagement">
-                    
-                      <span className="menu-title">Regions</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/zonemanagement">
-                     
-                      <span className="menu-title">Zones</span>
-                    </Link>
-                  </div>
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/woredamanagement">
-                    
-                      <span className="menu-title">Woredas</span>
-                    </Link>
-                  </div>
-
-                  <div className="menu-item">
-                    <Link className="menu-link" to="/rolemanagement">
-                    
-                      <span className="menu-title">Role Settings</span>
-                    </Link>
-                  </div>
+              <div className="menu-sub menu-sub-accordion">
+                <div className="menu-item">
+                  <Link className="menu-link" to="/iddetails">
+                    <span className="menu-title">Template Details</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/dynamicdetails">
+                    <span className="menu-title">
+                      Organization Information
+                    </span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/organization-unit">
+                    <span className="menu-title"> Organization Units</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/job-title-category">
+                    <span className="menu-title"> Job Title Categories</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/job-position">
+                    <span className="menu-title"> Job Positions</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/maritalstatusmanagement">
+                    <span className="menu-title"> Marital Statuses</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/regionmanagement">
+                    <span className="menu-title">Regions</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/zonemanagement">
+                    <span className="menu-title">Zones</span>
+                  </Link>
+                </div>
+                <div className="menu-item">
+                  <Link className="menu-link" to="/woredamanagement">
+                    <span className="menu-title">Woredas</span>
+                  </Link>
                 </div>
               </div>
             </div>

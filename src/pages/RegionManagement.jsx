@@ -20,6 +20,14 @@ import {
       <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
     </svg> )
 
+  const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
+
 
 
 export default function Region() {
@@ -46,6 +54,7 @@ export default function Region() {
   const [searchItem, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [selectedUsers, setSelectedUsers] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -93,6 +102,7 @@ export default function Region() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getRegion())
       .then((data) => {
         console.log(data);
@@ -104,7 +114,8 @@ export default function Region() {
       })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
+      })
+      .finally(() => setIsLoading(false)); 
   }, [dispatch, region]);
 
   useEffect(() => {
@@ -371,23 +382,25 @@ export default function Region() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          checked={
-                            Object.keys(selectedUsers).length ===
-                            regionData.length
-                          }
-                          onChange={handleSelectAll}
-                          title={
-                            Object.keys(selectedUsers).length ===
-                            regionData.length
-                              ? "Deselect All"
-                              : "Select All"
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={
+                                Object.keys(selectedUsers).length ===
+                                regionData.length
+                              }
+                              onChange={handleSelectAll}
+                              title={
+                                Object.keys(selectedUsers).length ===
+                                regionData.length
+                                  ? "Deselect All"
+                                  : "Select All"
+                              }
+                              style={{ cursor: "pointer" }}
+                            />
+                            S.N.
+                        </div>
                       </th>
-                      <th className="min-w-100px">S.N.</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Code</th>
                       <th className="text-start min-w-100px">Action</th>
@@ -395,7 +408,14 @@ export default function Region() {
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                    {Array.isArray(regionData) ? (
+                      {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader /> {/* Use the loader here */}
+                        </td>
+                      </tr>
+                    ) :
+                    Array.isArray(regionData) ? (
                       currentdata.length > 0 ? (
                         currentdata
                           .filter((row) => {
@@ -415,22 +435,21 @@ export default function Region() {
                                 data-kt-table-widget-4="subtable_template"
                               >
                                 <td>
-                                  {
-                                    <input
-                                      type="checkbox"
-                                      checked={!!selectedUsers[row.id]}
-                                      onChange={() =>
-                                        handleSelectedRows(row.id)
-                                      }
-                                    />
-                                  }
+                                  <div className="d-flex align-items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedUsers[row.id]}
+                                        onChange={() =>
+                                          handleSelectedRows(row.id)
+                                        }
+                                      />{index + 1}
+                                    </div>
                                 </td>
-                                <td className="text-start">{index + 1}</td>
                                 <td className="text-start">{row.name}</td>
                                 <td className="text-start">{row.code}</td>
                                 <td className="text-start">
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
                                     onClick={() => {
                                       setIsShowModalOpen(true),
                                         setSelectedUser(row);
@@ -491,7 +510,7 @@ export default function Region() {
 
 
                                   <span
-                                    className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                                     onClick={() => {
                                       setIsEditModalOpen(true),
                                         setSelectedUser(row);
@@ -567,7 +586,7 @@ export default function Region() {
 
                               
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
                                     onClick={() => {
                                       setSelectedUser(row),
                                         setIsDeleteModalOpen(true);

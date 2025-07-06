@@ -116,8 +116,15 @@ export const deleteOrganizationUnit = createAsyncThunk(
 export const deleteBunchUnits = createAsyncThunk(
   "organizationUnits/deleteBunch",
   async (ids, { rejectWithValue }) => {
-    try {
-      await Promise.all(ids.map(id => api.delete(`/${id}`)));
+   try {
+      let token = JSON.parse(localStorage.getItem('token'));
+      await Promise.all(ids.map(id => 
+        api.delete(`/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+      ));
       return ids;
     } catch (error) {
       return handleApiError(error, rejectWithValue);
@@ -143,7 +150,7 @@ const organizationUnitSlice = createSlice({
       })
       .addCase(fetchOrganizationUnits.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = Array.isArray(action.payload.data)
+        state.items = Array.isArray(action.payload?.data)
         ? action.payload.data
         : [];
       })
@@ -156,20 +163,19 @@ const organizationUnitSlice = createSlice({
       })
       .addCase(getOrganiztionUnitInfo.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.organizationInfo = action.payload;
+        state.organizationInfo = action.payload?.data || {};
       })
       .addCase(getOrganiztionUnitInfo.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       })
       .addCase(addOrganizationUnit.fulfilled, (state, action) => {
-        state.items.push(action.payload);
+        state.items.push(action.payload.data);
       })
       .addCase(updateOrganizationUnit.fulfilled, (state, action) => {
-        const index = state.items.findIndex(
-          item => item.id === action.payload.id
-        );
-        if (index !== -1) state.items[index] = action.payload;
+        const updatedItem = action.payload.data;
+        const index = state.items.findIndex(item => item.id === updatedItem.id);
+        if (index !== -1) state.items[index] = updatedItem;
       })
       .addCase(deleteOrganizationUnit.fulfilled, (state, action) => {
         state.items = state.items.filter(item => item.id !== action.payload);

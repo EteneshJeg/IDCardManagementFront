@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -45,6 +45,13 @@ const CloseIcon = () => (
     />
   </svg>
 );
+const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
 
 export default function Zone() {
   useEffect(() => {
@@ -71,6 +78,7 @@ export default function Zone() {
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [filteredData, setFilteredData] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     region_id: "",
@@ -85,6 +93,15 @@ export default function Zone() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const itemsPerPage = 5;
+
+  // Create a region map for ID to name lookup
+  const regionMap = useMemo(() => {
+    const map = {};
+    region.forEach(r => {
+      map[r.id] = r.name;
+    });
+    return map;
+  }, [region]);
 
   const totalPages = Math.ceil(zoneData.length / itemsPerPage);
 
@@ -108,9 +125,10 @@ export default function Zone() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getZone())
       .then((data) => {
-        console.log(data);
+        // console.log(data);
         const dataitem = data.payload;
         console.log(dataitem);
 
@@ -119,10 +137,12 @@ export default function Zone() {
       })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch, zone]);
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getRegion())
       .then((data) => {
         console.log(data);
@@ -134,7 +154,8 @@ export default function Zone() {
       })
       .catch((error) => {
         console.log("Error fetching data", error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
@@ -146,11 +167,11 @@ export default function Zone() {
       setFilteredData(zoneData);
     } else {
       const filtered = zoneData.filter(
-        (data) => data.region?.toLowerCase() === selectedFilter.toLowerCase()
+        (data) => regionMap[data.region_id]?.toLowerCase() === selectedFilter.toLowerCase()
       );
       setFilteredData(filtered);
     }
-  }, [selectedFilter, zoneData]);
+  }, [selectedFilter, zoneData, regionMap]);
   console.log(selectedFilter);
 
   const handleSelectedRows = (rowId) => {
@@ -443,23 +464,25 @@ export default function Zone() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          checked={
-                            Object.keys(selectedUsers).length ===
-                            zoneData.length
-                          }
-                          onChange={handleSelectAll}
-                          title={
-                            Object.keys(selectedUsers).length ===
-                            zoneData.length
-                              ? "Deselect All"
-                              : "Select All"
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
+                          <div className="d-flex align-items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  Object.keys(selectedUsers).length ===
+                                  zoneData.length
+                                }
+                                onChange={handleSelectAll}
+                                title={
+                                  Object.keys(selectedUsers).length ===
+                                  zoneData.length
+                                    ? "Deselect All"
+                                    : "Select All"
+                                }
+                                style={{ cursor: "pointer" }}
+                              />
+                              S.N.
+                          </div>
                       </th>
-                      <th className="min-w-100px">S.N.</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Region</th>
                       <th className="text-start min-w-100px">Action</th>
@@ -467,7 +490,14 @@ export default function Zone() {
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                    {Array.isArray(zoneData) ? (
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan="8" className="text-center">
+                            <Loader /> {/* Use the loader here */}
+                          </td>
+                        </tr>
+                      ) :
+                    Array.isArray(zoneData) ? (
                       currentdata.length > 0 ? (
                         currentdata
                           .filter((row) => {
@@ -479,7 +509,7 @@ export default function Zone() {
                                     .includes(searchItem);
                             const matchFilter =
                               selectedFilter === "show all" ||
-                              row.region?.toLowerCase() ===
+                              regionMap[row.region_id]?.toLowerCase() ===
                                 selectedFilter.toLowerCase();
 
                             return matchSearch && matchFilter;
@@ -491,18 +521,24 @@ export default function Zone() {
                                 data-kt-table-widget-4="subtable_template"
                               >
                                 <td>
-                                  <input
-                                    type="checkbox"
-                                    checked={!!selectedUsers[row.id]}
-                                    onChange={() => handleSelectedRows(row.id)}
-                                  />
+                                   <div className="d-flex align-items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedUsers[row.id]}
+                                        onChange={() => handleSelectedRows(row.id)}
+                                      />
+                                        {index + 1}
+                                  </div>
                                 </td>
                                 <td className="text-start">{index + 1}</td>
                                 <td className="text-start">{row.name}</td>
-                                <td className="text-start">{row.region_id}</td>
+                                {/* Fixed: Display region name instead of ID */}
+                                <td className="text-start">
+                                  {regionMap[row.region_id] || '-'}
+                                </td>
                                 <td className="text-start">
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
                                     onClick={() => {
                                       setIsShowModalOpen(true),
                                         setSelectedUser(row);
@@ -560,7 +596,8 @@ export default function Zone() {
                                                 Region
                                               </label>
                                               <div className="form-control form-control-solid">
-                                                {selectedUser?.region_id || "-"}
+                                                {/* Fixed: Show region name in view modal */}
+                                                {regionMap[selectedUser?.region_id] || '-'}
                                               </div>
                                             </div>
                                           </div>
@@ -574,7 +611,7 @@ export default function Zone() {
                                   )}
 
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2"
+                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                                     onClick={() => {
                                       setIsEditModalOpen(true),
                                         setSelectedUser(row);
@@ -673,7 +710,7 @@ export default function Zone() {
                                   )}
 
                                   <button
-                                    className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
                                     onClick={() => {
                                       setSelectedUser(row),
                                         setIsDeleteModalOpen(true);

@@ -37,6 +37,7 @@ export default function UserManagement() {
   const [isShowModalOpen, setIsShowModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState({
     name: '',
     email: '',
@@ -62,6 +63,7 @@ export default function UserManagement() {
 
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getUser())
       .then((data) => {
         const dataitem = data.payload;
@@ -72,7 +74,8 @@ export default function UserManagement() {
       })
       .catch((error) => {
         console.log('Error fetching data', error);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [dispatch, users]);
 
   useEffect(() => {
@@ -265,6 +268,14 @@ export default function UserManagement() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   }
+
+  const Loader = () => (
+  <div className="d-flex justify-content-center py-10">
+    <div className="spinner-border text-primary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
 
 
   return (
@@ -490,15 +501,16 @@ export default function UserManagement() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <input
-                          type="checkbox"
-                          checked={Object.keys(selectedUsers).length === userdata.length}
-                          onChange={handleSelectAll}
-                          title={Object.keys(selectedUsers).length === userdata.length ? 'Deselect All' : 'Select All'}
-                          style={{ cursor: 'pointer' }}
-                        />
+                        <div className="d-flex align-items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Object.keys(selectedUsers).length === userdata.length}
+                            onChange={handleSelectAll}
+                            title={Object.keys(selectedUsers).length === userdata.length ? 'Deselect All' : 'Select All'}
+                            style={{ cursor: 'pointer' }}
+                          />S.N.
+                       </div>
                       </th>
-                      <th className="min-w-100px">#</th>
                       <th className="text-start min-w-100px">Profile Image</th>
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Email</th>
@@ -511,7 +523,14 @@ export default function UserManagement() {
                   {/*end::Table head*/}
                   {/*begin::Table body*/}
                   <tbody className="fw-bold text-gray-600">
-                    {Array.isArray(userdata) ? (
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan="8" className="text-center">
+                            <Loader /> {/* Use the loader here */}
+                          </td>
+                        </tr>
+                      ) :
+                    Array.isArray(userdata) ? (
                       currentdata.length > 0 ? (
                         currentdata.filter((row) => {
                           const matchSearch = searchItem.toLowerCase() === '' ? row : String(row.name).toLowerCase().includes(searchItem);
@@ -526,11 +545,14 @@ export default function UserManagement() {
                             return (
                               <tr key={index} data-kt-table-widget-4="subtable_template">
                                 <td >
-                                  <input type="checkbox" checked={!!selectedUsers[row.id]} onChange={() => handleSelectedRows(row.id)} />
+                                  <div className="d-flex align-items-center gap-2">
+                                      <input type="checkbox" 
+                                      checked={!!selectedUsers[row.id]} 
+                                      onChange={() => handleSelectedRows(row.id)} />
+                                      {index + 1}
+                                  </div>
                                 </td>
-                                <td className="text-start">
-                                  {index + 1}
-                                </td>
+                      
                                 <td className="text-start">
                                   <img
                                     src={row.profile_image_url}
@@ -553,7 +575,7 @@ export default function UserManagement() {
                                   {row.role}
                                 </td>
                                 <td className="text-start">
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={() => { setIsShowModalOpen(true), setSelectedUser(row) }}> <i className="bi bi-eye-fill fs-4"></i></button>
+                                  <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => { setIsShowModalOpen(true), setSelectedUser(row) }}> <i className="bi bi-eye-fill fs-4"></i></button>
 
                                   {isShowModalOpen && (
 
@@ -594,7 +616,7 @@ export default function UserManagement() {
 
                                   )}
 
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2" onClick={() => { setIsEditModalOpen(true), setSelectedUser(row) }}><i className="bi bi-pencil-fill"></i></button>
+                                  <button className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" onClick={() => { setIsEditModalOpen(true), setSelectedUser(row) }}><i className="bi bi-pencil-fill"></i></button>
                                   {isEditModalOpen && (
                                     <div
                                       className="modal fade show d-block"
@@ -689,7 +711,7 @@ export default function UserManagement() {
                                       </div>
                                     </div>
                                   )}
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onClick={() => { setSelectedUser(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
+                                  <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm" onClick={() => { setSelectedUser(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
                                   {isDeleteModalOpen && (
                                     <div
                                       className="modal fade show d-block"
@@ -738,7 +760,7 @@ export default function UserManagement() {
                             );
                           })
                       ) : (
-                        <tr><td colSpan="8">No data available</td></tr>
+                        <tr className="text-center"><td colSpan="8">Loading...</td></tr>
                       )
                     ) : (
                       <tr>

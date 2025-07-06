@@ -52,7 +52,9 @@ export default function IdDetails() {
 
   useEffect(() => {
     dispatch(getOrganizationInfo()).then((data) => {
-      const org = data.payload[0];
+      //console.log(data);
+      const org = data.payload;
+      console.log(org);
       const img = new window.Image();
       if (org) {
         setOrgName(org.en_name);
@@ -60,11 +62,12 @@ export default function IdDetails() {
         setMission(org.mission);
         setVision(org.vision);
         setCoreValue(org.core_value);
-        img.src = (org.logo);
-        img.onload = () => {
-          setLogo(img);
-        };
-        console.log(org.logo)
+        const backendBaseUrl = 'http://localhost:8000'; 
+
+setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
+		
+
+
         setOrgAddress(org.address);
         setWebsite(org.website);
         setOrgEmail(org.email);
@@ -79,6 +82,7 @@ export default function IdDetails() {
       }
     });
   }, []);
+  console.log(logo)
 
 
   const imageFields = ['photo', 'logo'];
@@ -260,9 +264,103 @@ export default function IdDetails() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("front");
-  const selectedTemplateFields = newTemplates[selectedTemplate] || {};
+  const selectedTemplateFields = newTemplates?.[selectedTemplate] || {};
 
-  console.log(newTemplates[selectedTemplate]?.photo?.circle_positionx)
+  const [frontImage,setFrontImage]=useState();
+  const [backImage,setBackImage]=useState();
+  const [badgeImage,setBadgeImage]=useState();
+  const [templateImage,setTemplateImage]=useState();
+  const [logoImage,setLogoImage]=useState();
+
+  useEffect(() => {
+  const imageUrl = newTemplates?.[selectedTemplate]?.templateBackground?.imageUrl;
+
+  if (!imageUrl) {
+    setTemplateImage(null);
+    return;
+  }
+
+  const img = new window.Image();
+  img.src = imageUrl;
+
+  img.onload = () => {
+    setTemplateImage(img);
+  };
+
+  img.onerror = () => {
+    console.error("Failed to load image from template");
+  };
+}, [newTemplates, selectedTemplate]);
+
+
+  const handleImageSelect = (e, viewType) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new window.Image();
+    img.src = reader.result;
+
+    img.onload = () => {
+      switch (viewType) {
+        case 'front':
+          setFrontImage(img);
+          break;
+        case 'back':
+          setBackImage(img);
+          break;
+        case 'badge':
+          setBadgeImage(img);
+          break;
+        default:
+          break;
+      }
+
+      // Optional: update your template metadata (e.g., for preview)
+      setNewTemplates((prev) => ({
+        ...prev,
+        [viewType]: {
+          ...prev[viewType],
+            templateBackground: {
+              ...(prev[viewType]?.templateBackground || {}),
+              imageUrl: reader.result, // <-- if you want to store as base64 string
+            },
+          
+        },
+      }));
+    };
+
+    img.onerror = () => {
+      console.error("Failed to load image");
+    };
+  };
+
+  reader.readAsDataURL(file);
+};
+
+useEffect(() => {
+  if (!logo) {
+    console.log("!log")
+    setLogoImage(null);
+    return;
+  }
+
+  const img = new window.Image();
+  img.crossOrigin = "anonymous";  // add if you get CORS issues
+  img.src = logo; // logo is the URL string
+
+  img.onload = () => {
+    setLogoImage(img);
+  };
+
+  img.onerror = () => {
+    console.error("Failed to load logo image", logo);
+  };
+}, [logo]);
+
+
+  console.log(newTemplates?.[selectedTemplate]?.photo?.circle_positionx)
 
 
   Object.entries(selectedTemplateFields).filter(([key, field]) => enableField[selectedTemplate]?.[key]).map(([key, field]) => {
@@ -274,8 +372,8 @@ export default function IdDetails() {
     img.src = "https://th.bing.com/th/id/OIP.30Yq02E10j8tn6kKBO1qdQHaHa?rs=1&pid=ImgDetMain";
     img.onload = () => setImage(img);
     img.onerror = () => {
-      console.error("Image failed to load.");
-    };
+  console.error("Failed to load image:", imageUrl);
+};
 
 
   }, []);
@@ -285,14 +383,15 @@ export default function IdDetails() {
     const dataitem = action.payload;
 
     if (dataitem && typeof dataitem === 'object') {
-      setNewTemplates(dataitem);
+      
 
       const keys = Object.keys(dataitem);
       if (keys.length === 0) {
         console.log("No templates found.");
+        setNewTemplates(null);
       } else {
         console.log("Loaded templates:", dataitem);
-        setSelectedTemplate(keys[0]); // optional: auto-select first template
+        setNewTemplates(dataitem); // optional: auto-select first template
       }
     } else {
       console.warn("Invalid template payload.");
@@ -303,6 +402,7 @@ export default function IdDetails() {
 }, [dispatch]);
 
 
+console.log(newTemplates)
 
 
   const [backObj, setBackObj] = useState();
@@ -323,7 +423,7 @@ export default function IdDetails() {
           localStorage.setItem(`templateCards${selectedTemplate}`, imgData);
 
           setNewTemplates((prevTemplates) => {
-            const updatedTemplate = { ...prevTemplates[selectedTemplate] };
+            const updatedTemplate = { ...prevTemplates?.[selectedTemplate] };
             updatedTemplate.templateBackground = {
               ...updatedTemplate.templateBackground,
               image: konvaImg,
@@ -356,70 +456,69 @@ export default function IdDetails() {
   }, [selectedTemplate])
 
   const handleEnableField = (e) => {
+  const selectedField = e.target?.previousSibling?.value;
 
-    const selectedField = e.target.previousSibling.value;
-
-    if (selectedField === 'photo' || selectedField === 'logo') {
-      setEnableField((prev) => ({
-        ...prev,
-        [selectedTemplate]: {
-          ...(prev[selectedTemplate] || {}),
-          [selectedField]: true
-        }
-      }));
-
-      setNewTemplates((prev) => {
-        const template = prev[selectedTemplate];
-        const field = template.imageFields[selectedField];
-        //const shared = field.shareddetails || {};
-
-        return {
-          ...prev,
-          [selectedTemplate]: {
-            ...template,
-            imageFields: {
-              ...template.imageFields,
-              [selectedField]: {
-                ...field,
-               
-                  //  ...shared,
-                  status: "active"
-                
-              }
-            }
-          }
-        };
-      });
-    }
-    else {
-      setEnableField((prev) => ({
-        ...prev,
-        [selectedTemplate]: {
-          ...(prev[selectedTemplate] || {}),
-          [selectedField]: true
-        }
-      }));
-
-      setNewTemplates(prev => ({
-        ...prev,
-        [selectedTemplate]: {
-          ...prev[selectedTemplate],
-          textFields: {
-            ...prev[selectedTemplate].textFields,
-            [selectedField]: {
-              ...prev[selectedTemplate].textFields[selectedField],
-              status: "active",  // <-- set status to active here
-            }
-          }
-        }
-      }));
-    }
-
-
-
-
-
+  if (!selectedTemplate || !selectedField) {
+    console.warn("Missing selected template or field");
+    return;
   }
+
+  // Enable field toggle
+  setEnableField((prev) => ({
+    ...prev,
+    [selectedTemplate]: {
+      ...(prev[selectedTemplate] || {}),
+      [selectedField]: true,
+    },
+  }));
+
+  // Update imageFields
+  if (selectedField === "photo" || selectedField === "logo") {
+    setNewTemplates((prev) => {
+      const template = prev?.[selectedTemplate] || {};
+      const imageFields = template.imageFields || {};
+      const field = imageFields[selectedField] || {};
+
+      return {
+        ...prev,
+        [selectedTemplate]: {
+          ...template,
+          imageFields: {
+            ...imageFields,
+            [selectedField]: {
+              ...field,
+              status: "active",
+            },
+          },
+        },
+      };
+    });
+  }
+
+  // Update textFields
+  else {
+    setNewTemplates((prev) => {
+      const template = prev?.[selectedTemplate] || {};
+      const textFields = template.textFields || {};
+      const field = textFields[selectedField] || {};
+
+      return {
+        ...prev,
+        [selectedTemplate]: {
+          ...template,
+          textFields: {
+            ...textFields,
+            [selectedField]: {
+              ...field,
+              status: "active",
+            },
+          },
+        },
+      };
+    });
+  }
+};
+
   console.log(enableField)
 
   const handleDisableField = (e, key, selectedField) => {
@@ -635,7 +734,7 @@ export default function IdDetails() {
   const handleSaveTemplate = (newTemplates) => {
 
 
-    const enabledText = () => {
+    /*const enabledText = () => {
       return Object.values(newTemplates[selectedTemplate]?.textFields || {})
         .filter(field => field.status === 'active');
     };
@@ -644,7 +743,7 @@ export default function IdDetails() {
       return Object.values(newTemplates[selectedTemplate]?.textFields || {})
         .filter(field => field.status === 'active')
         .map(field => field.field_name);
-    };
+    };*/
 
 
     /*  const enabledImages = () => {
@@ -653,11 +752,11 @@ export default function IdDetails() {
       }*/
 
 
-    console.log(enabledText())
+    //console.log(enabledText())
     //console.log(enabledImages());
 
 
-    const detaildata = {
+    /*const detaildata = {
       field_names: textFields.map(field_name => {
         return newTemplates[selectedTemplate]?.textFields?.[field_name]
       }),
@@ -706,16 +805,37 @@ export default function IdDetails() {
       circle_backgrounds: imageFields.map(name => {
         return newTemplates[selectedTemplate]?.textFields?.[name]?.circle_background
       }),
-    }
+    }*/
     //console.log(enableField)
     //dispatch(saveIdDetails({Side:selectedTemplate,Text:enabledText(),TextName:enabledTextName().field_name,Image:enabledImages()}));
-    dispatch(saveTemplate({ TemplateData: newTemplates, Enabled: enableField }));
+    console.log("template data",newTemplates);
+    console.log("enabled",enableField);
+    dispatch(saveTemplate({
+  TemplateData: {
+    ...newTemplates,
+    front: {
+      ...newTemplates.front,
+      templateBackground: {
+        ...newTemplates.front.templateBackground,
+        image: null // or remove `image`
+      }
+    }
+  },
+  Enabled: enableField
+}));
   }
 
   const handleViewTemplate = (id) => {
     setSelectedTemplate(id);
   }
 
+const textFieldsToRender = newTemplates?.[selectedTemplate]?.textFields;
+
+const fieldsToRender = textFieldsToRender
+  ? Object.entries(textFieldsToRender).filter(
+      ([key, field]) => enableField?.[selectedTemplate]?.[key]
+    )
+  : [];
 
 
 
@@ -770,7 +890,7 @@ export default function IdDetails() {
             <Stage className="stage" width={700} height={600}>
               <Layer>
                 <KonvaImage
-                  image={backObj || backImg}
+                  image={templateImage}
                   width={700}
                   height={600}
 
@@ -805,7 +925,7 @@ export default function IdDetails() {
                     <Image
                       x={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positionx || 50}
                       y={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positiony || 50}
-                      image={logo}
+                      image={logoImage}
                       width={newTemplates[selectedTemplate]?.imageFields?.logo?.image_width || 150}
                       height={newTemplates[selectedTemplate]?.imageFields?.logo?.image_height || 150}
                       stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || imageMaskColor}
@@ -819,9 +939,12 @@ export default function IdDetails() {
                     />
                   </>
                 )}
-                {Object.entries(selectedTemplateFields?.textFields).filter(([key, field]) => enableField[selectedTemplate]?.[key]).map(([key, field]) => {
+                {newTemplates?.[selectedTemplate]?.textFields &&
+  Object.entries(newTemplates[selectedTemplate].textFields)
+    .filter(([key, field]) => field.status==="active")
+    .map(([key, field]) =>   {
 
-
+                
                   let fieldValue = "N/A";
                   switch (field.field_name) {
                     case "orgname":
@@ -977,7 +1100,7 @@ export default function IdDetails() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleTemplateImageUpload(e)}
+                          onChange={(e) => handleImageSelect(e,"front")}
                           style={{ display: 'none' }}
                           id="template-front"
                         />
@@ -1035,7 +1158,7 @@ export default function IdDetails() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleTemplateImageUpload(e,)}
+                          onChange={(e) => handleImageSelect(e,"back")}
                           style={{ display: 'none' }}
                           id="template-back"
                         />
@@ -1093,7 +1216,7 @@ export default function IdDetails() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleTemplateImageUpload(e)}
+                          onChange={(e) => handleImageSelect(e,"badge")}
                           style={{ display: 'none' }}
                           id="template-badge"
                         />
@@ -1554,10 +1677,7 @@ export default function IdDetails() {
               </Group>)}
 
               <div className="temp-settings">
-                {Object.entries(newTemplates[selectedTemplate]?.textFields).filter(([key, field]) =>
-
-                  enableField[selectedTemplate]?.[key]
-                ).map(([key, field]) => (
+                {fieldsToRender.map(([key, field]) => (
                   <div key={key}>
                     <details className="collapsable">
 

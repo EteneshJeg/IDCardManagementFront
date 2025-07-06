@@ -11,6 +11,7 @@ import zoneReducer from './features/zoneSlice'
 import woredaReducer from './features/woredaSlice'
 import maritalStatusReducer from './features/maritalStatusSlice'
 import roleReducer from './features/roleSlice'
+import permissionReducer from './features/permissionSlice'; // Add this line
 
 
 const store = configureStore({
@@ -26,7 +27,9 @@ const store = configureStore({
     zone:zoneReducer,
     woreda:woredaReducer,
     maritalStatus:maritalStatusReducer,
-    role:roleReducer
+    role:roleReducer,
+    permissions: permissionReducer
+    
 
 
 
