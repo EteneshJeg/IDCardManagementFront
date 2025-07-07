@@ -119,7 +119,7 @@ export default function JobPositionManagement() {
     }
     setFormData({
       organization_unit: position.organization_unit || "",
-      job_title_category: categoryId,
+      job_title_category: position.job_title_category || "",
       position_code: position.position_code || "",
       status: position.status || "active",
       job_description: position.job_description || "",
@@ -410,9 +410,9 @@ export default function JobPositionManagement() {
                     Organization Unit
                   </label>
                   <div className="form-control form-control-solid">
-                    {typeof selectedPosition?.organization_unit === "object"
-                      ? selectedPosition?.organization_unit?.name || "-"
-                      : selectedPosition?.organization_unit || "-"}
+                    {organizationUnits.find(unit => 
+                      unit.id === selectedPosition.organization_unit_id
+                    )?.en_name || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
@@ -420,10 +420,9 @@ export default function JobPositionManagement() {
                     Job Title Category
                   </label>
                   <div className="form-control form-control-solid">
-                    {/* If job_title_category is object, show name */}
-                    {typeof selectedPosition?.job_title_category === "object"
-                      ? selectedPosition?.job_title_category?.name || "-"
-                      : selectedPosition?.job_title_category || "-"}
+                    {jobTitleCategories.find(category => 
+                      category.id === selectedPosition.job_title_category_id
+                    )?.name || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
@@ -701,22 +700,14 @@ export default function JobPositionManagement() {
                             </div>
                           </td>
                           <td>
-                            {typeof position.organization_unit === "object"
-                              ? position.organization_unit?.name || "-"
-                              : organizationUnits.find(
-                                  (cat) =>
-                                    cat.id.toString() ===
-                                    position.organization_unit
-                                )?.en_name || "-"}
+                            {organizationUnits.find(unit => 
+                              unit.id === position.organization_unit_id
+                            )?.en_name || '-'}
                           </td>
                           <td>
-                            {typeof position.job_title_category === "object"
-                              ? position.job_title_category?.name || "-"
-                              : jobTitleCategories.find(
-                                  (cat) =>
-                                    cat.id.toString() ===
-                                    position.job_title_category
-                                )?.name || "-"}
+                            {jobTitleCategories.find(category => 
+                              category.id === position.job_title_category_id
+                            )?.name || '-'}
                           </td>
                           <td>{position.position_code || "-"}</td>
                           <td>

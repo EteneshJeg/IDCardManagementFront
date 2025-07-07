@@ -338,65 +338,82 @@ export default function OrganizationUnit() {
                         {isLoading ? (
                           <tr>
                             <td colSpan="8" className="text-center">
-                              <Loader /> {/* Use the loader here */}
+                              <Loader />
                             </td>
                           </tr>
-                        ) :
-                        currentData.filter((data)=>{
-                          const matchFilter=selectedFilter === 'show all' ||
-                            data.status?.toLowerCase() === selectedFilter.toLowerCase();
-                            return matchFilter;
-                        }).map((unit,index) => (
-                          <tr key={unit.id}>
-                            <td>
-                              <div className="d-flex align-items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={!!selectedUnits[unit.id]}
-                                  onChange={() => handleSelectedRows(unit.id)}
-                                />
-                                {index + 1}
-                              </div>
-                            </td>
-                            <td>{unit.en_name || '-'}</td>
-                            <td>{unit.en_acronym || '-'}</td>
-                            <td>{unit.location || '-'}</td>
-                            <td>{unit.is_root_unit ? 'Yes' : 'No'}</td>
-                            <td>{unit.is_category ? 'Yes' : 'No'}</td>
-                            <td>{unit.synchronize_status || '-'}</td>
-                            <td>
-                              <button 
-                                className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" 
-                                onClick={() => {
-                                  setSelectedUnit(unit);
-                                  setIsShowModalOpen(true);
-                                }}
-                              >
-                                <i className="bi bi-eye-fill"></i>
-                              </button>
-                              <button 
-                                className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" 
-                                onClick={() => {
-                                  setFormData(unit);
-                                  setSelectedUnit(unit);
-                                  setIsEditModalOpen(true);
-                                }}
-                              >
-                                <i className="bi bi-pencil-fill"></i>
-                              </button>
-                              <button 
-                                className="btn btn-icon btn-bg-light btn-color-danger btn-sm" 
-                                onClick={() => {
-                                  setSelectedUnit(unit);
-                                  setIsDeleteModalOpen(true);
-                                }}
-                              >
-                                <i className="bi bi-trash-fill"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                        ) : (
+                          (() => {
+                            const filteredData = currentData.filter((data) => {
+                              return (
+                                selectedFilter === 'show all' ||
+                                data.status?.toLowerCase() === selectedFilter.toLowerCase()
+                              );
+                            });
+
+                            if (filteredData.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan="8" className="text-center py-10">
+                                    No organization unit found
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            return filteredData.map((unit, index) => (
+                              <tr key={unit.id}>
+                                <td>
+                                  <div className="d-flex align-items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!selectedUnits[unit.id]}
+                                      onChange={() => handleSelectedRows(unit.id)}
+                                    />
+                                    {index + 1}
+                                  </div>
+                                </td>
+                                <td>{unit.en_name || '-'}</td>
+                                <td>{unit.en_acronym || '-'}</td>
+                                <td>{unit.location || '-'}</td>
+                                <td>{unit.is_root_unit ? 'Yes' : 'No'}</td>
+                                <td>{unit.is_category ? 'Yes' : 'No'}</td>
+                                <td>{unit.synchronize_status || '-'}</td>
+                                <td>
+                                  <button
+                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                    onClick={() => {
+                                      setSelectedUnit(unit);
+                                      setIsShowModalOpen(true);
+                                    }}
+                                  >
+                                    <i className="bi bi-eye-fill"></i>
+                                  </button>
+                                  <button
+                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                    onClick={() => {
+                                      setFormData(unit);
+                                      setSelectedUnit(unit);
+                                      setIsEditModalOpen(true);
+                                    }}
+                                  >
+                                    <i className="bi bi-pencil-fill"></i>
+                                  </button>
+                                  <button
+                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                    onClick={() => {
+                                      setSelectedUnit(unit);
+                                      setIsDeleteModalOpen(true);
+                                    }}
+                                  >
+                                    <i className="bi bi-trash-fill"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            ));
+                          })()
+                        )}
                       </tbody>
+
                     </table>
 
                     <div className="pagination d-flex justify-content-between align-items-center mt-5">

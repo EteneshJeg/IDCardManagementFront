@@ -1,13 +1,15 @@
 // jobPositionsSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../api";
+import axios from "axios";
 
 // Async Thunks
 export const fetchJobPositions = createAsyncThunk(
   "jobPositions/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const data = JSON.parse(localStorage.getItem("job_positions") || "[]");
-      return data;
+      const response = await api.get("/job-position");
+      return response.data.data;
     } catch {
       return rejectWithValue("Failed to load job positions");
     }
@@ -18,56 +20,52 @@ export const addJobPosition = createAsyncThunk(
   "jobPositions/add",
   async (formData, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_positions") || "[]");
-      const maxId = stored.length ? Math.max(...stored.map(item => item.id)) : 0;
-      const id = maxId + 1;
-
-      const newPosition = {
-        id,
-        organization_unit: formData.organization_unit,
-        job_title_category: formData.job_title_category,
-        job_description: formData.job_description,
+      const payload = {
+        organization_unit_id: formData.organization_unit,
+        job_title_category_id: formData.job_title_category,
         position_code: formData.position_code,
-        salary: formData.salary,
-        status: formData.status
+        status: formData.status,
+        job_description: formData.job_description,
       };
 
-      localStorage.setItem("job_positions", JSON.stringify([...stored, newPosition]));
-      return newPosition;
-    } catch {
+      const response = await api.post("/job-position", payload);
+      return response.data.data;
+    } catch (error) {
+      console.error("Add failed:", error?.response?.data);
       return rejectWithValue("Failed to add position");
     }
   }
 );
 
+
 export const updateJobPosition = createAsyncThunk(
   "jobPositions/update",
   async ({ id, formData }, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_positions") || "[]");
-      const index = stored.findIndex(item => item.id === id);
-      
-      if (index === -1) return rejectWithValue("Position not found");
-      
-      const updated = stored.map((item, i) => 
-        i === index ? { ...item, ...formData } : item
-      );
-      
-      localStorage.setItem("job_positions", JSON.stringify(updated));
-      return { id, ...formData };
-    } catch {
+      const payload = {
+        organization_unit_id: formData.organization_unit,
+        job_title_category_id: formData.job_title_category,
+        position_code: formData.position_code,
+        status: formData.status,
+        job_description: formData.job_description,
+      };
+
+      const response = await api.put(`/job-position/${id}`, payload);
+      return response.data.data;
+    } catch (error) {
+      // Optional: log error response for debugging
+      console.error("Update failed:", error?.response?.data);
       return rejectWithValue("Failed to update position");
     }
   }
 );
 
+
 export const deleteJobPosition = createAsyncThunk(
   "jobPositions/delete",
   async (id, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_positions") || "[]");
-      const filtered = stored.filter(item => item.id !== id);
-      localStorage.setItem("job_positions", JSON.stringify(filtered));
+      await api.delete(`/job-position/${id}`);
       return id;
     } catch {
       return rejectWithValue("Failed to delete position");
@@ -80,10 +78,14 @@ export const deleteBunchPositions = createAsyncThunk(
   "jobPositions/deleteBunch",
   async (ids, { rejectWithValue }) => {
     try {
-      const stored = JSON.parse(localStorage.getItem("job_positions") || "[]");
-      const filtered = stored.filter(item => !ids.includes(item.id));
-      localStorage.setItem("job_positions", JSON.stringify(filtered));
-      return ids;
+      const token = JSON.parse(localStorage.getItem('token'));
+      await axios.post(
+        'http://localhost:8000/api/job-positions/delete-bunch',
+        {ids: Id},
+        {headers: { Authorization: `Bearer ${token}`}}
+      );
+      return Id;
+
     } catch {
       return rejectWithValue("Failed to delete positions");
     }

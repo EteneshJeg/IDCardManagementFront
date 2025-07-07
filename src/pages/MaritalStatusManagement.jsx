@@ -240,7 +240,8 @@ export default function MaritalStatus() {
   };
 
   const handleDeleteBunch = () => {
-    const ids = Object.keys(selectedUsers);
+    const ids = Object.keys(selectedUsers)
+    
     dispatch(deleteBunch({ Id: ids }))
       .unwrap()
       .then(() => {

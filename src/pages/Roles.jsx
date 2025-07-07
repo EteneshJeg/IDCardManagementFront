@@ -5,13 +5,12 @@ import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { 
   fetchRoles, 
-  addRole,  // Changed from createRole to addRole
+  addRole,
   updateRole, 
   deleteRole,
   selectAllRoles,
   selectRolesStatus,
   selectRolesError,
-//   selectRoleById 
 } from "../features/roleSlice";
 import { 
   fetchPermissions,
@@ -41,6 +40,10 @@ export default function RoleManagement() {
     permissions: []
   });
 
+  // Enhanced UI state for multi-select
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [isPermissionDropdownOpen, setIsPermissionDropdownOpen] = useState(false);
+
   // Initialize data
   useEffect(() => {
     if (status === 'idle') {
@@ -69,6 +72,12 @@ export default function RoleManagement() {
     currentPage * itemsPerPage
   );
 
+
+  // Filter permissions based on search
+  const filteredPermissions = permissionList.filter(permission => 
+    permission.name?.toLowerCase().includes(permissionSearch.toLowerCase())
+  );
+
   // Handlers
   const handleSaveRole = async () => {
     if (!formData.name) {
@@ -82,10 +91,11 @@ export default function RoleManagement() {
     }
     
     try {
-      await dispatch(addRole(formData)).unwrap(); // Changed to addRole
+      await dispatch(addRole(formData)).unwrap();
       toast.success("Role created successfully!");
       setIsModalOpen(false);
       setFormData({ name: '', permissions: [] });
+      setPermissionSearch('');
     } catch (error) {
       toast.error("Failed to create role");
     }
@@ -102,6 +112,7 @@ export default function RoleManagement() {
       toast.success("Role updated successfully!");
       setIsEditModalOpen(false);
       setFormData({ name: '', permissions: [] });
+      setPermissionSearch('');
     } catch (error) {
       toast.error("Failed to update role");
     }
@@ -139,10 +150,10 @@ export default function RoleManagement() {
   };
 
   const handleSelectAllPermissions = () => {
-    if (formData.permissions.length === permissionList.length) {
+    if (formData.permissions.length === filteredPermissions.length) {
       setFormData(prev => ({ ...prev, permissions: [] }));
     } else {
-      const allIds = permissionList.map(p => p.id);
+      const allIds = filteredPermissions.map(p => p.id);
       setFormData(prev => ({ ...prev, permissions: allIds }));
     }
   };
@@ -175,6 +186,10 @@ export default function RoleManagement() {
     return () => document.body.removeChild(script);
   }, []);
 
+  useEffect(() => {
+    console.log("Fetched roles:", roles);
+  }, [roles]);
+
   // Get permission names for display
   const getPermissionNames = (permissionIds) => {
     return permissionList
@@ -182,6 +197,7 @@ export default function RoleManagement() {
       .map(p => p.name)
       .join(", ") || "No permissions";
   };
+
 
   return (
     <>
@@ -203,6 +219,7 @@ export default function RoleManagement() {
               className="btn btn-sm fw-bold btn-primary"
               onClick={() => {
                 setFormData({ name: '', permissions: [] });
+                setPermissionSearch('');
                 setIsModalOpen(true);
               }}
             >
@@ -284,6 +301,7 @@ export default function RoleManagement() {
                                 name: role.name,
                                 permissions: role.permissions
                               });
+                              setPermissionSearch('');
                               setIsEditModalOpen(true);
                             }}
                           >
@@ -351,7 +369,10 @@ export default function RoleManagement() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Add New Role</h5>
-                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsModalOpen(false)}>
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => {
+                  setIsModalOpen(false);
+                  setPermissionSearch('');
+                }}>
                   <span className="svg-icon svg-icon-1"><CloseIcon /></span>
                 </div>
               </div>
@@ -377,38 +398,96 @@ export default function RoleManagement() {
                       className="btn btn-sm btn-link"
                       onClick={handleSelectAllPermissions}
                     >
-                      {formData.permissions.length === permissionList.length 
+                      {formData.permissions.length === filteredPermissions.length 
                         ? "Deselect All" 
                         : "Select All"}
                     </button>
                   </div>
                   
-                  <div className="border rounded p-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {permissionList.map(permission => (
-                      <div key={permission.id} className="form-check mb-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={formData.permissions.includes(permission.id)}
-                          onChange={() => handlePermissionChange(permission.id)}
-                          id={`perm-${permission.id}`}
-                        />
-                        <label className="form-check-label" htmlFor={`perm-${permission.id}`}>
-                          {permission.name}
-                        </label>
+                  {/* Enhanced Multi-Select UI */}
+                  <div className="position-relative">
+                    <div 
+                      className="form-control d-flex align-items-center flex-wrap gap-1 py-2"
+                      style={{ minHeight: "42px", cursor: "pointer" }}
+                      onClick={() => setIsPermissionDropdownOpen(!isPermissionDropdownOpen)}
+                    >
+                      {formData.permissions.length === 0 ? (
+                        <span className="text-muted">Select permissions...</span>
+                      ) : (
+                        permissionList
+                          .filter(p => formData.permissions.includes(p.id))
+                          .map(p => (
+                            <span key={p.id} className="badge badge-light-primary d-inline-flex align-items-center">
+                              {p.name}
+                              <button 
+                                type="button" 
+                                className="btn btn-icon btn-sm btn-active-color-primary ms-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermissionChange(p.id);
+                                }}
+                              >
+                                <i className="bi bi-x fs-5"></i>
+                              </button>
+                            </span>
+                          ))
+                      )}
+                      <div className="ms-auto">
+                        <i className={`bi bi-chevron-${isPermissionDropdownOpen ? 'up' : 'down'}`}></i>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {isPermissionDropdownOpen && (
+                      <div className="border rounded mt-1 p-2 position-absolute w-100 bg-white z-index-1 shadow"
+                           style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        <div className="sticky-top bg-white pt-2 pb-2">
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mb-2"
+                            placeholder="Search permissions..."
+                            value={permissionSearch}
+                            onChange={(e) => setPermissionSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        
+                        <div className="list-group">
+                          {filteredPermissions.length > 0 ? (
+                            filteredPermissions.map(permission => (
+                              <div 
+                                key={permission.id}
+                                className="list-group-item list-group-item-action d-flex align-items-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermissionChange(permission.id);
+                                }}
+                              >
+                                <div className="form-check mb-0 flex-grow-1">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={formData.permissions.includes(permission.id)}
+                                    onChange={() => {}}
+                                    id={`perm-${permission.id}`}
+                                  />
+                                  <label className="form-check-label w-100" htmlFor={`perm-${permission.id}`}>
+                                    {permission.name}
+                                  </label>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center p-3 text-muted">
+                              No permissions found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -429,7 +508,10 @@ export default function RoleManagement() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Edit Role: {selectedRole.name}</h5>
-                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsEditModalOpen(false)}>
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => {
+                  setIsEditModalOpen(false);
+                  setPermissionSearch('');
+                }}>
                   <span className="svg-icon svg-icon-1"><CloseIcon /></span>
                 </div>
               </div>
@@ -454,27 +536,92 @@ export default function RoleManagement() {
                       className="btn btn-sm btn-link"
                       onClick={handleSelectAllPermissions}
                     >
-                      {formData.permissions.length === permissionList.length 
+                      {formData.permissions.length === filteredPermissions.length 
                         ? "Deselect All" 
                         : "Select All"}
                     </button>
                   </div>
                   
-                  <div className="border rounded p-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {permissionList.map(permission => (
-                      <div key={permission.id} className="form-check mb-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={formData.permissions.includes(permission.id)}
-                          onChange={() => handlePermissionChange(permission.id)}
-                          id={`edit-perm-${permission.id}`}
-                        />
-                        <label className="form-check-label" htmlFor={`edit-perm-${permission.id}`}>
-                          {permission.name}
-                        </label>
+                  {/* Enhanced Multi-Select UI */}
+                  <div className="position-relative">
+                    <div 
+                      className="form-control d-flex align-items-center flex-wrap gap-1 py-2"
+                      style={{ minHeight: "42px", cursor: "pointer" }}
+                      onClick={() => setIsPermissionDropdownOpen(!isPermissionDropdownOpen)}
+                    >
+                      {formData.permissions.length === 0 ? (
+                        <span className="text-muted">Select permissions...</span>
+                      ) : (
+                        permissionList
+                          .filter(p => formData.permissions.includes(p.id))
+                          .map(p => (
+                            <span key={p.id} className="badge badge-light-primary d-inline-flex align-items-center">
+                              {p.name}
+                              <button 
+                                type="button" 
+                                className="btn btn-icon btn-sm btn-active-color-primary ms-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermissionChange(p.id);
+                                }}
+                              >
+                                <i className="bi bi-x fs-5"></i>
+                              </button>
+                            </span>
+                          ))
+                      )}
+                      <div className="ms-auto">
+                        <i className={`bi bi-chevron-${isPermissionDropdownOpen ? 'up' : 'down'}`}></i>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {isPermissionDropdownOpen && (
+                      <div className="border rounded mt-1 p-2 position-absolute w-100 bg-white z-index-1 shadow"
+                           style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        <div className="sticky-top bg-white pt-2 pb-2">
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mb-2"
+                            placeholder="Search permissions..."
+                            value={permissionSearch}
+                            onChange={(e) => setPermissionSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        
+                        <div className="list-group">
+                          {filteredPermissions.length > 0 ? (
+                            filteredPermissions.map(permission => (
+                              <div 
+                                key={permission.id}
+                                className="list-group-item list-group-item-action d-flex align-items-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermissionChange(permission.id);
+                                }}
+                              >
+                                <div className="form-check mb-0 flex-grow-1">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    checked={formData.permissions.includes(permission.id)}
+                                    onChange={() => {}}
+                                    id={`edit-perm-${permission.id}`}
+                                  />
+                                  <label className="form-check-label w-100" htmlFor={`edit-perm-${permission.id}`}>
+                                    {permission.name}
+                                  </label>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center p-3 text-muted">
+                              No permissions found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -482,7 +629,10 @@ export default function RoleManagement() {
                 <button
                   type="button"
                   className="btn btn-light"
-                  onClick={() => setIsEditModalOpen(false)}
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setPermissionSearch('');
+                  }}
                 >
                   Cancel
                 </button>
