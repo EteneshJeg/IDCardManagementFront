@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
+
 import { 
   fetchRoles, 
   addRole,
@@ -23,7 +24,7 @@ export default function RoleManagement() {
   
   // Redux state
   const roles = useSelector(selectAllRoles);
-  const permissions = useSelector(selectAllPermissions);
+  const allPermissions = useSelector(selectAllPermissions);
   const status = useSelector(selectRolesStatus);
   const error = useSelector(selectRolesError);
   const permissionStatus = useSelector(state => state.permissions.status);
@@ -32,6 +33,7 @@ export default function RoleManagement() {
   const [searchItem, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false); // Added view modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   
@@ -56,7 +58,7 @@ export default function RoleManagement() {
 
   // Create safe arrays
   const roleList = Array.isArray(roles) ? roles : [];
-  const permissionList = Array.isArray(permissions) ? permissions : [];
+  const permissionList = Array.isArray(allPermissions) ? allPermissions : [];
   
   // Filter data based on search
   const filteredData = roleList.filter(role => 
@@ -71,7 +73,6 @@ export default function RoleManagement() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
 
   // Filter permissions based on search
   const filteredPermissions = permissionList.filter(permission => 
@@ -158,6 +159,16 @@ export default function RoleManagement() {
     }
   };
 
+  // Get permission names for display - FIXED to handle non-array permissions
+  const getPermissionNames = (permissionIds) => {
+    if (!Array.isArray(permissionIds) || permissionIds.length === 0) return "No permissions";
+    
+    return allPermissions
+      .filter(permission => permissionIds.includes(permission.id))
+      .map(p => p.name)
+      .join(', ');
+  };
+
   // UI Components
   const CloseIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -185,19 +196,6 @@ export default function RoleManagement() {
     document.body.appendChild(script);
     return () => document.body.removeChild(script);
   }, []);
-
-  useEffect(() => {
-    console.log("Fetched roles:", roles);
-  }, [roles]);
-
-  // Get permission names for display
-  const getPermissionNames = (permissionIds) => {
-    return permissionList
-      .filter(p => permissionIds.includes(p.id))
-      .map(p => p.name)
-      .join(", ") || "No permissions";
-  };
-
 
   return (
     <>
@@ -264,7 +262,7 @@ export default function RoleManagement() {
                   <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                     <th className="min-w-50px">S.N.</th>
                     <th>Role Name</th>
-                    <th>Permissions</th>
+                    {/* <th>Permissions</th> */}
                     <th>Created At</th>
                     <th>Actions</th>
                   </tr>
@@ -287,12 +285,25 @@ export default function RoleManagement() {
                       <tr key={role.id}>
                         <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td>{role.name}</td>
-                        <td className="text-truncate" style={{ maxWidth: "300px" }} 
-                            title={getPermissionNames(role.permissions)}>
+                        {/* <td 
+                          className="text-truncate" 
+                          style={{ maxWidth: "300px" }} 
+                          title={getPermissionNames(role.permissions)}
+                        >
                           {getPermissionNames(role.permissions)}
-                        </td>
+                        </td> */}
                         <td>{new Date(role.created_at).toLocaleDateString()}</td>
                         <td>
+                          {/* Added View Button */}
+                          <button
+                            className="btn btn-icon btn-bg-light btn-color-info btn-sm me-2"
+                            onClick={() => {
+                              setSelectedRole(role);
+                              setIsViewModalOpen(true);
+                            }}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </button>
                           <button
                             className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                             onClick={() => {
@@ -628,21 +639,55 @@ export default function RoleManagement() {
               <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn btn-light"
-                  onClick={() => {
-                    setIsEditModalOpen(false);
-                    setPermissionSearch('');
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
                   className="btn btn-primary"
                   onClick={handleUpdateRole}
                 >
                   Update Role
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Role Modal - NEW */}
+      {isViewModalOpen && selectedRole && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">View Role: {selectedRole.name}</h5>
+                <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsViewModalOpen(false)}>
+                  <span className="svg-icon svg-icon-1"><CloseIcon /></span>
+                </div>
+              </div>
+              <div className="modal-body">
+                <div className="mb-5">
+                  <label className="form-label fw-bold">Role Name</label>
+                  <p className="form-control-static">{selectedRole.name}</p>
+                </div>
+                
+                {/* <div className="mb-3">
+                  <label className="form-label fw-bold">Permissions</label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {selectedRole.permissions && selectedRole.permissions.length > 0 ? (
+                      allPermissions
+                        .filter(p => selectedRole.permissions.includes(p.id))
+                        .map(p => (
+                          <span key={p.id} className="badge badge-light-primary">
+                            {p.name}
+                          </span>
+                        ))
+                    ) : (
+                      <p>No permissions assigned</p>
+                    )}
+                  </div>
+                </div> */}
+                
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Created At</label>
+                  <p>{new Date(selectedRole.created_at).toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -665,13 +710,6 @@ export default function RoleManagement() {
                 <p className="text-danger">This action cannot be undone and will affect all users assigned to this role.</p>
               </div>
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={() => setIsDeleteModalOpen(false)}
-                >
-                  Cancel
-                </button>
                 <button
                   type="button"
                   className="btn btn-danger"

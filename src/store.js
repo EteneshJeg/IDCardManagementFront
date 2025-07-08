@@ -27,7 +27,7 @@ const store = configureStore({
     zone:zoneReducer,
     woreda:woredaReducer,
     maritalStatus:maritalStatusReducer,
-    role:roleReducer,
+    roles:roleReducer,
     permissions: permissionReducer
     
 

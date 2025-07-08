@@ -1332,32 +1332,69 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
           }
       },[userProfile]);
 
-    useEffect(()=>{
-        const img=localStorage.getItem(`templateCardsback`);
-        console.log(img);
-        const loading=new window.Image();
-        loading.src=img;
-        console.log(loading);
-        setBackObj(loading);
-    },[]);
+    useEffect(() => {
+      const img = localStorage.getItem('templateCardsback');
+      console.log("Fetched from localStorage:", img);
 
-     useEffect(()=>{
-        const img=localStorage.getItem(`templateCardsback`);
-        console.log(img);
-        const loading=new window.Image();
-        loading.src=img;
-        console.log(loading);
-        setBackObjBack(loading);
-    },[]);
+      const loading = new window.Image();
 
-    useEffect(()=>{
-      const img=localStorage.getItem(`templateCardsbadge`);
-      console.log(img);
-      const loading=new window.Image();
-      loading.src=img;
-      console.log(loading);
-      setBackObjBadge(loading);
-  },[]);
+      if (img && typeof img === 'string') {
+        loading.src = img;
+      } else {
+        // Use a fallback image (optional)
+        loading.src = '/default-back.png'; // Replace with your actual default path
+      }
+
+      console.log("Image object:", loading);
+      setBackObj(loading);
+    }, []);
+
+
+    useEffect(() => {
+      const img = localStorage.getItem('templateCardsback');
+      console.log("Fetched from localStorage:", img);
+
+      const loading = new window.Image();
+
+      // Check if img is a valid non-null string and looks like an image URL or base64 data
+      const isValidImage =
+        img && typeof img === 'string' &&
+        (img.startsWith('data:image') || img.startsWith('http') || img.endsWith('.jpg') || img.endsWith('.png') || img.endsWith('.jpeg'));
+
+      if (isValidImage) {
+        loading.src = img;
+      } else {
+        // Fallback image path in case img is null or invalid
+        loading.src = '/default-back.png'; // Replace with your own default path if needed
+      }
+
+      console.log("Image object:", loading);
+      setBackObjBack(loading);
+    }, []);
+
+
+useEffect(() => {
+  const img = localStorage.getItem('templateCardsback');
+  console.log("Fetched from localStorage:", img);
+
+  const loading = new window.Image();
+
+  // Check if img is a valid non-null string and looks like an image URL or base64 data
+  const isValidImage =
+    img && typeof img === 'string' &&
+    (img.startsWith('data:image') || img.startsWith('http') || img.endsWith('.jpg') || img.endsWith('.png') || img.endsWith('.jpeg'));
+
+  if (isValidImage) {
+    loading.src = img;
+  } else {
+    // Fallback image path in case img is null or invalid
+    loading.src = '/default-back.png'; // Replace with your own default path if needed
+  }
+
+  console.log("Image object:", loading);
+  setBackObjBack(loading);
+}, []);
+
 
   useEffect(() => {
         dispatch(getTemplate()).then((data)=>{
@@ -1801,7 +1838,7 @@ const [logoMaskColor,setLogoMaskColor]=useState('black');
     </div>
 </div>
                                 </div>):String(role).toLowerCase()==='human resources'?( <div id="kt_app_content" className="app-content flex-column-fluid">
-                    <h1>Welcome to HR Dashboard</h1>
+                    <h1 className="text-center">Welcome to  Dashboard</h1>
                 </div>):(<div id="kt_app_content" className="app-content flex-column-fluid">
                     <h1>Welcome to IT Staff Dashboard</h1>
                 </div>)}

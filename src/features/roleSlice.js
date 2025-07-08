@@ -27,8 +27,12 @@ export const fetchRoles = createAsyncThunk(
       const response = await api.get('/', {
         headers: getAuthHeaders(),
       });
+
+      console.log("✅ [fetchRoles] API response:", response.data); // 🐞 log added
+
       return response.data;
     } catch (error) {
+      console.error("❌ [fetchRoles] API error:", error);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -41,8 +45,12 @@ export const addRole = createAsyncThunk(
       const response = await api.post('/', roleData, {
         headers: getAuthHeaders(),
       });
+
+      console.log("✅ [addRole] Added:", response.data); // 🐞 log added
+
       return response.data;
     } catch (error) {
+      console.error("❌ [addRole] API error:", error);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -55,8 +63,12 @@ export const updateRole = createAsyncThunk(
       const response = await api.put(`/${id}`, formData, {
         headers: getAuthHeaders(),
       });
+
+      console.log("✅ [updateRole] Updated:", response.data); // 🐞 log added
+
       return response.data;
     } catch (error) {
+      console.error("❌ [updateRole] API error:", error);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -69,8 +81,12 @@ export const deleteRole = createAsyncThunk(
       await api.delete(`/${id}`, {
         headers: getAuthHeaders(),
       });
+
+      console.log("🗑️ [deleteRole] Deleted ID:", id); // 🐞 log added
+
       return id;
     } catch (error) {
+      console.error("❌ [deleteRole] API error:", error);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -91,14 +107,17 @@ const roleSlice = createSlice({
       // Fetch Roles
       .addCase(fetchRoles.pending, (state) => {
         state.status = 'loading';
+        console.log("🔄 [fetchRoles] Loading...");
       })
       .addCase(fetchRoles.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.list = Array.isArray(action.payload) ? action.payload : [];
+        console.log("✅ [fetchRoles] Success, roles set:", state.list);
       })
       .addCase(fetchRoles.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+        console.error("❌ [fetchRoles] Failed:", state.error);
       })
 
       // Add Role
@@ -108,10 +127,12 @@ const roleSlice = createSlice({
       .addCase(addRole.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.list.push(action.payload);
+        console.log("✅ [addRole] Role added:", action.payload);
       })
       .addCase(addRole.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+        console.error("❌ [addRole] Failed:", state.error);
       })
 
       // Update Role
@@ -123,11 +144,13 @@ const roleSlice = createSlice({
         const index = state.list.findIndex((role) => role.id === action.payload.id);
         if (index !== -1) {
           state.list[index] = action.payload;
+          console.log("✅ [updateRole] Role updated at index", index, ":", action.payload);
         }
       })
       .addCase(updateRole.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+        console.error("❌ [updateRole] Failed:", state.error);
       })
 
       // Delete Role
@@ -137,10 +160,12 @@ const roleSlice = createSlice({
       .addCase(deleteRole.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.list = state.list.filter((role) => role.id !== action.payload);
+        console.log("🗑️ [deleteRole] Role removed from state, ID:", action.payload);
       })
       .addCase(deleteRole.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+        console.error("❌ [deleteRole] Failed:", state.error);
       });
   },
 });
