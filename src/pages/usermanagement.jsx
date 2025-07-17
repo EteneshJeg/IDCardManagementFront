@@ -1,14 +1,12 @@
 import { useEffect } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
+
 
 import { useState, useRef } from "react"
-//import { useReactToPrint } from "react-to-print"
 import { useDispatch, useSelector } from "react-redux"
 import { toast } from "react-toastify";
 
 import { addUser, deleteUser, updateUser, getUser, deleteBunch } from "../features/userSlice";
+import { fetchRoles } from "../features/roleSlice";
 
 export default function UserManagement() {
 
@@ -59,6 +57,7 @@ export default function UserManagement() {
   const [searchItem, setSearch] = useState('');
   const [confPassword, setConfPassword] = useState('');
   const [userdata, setUserData] = useState([]);
+  const [roles,setRoles]=useState([]);
 
 
 
@@ -81,6 +80,18 @@ export default function UserManagement() {
   useEffect(() => {
     console.log('userdata type check:', Array.isArray(userdata), userdata);
   }, [userdata]);
+
+
+  useEffect(()=>{
+    dispatch(fetchRoles()).then((data)=>{
+      const dataitem=data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      setRoles(normalizedData);
+    }).catch((error) => {
+        console.log('Error fetching data', error);
+      })
+      .finally(() => setIsLoading(false));
+  },[dispatch]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -412,9 +423,11 @@ export default function UserManagement() {
                           <label className="form-label fw-semibold required">Role</label>
                           <select className="form-select" name="role" value={formData.role} onChange={handleChange}>
                             <option value="">Select</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="IT Assistant">IT Assistant</option>
-                            <option value="Employee">Employee</option>
+                            {roles.map((data) => (
+                          <option key={data.id} value={data.id}>
+                            {data.name}
+                          </option>
+                        ))}
                           </select>
                         </div>
                         <br />
@@ -591,7 +604,7 @@ export default function UserManagement() {
                                   {row.email}
                                 </td>
                                 <td className="text-start">
-                                  {row.role}
+                                  {row?.roles[0]?.name}
                                 </td>
                                 <td className="text-start">
                                   <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => { setIsShowModalOpen(true), setSelectedUser(row) }}> <i className="bi bi-eye-fill fs-4"></i></button>
@@ -690,9 +703,11 @@ export default function UserManagement() {
                                                   <label className="fw-semibold">Role</label>
                                                   <select className="form-select" name="role" value={formData?.role || ""} onChange={handleChange}>
                                                     <option value="">Select</option>
-                                                    <option value="Human Resources">Human Resources</option>
-                                                    <option value="IT Assistant">IT Assistant</option>
-                                                    <option value="Employee">Employee</option>
+                                                    {roles.map((data) => (
+                          <option key={data.id} value={data.id}>
+                            {data.name}
+                          </option>
+                        ))}
                                                   </select>
                                                 </div>
                                                 <br />

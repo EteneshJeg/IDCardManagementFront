@@ -178,13 +178,33 @@ export const addUser = createAsyncThunk(
                 password:rawForm.password,
                 profile_image:rawForm.profile_image,
                 active:1, //accessible or not
-                first_time:0 //change on login
+                first_time:0 ,//change on login
+                role:Array.isArray(rawForm.role)?rawForm.role:[rawForm.role]
             }
+            console.log(form);
             let formdata=new FormData();
-            for(let key in form){
-                formdata.append(key,form[key]);
-            }
-            console.log(formdata)
+            for (let key in form) {
+                if(key!=='role' && key!=='profile_image'){
+  formdata.append(key, form[key]);
+                }
+}
+
+if (Array.isArray(form.role)) {
+  form.role.forEach(role => {
+    formdata.append('roles[]', role);
+  });
+}
+// Append image separately
+if (rawForm.profile_image instanceof File) {
+  formdata.append('profile_image', rawForm.profile_image);
+} else {
+  console.log("Invalid or missing profile image file");
+}
+
+// Optional: Log all keys (for debugging)
+for (let pair of formdata.entries()) {
+  console.log(pair[0] + ':', pair[1]);
+}
 
             await axios.post('http://localhost:8000/api/users',formdata,{
                 headers:{

@@ -15,6 +15,7 @@ const role = useSelector((state) => state.user.role);
 const dispatch = useDispatch();
 const navigate = useNavigate();
 const [logo,setLogo]=useState();
+const [orgName,setOrgName]=useState();
 	
 	const {organizationInfo}=useSelector((state)=>state.organization);
 
@@ -23,7 +24,10 @@ const [logo,setLogo]=useState();
 			console.log(data);
 			console.log(data.payload);
 			console.log(data.payload[0]?.en_name)
-			setLogo(data.payload[0]?.logo);
+			setOrgName(data.payload.en_name);
+			const backendBaseUrl = 'http://localhost:8000'; // or your actual domain
+
+setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
 		})
 	},[organizationInfo]);
 
@@ -136,7 +140,7 @@ const handleSignin = (e) => {
 						
 						{/*end::Image*/}
 						{/*begin::Title*/}
-						<h1 className="d-none d-lg-block text-white fs-2qx fw-bolder text-center mb-7">TechHive Solutions</h1>
+						<h1 className="d-none d-lg-block text-white fs-2qx fw-bolder text-center mb-7">{orgName}</h1>
 						{/*end::Title*/}
 						{/*begin::Text*/}
 						
