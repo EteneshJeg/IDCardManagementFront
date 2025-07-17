@@ -40,7 +40,9 @@ export default function Sidebar() {
   // Fetch organization info
   useEffect(() => {
     dispatch(getOrganizationInfo()).then((data) => {
-      setLogo(data.payload[0]?.logo);
+      const backendBaseUrl = 'http://localhost:8000'; // or your actual domain
+
+setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     });
   }, [dispatch, organizationInfo]);
 

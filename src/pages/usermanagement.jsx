@@ -187,7 +187,7 @@ export default function UserManagement() {
   }
 
   const handleUpdateUser = (Id) => {
-    dispatch(updateUser({ Id: Id, FormData: formData }))
+    dispatch(updateUser({ Id: Id, rawForm: formData }))
     setIsEditModalOpen(false);
   }
 
@@ -268,6 +268,36 @@ export default function UserManagement() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   }
+
+   const CloseIcon = () => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        opacity="0.5"
+        x="6"
+        y="17.3137"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(-45 6 17.3137)"
+        fill="currentColor"
+      />
+      <rect
+        x="7.41422"
+        y="6"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(45 7.41422 6)"
+        fill="currentColor"
+      />
+    </svg>
+  );
 
   const Loader = () => (
   <div className="d-flex justify-content-center py-10">
@@ -511,7 +541,7 @@ export default function UserManagement() {
                           />S.N.
                        </div>
                       </th>
-                      <th className="text-start min-w-100px">Profile Image</th>
+                      
                       <th className="text-start min-w-100px">Name</th>
                       <th className="text-start min-w-125px">Email</th>
                       <th className="text-start min-w-100px">Role</th>
@@ -553,18 +583,7 @@ export default function UserManagement() {
                                   </div>
                                 </td>
                       
-                                <td className="text-start">
-                                  <img
-                                    src={row.profile_image_url}
-                                    width="100"
-                                    height="100"
-                                    alt="User"
-                                    style={{
-                                      borderRadius: '50%',
-                                      objectFit: 'cover'
-                                    }}
-                                  />
-                                </td>
+                                
                                 <td className="text-start">
                                   {row.name}
                                 </td>
@@ -581,34 +600,44 @@ export default function UserManagement() {
 
                                     <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} >
                                       <div className="modal-dialog modal-dialog-centered" role="document">
-                                        <div className="modal-content p-5 bg-white rounded shadow-sm">
-                                          <fieldset>
-                                            <legend>User Details</legend>
-                                            <div className="field-value">
-                                              <label className="field">Name</label>
-                                              <p >{selectedUser.name}</p>
-                                            </div>
-                                            <br />
-                                            <div className="field-value">
-                                              <label className="field">Email</label>
-                                              <   p >{selectedUser.email}</p>
-                                            </div>
-                                            <br />
-
-                                            <br />
-
-                                          </fieldset>
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => setIsShowModalOpen(false)}
-                                            >
-                                              Close
-                                            </button>
-
-                                          </div>
+                                        <div className="modal-content">
+                                          <div className="modal-header">
+                                          <h5 className="modal-title">User Details</h5>
+                                          <div
+                  className="btn btn-icon btn-sm btn-active-icon-primary"
+                  onClick={() => setIsShowModalOpen(false)}
+                >
+                  <span className="svg-icon svg-icon-1">
+                    <CloseIcon />
+                  </span>
+                </div>
                                         </div>
+<div className="modal-body">
+                                          
+                                            
+                                            <div className="mb-3">
+                                              <div className="form-label fw-semibold">Name</div>
+                                              <div className="form-control form-control-solid">{selectedUser.name}</div>
+                                            </div>
+                                            <br />
+                                            <div className="mb-3">
+                                              <div className="form-label fw-semibold">Email</div>
+                                              <div className="form-control form-control-solid">{selectedUser.email}</div>
+                                            </div>
+                                            <br />
+                                            <div className="mb-3">
+                                              <div className="form-label fw-semibold">Role</div>
+                                              <div className="form-control form-control-solid">{selectedUser.role}</div>
+                                            </div>
+
+                                            <br />
+
+                                         
+                                          
+                                        </div>
+                                        </div>
+                                        
+                                        
                                       </div>
                                     </div>
 

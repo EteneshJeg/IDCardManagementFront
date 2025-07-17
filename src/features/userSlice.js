@@ -257,34 +257,53 @@ export const addUser = createAsyncThunk(
 
 export const updateUser = createAsyncThunk(
     'user/update',
-    async ({ Id, FormData }, { rejectWithValue }) => {
+    async ({ Id, rawForm }, { rejectWithValue }) => {
         /*let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
         if (!Array.isArray(storedUsers)) {
             storedUsers = []; 
         }*/
+       console.log(rawForm);
+       
         try {
             let form={
-                name:FormData.name,
-                email:FormData.email,
-                password:FormData.password,
-                profile_image:FormData.profile_image,
+                name:rawForm.name,
+                email:rawForm.email,
+                password:rawForm.password,
+                profile_image:rawForm.profile_image,
                 active:true,
                 first_time:true
             }
+            console.log(form);
+            let formData = new FormData();
+formData.append('_method', 'PUT');
+
+for (const key in form) {
+  if (Object.hasOwnProperty.call(form, key)) {
+    const value = form[key];
+    if (value instanceof File) {
+      formData.append(key, value, value.name); 
+    }else if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0'); // Convert boolean to string '1' or '0'
+    } else {
+      formData.append(key, value);
+    }
+  }
+}
             let token=JSON.parse(localStorage.getItem('token'));
-            await axios.put(`http://localhost:8000/api/users/${Id}`,form,{
+            try{
+                const response=await axios.post(`http://localhost:8000/api/users/${Id}`,formData,{
                 headers:{
                     Authorization:`Bearer ${token}`
                 }
-            }).then(response=>{
-                console.log(response.data);
-                toast.success("User updated");
-                return;
-            }).catch(error=>{
+            })
+            console.log(response.data);
+            toast.success("User updated");
+            return;
+            }catch(error){
                 console.log(error.response);
                 toast.error("Failed to update user");
                 return;
-            })
+            }
             /*const userIndex = storedUsers.findIndex(storedUser => {
                 return String(storedUser.id).trim() === String(Id).trim();  
             });

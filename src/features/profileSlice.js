@@ -25,6 +25,7 @@ export const createProfile=createAsyncThunk(
     'create/profile',
     async(formData,{rejectWithValue})=>{
         try{
+          console.log(formData);
             const token=JSON.parse(localStorage.getItem('token'));
 
           
@@ -237,30 +238,34 @@ export const updateProfile=createAsyncThunk(
 console.log("Raw joined_date:", rawForm.joined_date);
 console.log("Cleaned:", cleanDateInput(rawForm.joined_date));
 
+console.log("marital status",rawForm.marital_status_id);
+console.log("sex",rawForm.sex);
+
+
             const prepareFormData = (rawForm) => {
   return {
-    en_name: formData.en_name || "",
-    title: formData.title || "",
-    sex: formData.sex || "",
-    date_of_birth: cleanDateInput(formData.date_of_birth)||null,
-    joined_date: cleanDateInput(formData.joined_date)||null,
-    email: formData.email || "",
-    photo: formData.photo || "",
-    phone_number: formData.phone_number || "",
-    organization_unit_id: formData.organization_unit_id || "",
-    job_position_id: formData.job_position_id || "",
-    job_title_category_id: formData.job_title_category_id || "",
-    salary_id: formData.salary_id || "",
-    martial_status_id: formData.martial_status_id || "",
-    nation: formData.nation || "",
-    employment_id: formData.employment_id || "",
-    job_position_start_date: cleanDateInput(formData.job_position_start_date)||null,
-    job_position_end_date: cleanDateInput(formData.job_position_end_date)||null,
-    address: formData.address || "",
-    house_number: formData.house_number || "",
-    region_id: formData.region_id || "",
-    woreda_id: formData.woreda_id || "",
-    zone_id: formData.zone_id || "",
+    en_name: rawForm.en_name || "",
+    title: rawForm.title || "",
+    sex: rawForm.sex || "",
+    date_of_birth: cleanDateInput(rawForm.date_of_birth)||null,
+    joined_date: cleanDateInput(rawForm.joined_date)||null,
+    email: rawForm.email || "",
+    photo: rawForm.photo || "",
+    phone_number: rawForm.phone_number || "",
+    organization_unit_id: rawForm.organization_unit_id || "",
+    job_position_id: rawForm.job_position_id || "",
+    job_title_category_id: rawForm.job_title_category_id || "",
+    salary_id: rawForm.salary_id || "",
+    martial_status_id: rawForm.marital_status_id || "",
+    nation: rawForm.nation || "",
+    employment_id: rawForm.employment_id || "",
+    job_position_start_date: cleanDateInput(rawForm.job_position_start_date)||null,
+    job_position_end_date: cleanDateInput(rawForm.job_position_end_date)||null,
+    address: rawForm.address || "",
+    house_number: rawForm.house_number || "",
+    region_id: rawForm.region_id || "",
+    woreda_id: rawForm.woreda_id || "",
+    zone_id: rawForm.zone_id || "",
     id_status:false,
     status:true
   };

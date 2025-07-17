@@ -77,41 +77,40 @@ export default function DynamicDetails(){
    console.log(formData)
 
    const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => {
-      const updatedFormData = [...prev]; 
-      updatedFormData[0] = {
-        ...updatedFormData[0], 
-        [name]: value 
-      };
-      return updatedFormData; 
-    });
-  };
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
-  const imageUploader=(e)=>{
-    const file=e.target.files[0];
-    if(file){
-        const reader=new FileReader();
-        reader.onloadend=()=>{
-          setFormData((prev) => {
-            const updatedFormData = [...prev]; 
-            updatedFormData[0] = {
-              ...updatedFormData[0], 
-              logo: reader.result 
-            };
-            return updatedFormData; 
-          });
-            
-        }
-        reader.readAsDataURL(file);
-    }
-}
+console.log(formData)
+
+
+  const imageUploader = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({
+        ...prev,
+        logo: file,
+      }));
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+
 
 
 const validateForm=(formData)=>{
+console.log(formData)
 
-
-
+if (!formData) {
+    console.error("formData is undefined!");
+    return false;
+  }
       if(formData.email&&!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)){
 
           toast.error('Email format is incorrect');
@@ -136,13 +135,18 @@ const validateForm=(formData)=>{
     const handleCreateInformation=(e)=>{
         e.preventDefault();
         console.log('creating')
-        if(validateForm(formData[0])){
+        if(validateForm(formData)){
+console.log(formData)
+console.log('Type of formData:', typeof formData);
 
-          dispatch(createOrganizationInfo({FormData:formData[0]}));
+          dispatch(createOrganizationInfo({rawData:formData}));
           
         }
         
     }
+
+   
+
     return(
         <>
        
@@ -179,25 +183,30 @@ const validateForm=(formData)=>{
     {/* Organization name */}
     <div className="col-md-6">
       <label htmlFor="en_name" className="form-label fw-semibold">Organization Name</label>
-      <input type="text" name="en_name" id="en_name" className="form-control"  onChange={handleChange} value={formData[0]?.en_name || ""}/>
+      <input type="text" name="en_name" id="en_name" className="form-control"  onChange={handleChange} value={formData?.en_name || ""}/>
     </div>
 
     {/* Motto */}
     <div className="col-md-6">
       <label htmlFor="motto" className="form-label fw-semibold">Motto</label>
-      <input type="text" name="motto"  id="motto" className="form-control"  onChange={handleChange} value={formData[0]?.motto || ""}/>
+      <input type="text" name="motto"  id="motto" className="form-control"  onChange={handleChange} value={formData?.motto || ""}/>
     </div>
 
     {/* Mission */}
     <div className="col-md-6">
       <label htmlFor="mission" className="form-label fw-semibold">Mission</label>
-      <input type="text" name="mission"  id="mission" className="form-control"  onChange={handleChange} value={formData[0]?.mission || ""}/>
+      <input type="text" name="mission"  id="mission" className="form-control"  onChange={handleChange} value={formData?.mission || ""}/>
+    </div>
+
+    <div className="col-md-6">
+      <label htmlFor="vision" className="form-label fw-semibold">Vision</label>
+      <input type="text" name="vision"  id="vision" className="form-control"  onChange={handleChange} value={formData?.vision || ""}/>
     </div>
 
     {/* Core Values */}
     <div className="col-md-6">
       <label htmlFor="core_value" className="form-label fw-semibold">Core Values</label>
-      <input type="text" name="core_value" id="core_value" className="form-control"  onChange={handleChange} value={formData[0]?.core_value || ""}/>
+      <input type="text" name="core_value" id="core_value" className="form-control"  onChange={handleChange} value={formData?.core_value || ""}/>
     </div>
 
     {/* Logo */}
@@ -209,48 +218,48 @@ const validateForm=(formData)=>{
     {/* Website */}
     <div className="col-md-6">
       <label htmlFor="website" className="form-label fw-semibold">Website</label>
-      <input type="text" name="website"  id="website" className="form-control"  onChange={handleChange} value={formData[0]?.website || ""}/>
+      <input type="text" name="website"  id="website" className="form-control"  onChange={handleChange} value={formData?.website || ""}/>
     </div>
 
     {/* Email */}
     <div className="col-md-6">
       <label htmlFor="email" className="form-label fw-semibold">Email</label>
-      <input type="email"  name="email" id="email" className="form-control"  onChange={handleChange} value={formData[0]?.email || ""}/>
+      <input type="email"  name="email" id="email" className="form-control"  onChange={handleChange} value={formData?.email || ""}/>
     </div>
 
 
     <div className="col-md-6">
       <label htmlFor="address" className="form-label fw-semibold">Address</label>
-      <input type="text" name="address"  id="address" className="form-control"  onChange={handleChange} value={formData[0]?.address || ""}/>
+      <input type="text" name="address"  id="address" className="form-control"  onChange={handleChange} value={formData?.address || ""}/>
     </div>
     {/* Phone Number */}
     <div className="col-md-6">
       <label htmlFor="phone_number" className="form-label fw-semibold">Phone Number</label>
-      <input type="tel" name="phone_number"  id="phone_number" className="form-control"  onChange={handleChange} value={formData[0]?.phone_number || ""}/>
+      <input type="tel" name="phone_number"  id="phone_number" className="form-control"  onChange={handleChange} value={formData?.phone_number || ""}/>
     </div>
 
     {/* Fax Number */}
     <div className="col-md-6">
       <label htmlFor="fax_number" className="form-label fw-semibold">Fax Number</label>
-      <input type="number" name="fax_number" id="fax_number" className="form-control"  onChange={handleChange} value={formData[0]?.fax_number || ""} />
+      <input type="number" name="fax_number" id="fax_number" className="form-control"  onChange={handleChange} value={formData?.fax_number || ""} />
     </div>
 
     {/* P.O. Box */}
     <div className="col-md-6">
       <label htmlFor="po_box" className="form-label fw-semibold">P.O. Box</label>
-      <input type="number" name="po_box"  id="po_box" className="form-control"  onChange={handleChange} value={formData[0]?.po_box || ""}/>
+      <input type="number" name="po_box"  id="po_box" className="form-control"  onChange={handleChange} value={formData?.po_box || ""}/>
     </div>
 
     {/* Tin Number */}
     <div className="col-md-6">
       <label htmlFor="tin_number" className="form-label fw-semibold">TIN Number</label>
-      <input type="number" name="tin_number"  id="tin_number" className="form-control"  onChange={handleChange} value={formData[0]?.tin_number || ""}/>
+      <input type="number" name="tin_number"  id="tin_number" className="form-control"  onChange={handleChange} value={formData?.tin_number || ""}/>
     </div>
 
     {/* Abbreviation */}
     <div className="col-md-6">
       <label htmlFor="abbreviation" className="form-label fw-semibold">Abbreviation</label>
-      <input type="text" name="abbreviation" id="abbreviation" className="form-control"  onChange={handleChange} value={formData[0]?.abbreviation || ""}/>
+      <input type="text" name="abbreviation" id="abbreviation" className="form-control"  onChange={handleChange} value={formData?.abbreviation || ""}/>
     </div>
   </div>
 

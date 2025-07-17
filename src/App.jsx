@@ -23,6 +23,7 @@ import Region from './pages/RegionManagement';
 import Zone from './pages/ZoneManagement';
 import Woreda from './pages/WoredaManagement';
 import Role from './pages/Roles';
+import QRScan from './pages/qrcodescanpage';
 
 import { Navigate } from 'react-router-dom';
 import PermissionsPage from './pages/Permissions';
@@ -59,6 +60,7 @@ function App() {
         <Route path="woredamanagement" element={<Woreda />} />
         <Route path="roles" element={<Role/>} />
         <Route path="/permissions" element={<PermissionsPage/>} />
+        <Route path="/employeeid" element={<QRScan/>}/>
       </Route>
     </Routes>
       <ToastContainer />

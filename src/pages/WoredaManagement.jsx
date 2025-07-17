@@ -394,7 +394,7 @@ export default function Woreda() {
                       <option value="show all">Show all</option>
                       {zone.map((data) => {
                         return (
-                          <option key={data.name} value={data.name}>
+                          <option key={data.id} value={data.name}>
                             {data.name}
                           </option>
                         );

@@ -26,8 +26,11 @@ export default function Header(){
 		dispatch(getOrganizationInfo()).then((data)=>{
 			console.log(data);
 			console.log(data.payload);
-			console.log(data.payload[0]?.en_name)
-			setLogo(data.payload[0]?.logo);
+			console.log(data.payload?.en_name)
+      console.log(data.payload?.logo)
+			const backendBaseUrl = 'http://localhost:8000'; 
+
+setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
 		})
 	},[organizationInfo]);
 

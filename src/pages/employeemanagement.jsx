@@ -54,9 +54,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getZone())
       .then((data) => {
-        console.log(data);
+       
         const dataitem = data.payload;
-        console.log(dataitem)
+      
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setZoneInfo(normalizedData);
@@ -71,9 +71,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getRegion())
       .then((data) => {
-        console.log(data);
+        
         const dataitem = data.payload;
-        console.log(dataitem)
+        
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setRegionInfo(normalizedData);
@@ -88,9 +88,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getWoreda())
       .then((data) => {
-        console.log(data);
+        
         const dataitem = data.payload;
-        console.log(dataitem)
+        
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setWoredaInfo(normalizedData);
@@ -105,9 +105,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getMaritalStatus())
       .then((data) => {
-        console.log(data);
+        
         const dataitem = data.payload;
-        console.log(dataitem)
+        
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setMaritalInfo(normalizedData);
@@ -122,9 +122,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchOrganizationUnits())
       .then((data) => {
-        console.log(data);
+        
         const dataitem = data.payload.data;
-        console.log(dataitem)
+        
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setOrganizationUnitInfo(normalizedData);
@@ -141,9 +141,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchJobPositions())
       .then((data) => {
-        console.log(data);
+        
         const dataitem = data.payload;
-        console.log(dataitem)
+        
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setJobPositionInfo(normalizedData);
@@ -158,9 +158,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchJobTitleCategories())
       .then((data) => {
-        console.log(data);
+       
         const dataitem = data.payload;
-        console.log(dataitem)
+       
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setJobTitleCatInfo(normalizedData);
@@ -196,7 +196,7 @@ export default function EmployeeManagement() {
     organization_unit_id: '',
     job_position_id: '',
     job_title_category_id: '',
-    salary_id: '',
+    salary: '',
     marital_status_id: '',
     nation: '',
     employment_id: '',
@@ -225,7 +225,7 @@ export default function EmployeeManagement() {
     organization_unit_id: FormData?.organization_unit_id || "",
     job_position_id: FormData?.job_position_id || "",
     job_title_category_id: FormData?.job_title_category_id || "",
-    salary_id: FormData?.salary_id || "",
+    salary: FormData?.salary || "",
     marital_status_id: FormData?.marital_status_id || "",
     nation: FormData?.nation || "",
     employment_id: FormData?.employment_id || "",
@@ -303,7 +303,7 @@ export default function EmployeeManagement() {
           if (Array.isArray(action.payload) && action.payload.length > 0) {
             setEmployeeProfile(action.payload[0]?.data);
             setProfilePhoto(action.payload[0]?.data?.photo_url);
-            console.log("Profiles:", action.payload[0]?.data);
+           
           } else {
             // Handle empty or unexpected payload gracefully
             setEmployeeProfile(null);
@@ -317,7 +317,8 @@ export default function EmployeeManagement() {
         console.error('Unexpected error', error);
       });
 
-  }, [dispatch, profiles]);
+  }, [dispatch]);
+  console.log(employeeProfile)
 
   useEffect(() => {
     if (selectedFilter === "show all") {
@@ -394,6 +395,7 @@ export default function EmployeeManagement() {
 
   const handleUpdateProfile = (id) => {
     console.log(id);
+    console.log(formData)
     dispatch(updateProfile({ Id: id, rawForm: formData }));
     setIsEditModalOpen(false);
   }
@@ -554,6 +556,8 @@ export default function EmployeeManagement() {
 
   }
 
+  
+
 const Loader = () => (
   <div className="d-flex justify-content-center py-10">
     <div className="spinner-border text-primary" role="status">
@@ -561,6 +565,8 @@ const Loader = () => (
     </div>
   </div>
 );
+
+
 
 
   return (
@@ -733,7 +739,7 @@ const Loader = () => (
                         {/* Salary Amount */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Salary Amount</label>
-                          <input type="text" name="salary_id" className="form-control" onChange={handleChange} />
+                          <input type="text" name="salary" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Marital Status */}
@@ -975,7 +981,7 @@ const Loader = () => (
                         <div className="d-flex align-items-center gap-2">
                             <input
                               type="checkbox"
-                              cchecked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
+                              checked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
 
                               onChange={handleSelectAll}
                               title={
@@ -1044,15 +1050,16 @@ const Loader = () => (
                                 </td>
                                 <td className="text-start pe-4">
                                   <img
-                                    src={row.photo_url}
-                                    width="100"
-                                    height="100"
-                                    alt="User"
-                                    style={{
-                                      borderRadius: '50%',
-                                      objectFit: 'cover'
-                                    }}
-                                  />
+  src={`http://localhost:8000/cors-image/${row.photo_url}`}
+  width="100"
+  height="100"
+  alt="User"
+  style={{
+    borderRadius: '50%',
+    objectFit: 'cover'
+  }}
+/>
+
                                 </td>
 
                                 <td className="text-start">
@@ -1068,21 +1075,21 @@ const Loader = () => (
                                   {row.phone_number}
                                 </td>
                                 <td className="text-start">
-                                  {row.organization_unit_id}
+                                  {row?.organization_unit?.en_name}
                                 </td>
                                 <td className="text-start">
-                                  {row.job_position_id}
+                                  {row?.job_position?.job_description}
                                 </td>
 
                                 <td className="text-start">
-                                  <span className={`badge badge-${row.id_status && row.id_status.toLowerCase() === 'valid' ? 'success' : 'danger'
+                                  <span className={`badge badge-${row.id_status && row.id_status.toLowerCase() === 'active' ? 'success' : 'danger'
                                     }`}>
                                     {row.id_status || 'Unknown'}
                                   </span>
                                 </td>
 
                                 <td className="text-start">
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.employment_id}`, '_blank')}> <i className="bi bi-eye-fill fs-4"></i></button>
+                                  <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}> <i className="bi bi-eye-fill fs-4"></i></button>
 
 
                                   <button className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2" onClick={() => { setIsEditModalOpen(true), setSelectedUser(row) }}><i className="bi bi-pencil-fill"></i></button>
@@ -1116,7 +1123,7 @@ const Loader = () => (
                                                   <input
                                                     type="text"
                                                     className="form-control"
-                                                    value={selectedUser?.en_name || ""}
+                                                   // value={selectedUser?.en_name || ""}
                                                     name="en_name"
                                                     onChange={handleChange}
                                                     required
@@ -1129,7 +1136,7 @@ const Loader = () => (
                                                   <input
                                                     type="text"
                                                     className="form-control"
-                                                    value={selectedUser?.title || ""}
+                                                   // value={selectedUser?.title || ""}
                                                     name="title"
                                                     onChange={handleChange}
                                                   />
@@ -1140,13 +1147,13 @@ const Loader = () => (
                                                   <label className="form-label fw-semibold">Sex</label>
                                                   <select
                                                     className="form-select"
-                                                    name="gender"
-                                                    value={selectedUser?.sex || ""}
+                                                    name="sex"
+                                                    //value={selectedUser?.sex || ""}
                                                     onChange={handleChange}
                                                   >
                                                     <option value="">Select</option>
-                                                    <option value="Male">Male</option>
-                                                    <option value="Female">Female</option>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
                                                   </select>
                                                 </div>
 
@@ -1157,7 +1164,7 @@ const Loader = () => (
                                                     type="date"
                                                     className="form-control"
                                                     name="date_of_birth"
-                                                    value={selectedUser?.date_of_birth || ""}
+                                                    //value={selectedUser?.date_of_birth || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1168,7 +1175,7 @@ const Loader = () => (
                                                   <input
                                                     type="date"
                                                     className="form-control"
-                                                    value={selectedUser?.joined_date || ""}
+                                                   // value={selectedUser?.joined_date || ""}
                                                     name="joined_date"
                                                     onChange={handleChange}
                                                   />
@@ -1181,7 +1188,7 @@ const Loader = () => (
                                                     type="email"
                                                     className="form-control"
                                                     name="email"
-                                                    value={selectedUser?.email || ""}
+                                                    //value={selectedUser?.email || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1193,7 +1200,7 @@ const Loader = () => (
                                                     type="tel"
                                                     className="form-control"
                                                     name="phone_number"
-                                                    value={selectedUser?.phone_number || ""}
+                                                   // value={selectedUser?.phone_number || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1201,10 +1208,10 @@ const Loader = () => (
                                                 {/* Organization Unit */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Organization Unit</label>
-                                                  <select className="form-select" name="organization_unit_id" value={selectedUser?.organization_unit_id || ""} onChange={handleChange}>
+                                                  <select className="form-select" name="organization_unit_id" /*value={selectedUser?.organization_unit_id || ""}*/ onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {organizationUnitInfo.map((data) => {
-                                                      return <option>{data.en_name}</option>
+                                                      return <option key={data.id} value={data.id}>{data.en_name}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1212,10 +1219,10 @@ const Loader = () => (
                                                 {/* Job Position */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Position</label>
-                                                  <select className="form-select" name="job_position_id" value={selectedUser?.job_position_id || ""}onChange={handleChange}>
+                                                  <select className="form-select" name="job_position_id" /*value={selectedUser?.job_position_id || ""}*/onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {jobPositionInfo.map((data) => {
-                                                      return <option>{data.position_code}</option>
+                                                      return <option  key={data.id} value={data.id}>{data.position_code}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1223,10 +1230,10 @@ const Loader = () => (
                                                 {/* Job Title Category */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Job Title Category</label>
-                                                  <select className="form-select" name="job_title_category_id" value={selectedUser?.job_title_category_id || ""}onChange={handleChange}>
+                                                  <select className="form-select" name="job_title_category_id" /*value={selectedUser?.job_title_category_id || ""}*/onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {jobTitleCatInfo.map((data) => {
-                                                      return <option>{data.name}</option>
+                                                      return <option key={data.id} value={data.id}>{data.name}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1237,8 +1244,8 @@ const Loader = () => (
                                                   <input
                                                     type="text"
                                                     className="form-control"
-                                                    value={selectedUser?.salary_id || ""}
-                                                    name="salary_id"
+                                                   // value={selectedUser?.salary || ""}
+                                                    name="salary"
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1246,10 +1253,11 @@ const Loader = () => (
                                                 {/* Marital Status */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Marital Status</label>
-                                                  <select className="form-select" name="marital_status_id" value={selectedUser?.marital_status_id || ""} onChange={handleChange}>
+                                                  <select className="form-select" name="marital_status_id" /*value={selectedUser?.marital_status_id || ""}*/ onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {maritalInfo.map((data) => {
-                                                      return <option>{data.name}</option>
+                                                      
+                                                      return <option key={data.id} value={data.id}>{data.name}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1261,7 +1269,7 @@ const Loader = () => (
                                                     type="text"
                                                     className="form-control"
                                                     name="nation"
-                                                    value={selectedUser?.nation || ""}
+                                                   // value={selectedUser?.nation || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1273,7 +1281,7 @@ const Loader = () => (
                                                     type="text"
                                                     className="form-control"
                                                     name="employment_id"
-                                                    value={selectedUser?.employment_id || ""}
+                                                   // value={selectedUser?.employment_id || ""}
                                                     onChange={handleChange}
                                                     required
                                                   />
@@ -1286,7 +1294,7 @@ const Loader = () => (
                                                     type="date"
                                                     className="form-control"
                                                     name="job_position_start_date"
-                                                    value={selectedUser?.job_position_start_date || ""}
+                                                   // value={selectedUser?.job_position_start_date || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1298,7 +1306,7 @@ const Loader = () => (
                                                     type="date"
                                                     className="form-control"
                                                     name="job_position_end_date"
-                                                    value={selectedUser?.job_position_end_date || ""}
+                                                   // value={selectedUser?.job_position_end_date || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1310,7 +1318,7 @@ const Loader = () => (
                                                     type="text"
                                                     className="form-control"
                                                     name="address"
-                                                    value={selectedUser?.address || ""}
+                                                   // value={selectedUser?.address || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1322,7 +1330,7 @@ const Loader = () => (
                                                     type="text"
                                                     className="form-control"
                                                     name="house_number"
-                                                    value={selectedUser?.house_number || ""}
+                                                   // value={selectedUser?.house_number || ""}
                                                     onChange={handleChange}
                                                   />
                                                 </div>
@@ -1330,10 +1338,10 @@ const Loader = () => (
                                                 {/* Region */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Region</label>
-                                                  <select className="form-select" name="region_id" value={selectedUser?.region_id || ""} onChange={handleChange}>
+                                                  <select className="form-select" name="region_id" /*value={selectedUser?.region_id || ""}*/ onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {regionInfo.map((data) => {
-                                                      return <option>{data.name}</option>
+                                                      return <option key={data.id} value={data.id}>{data.name}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1341,10 +1349,10 @@ const Loader = () => (
                                                 {/* Zone */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Zone</label>
-                                                  <select className="form-select" name="zone_id" value={selectedUser?.zone_id || ""} onChange={handleChange}>
+                                                  <select className="form-select" name="zone_id" /*value={selectedUser?.zone_id || ""}*/ onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {zoneInfo.map((data) => {
-                                                      return <option>{data.name}</option>
+                                                      return <option key={data.id} value={data.id}>{data.name}</option>
                                                     })}
                                                   </select>
                                                 </div>
@@ -1352,10 +1360,10 @@ const Loader = () => (
                                                 {/* Woreda */}
                                                 <div className="col-md-6">
                                                   <label className="form-label fw-semibold">Woreda</label>
-                                                  <select className="form-select" name="woreda_id" value={selectedUser?.woreda_id || ""} onChange={handleChange}>
+                                                  <select className="form-select" name="woreda_id" /*value={selectedUser?.woreda_id || ""}*/ onChange={handleChange}>
                                                     <option value="">Select...</option>
                                                     {woredaInfo.map((data) => {
-                                                      return <option>{data.name}</option>
+                                                      return <option key={data.id} value={data.id}>{data.name}</option>
                                                     })}
                                                   </select>
                                                 </div>

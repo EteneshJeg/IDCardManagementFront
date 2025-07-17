@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect,useRef } from "react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
@@ -10,7 +10,8 @@ import { toast } from "react-toastify";
 
 
 import { getOrganizationInfo } from "../features/organizationSlice";
-import { saveTemplate, getTemplate, saveIdDetails } from "../features/idCardSlice";
+import { saveTemplate, getTemplate, saveIdDetails,getIdDetails } from "../features/idCardSlice";
+import QRCode from "react-qr-code";
 
 export default function IdDetails() {
   useEffect(() => {
@@ -31,6 +32,8 @@ export default function IdDetails() {
 
   const dispatch = useDispatch();
   const [image, setImage] = useState(null);
+  const qrRef=useRef();
+  const [qrCodeImage,setQrCodeImage]=useState();
   const backImg = new window.Image();
   backImg.src = 'https://th.bing.com/th/id/OIP.Rv8GJCOZZhXXpr-MEfSOugAAAA?rs=1&pid=ImgDetMain'
 
@@ -55,16 +58,19 @@ export default function IdDetails() {
       //console.log(data);
       const org = data.payload;
       console.log(org);
-      const img = new window.Image();
+      
       if (org) {
         setOrgName(org.en_name);
         setMotto(org.email);
         setMission(org.mission);
         setVision(org.vision);
         setCoreValue(org.core_value);
-        const backendBaseUrl = 'http://localhost:8000'; 
-
-setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
+        console.log(org.logo)
+        const img = new window.Image();
+img.onload = () => setLogo(img);
+img.onerror = (e) => console.error('Image failed to load:', e);
+img.crossOrigin = 'anonymous'; // only if you need CORS / pixel access
+img.src = `http://localhost:8000/cors-logo/${org.logo}`;
 		
 
 
@@ -85,7 +91,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
   console.log(logo)
 
 
-  const imageFields = ['photo', 'logo'];
+  const imageFields = ['photo', 'logo','qrcode'];
   const textFields = [
     'en_name', 'job_position', 'id_issue_date', 'id_expire_date', 'title',
     'sex', 'date_of_birth', 'joined_date', 'email', 'phone_number', 'organization_unit',
@@ -104,6 +110,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     circle_positionx: 30,
     circle_positiony: 80,
     circle_background: 'black',
+    circle_mask_thickness:0
 
 
   }
@@ -116,6 +123,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     text_font_type: 'arial',
     text_font_size: 18,
     text_font_color: 'black',
+    text_gap:200
   }
 
   const shareddetails = {
@@ -123,6 +131,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     status: 'inactive', //to be filled when generated,
     label_length: 20
   }
+  
   const [newTemplates, setNewTemplates] = useState({
     front: {
       imageFields: Object.fromEntries(
@@ -189,10 +198,26 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     }
   });
 
+  const [oldTemplates,setOldTemplates]=useState();
+
   console.log(newTemplates?.front?.textFields?.en_name?.field_name);
 
 
-
+useEffect(()=>{
+      const canvas=qrRef.current;
+      if(canvas){
+        const svgData=new XMLSerializer().serializeToString(canvas);
+        const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+        const img=new window.Image();
+        img.onload=()=>{
+          setQrCodeImage(img)
+          URL.revokeObjectURL(url);
+        };
+        img.src=url
+      }
+      
+    },[]);
 
 
 
@@ -218,6 +243,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
       joined_date: false,
       email: false,
       photo: false,
+      qr_code:false,
       phone_number: false,
       organization_unit: false,
       job_position: false,
@@ -272,8 +298,8 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
   const [templateImage,setTemplateImage]=useState();
   const [logoImage,setLogoImage]=useState();
 
-  useEffect(() => {
-  const imageUrl = newTemplates?.[selectedTemplate]?.templateBackground?.imageUrl;
+  /*useEffect(() => {
+  const imageUrl = newTemplates?.[selectedTemplate]?.templateBackground?.image_file||newTemplates?.[selectedTemplate]?.templateBackground?.imageUrl;
 
   if (!imageUrl) {
     setTemplateImage(null);
@@ -290,7 +316,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
   img.onerror = () => {
     console.error("Failed to load image from template");
   };
-}, [newTemplates, selectedTemplate]);
+}, [newTemplates, selectedTemplate]);*/
 
 
   const handleImageSelect = (e, viewType) => {
@@ -306,12 +332,15 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
       switch (viewType) {
         case 'front':
           setFrontImage(img);
+          setTemplateImage(img);
           break;
         case 'back':
           setBackImage(img);
+          setTemplateImage(img);
           break;
         case 'badge':
           setBadgeImage(img);
+          setTemplateImage(img);
           break;
         default:
           break;
@@ -324,7 +353,8 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
           ...prev[viewType],
             templateBackground: {
               ...(prev[viewType]?.templateBackground || {}),
-              imageUrl: reader.result, // <-- if you want to store as base64 string
+              imageUrl: file, // <-- if you want to store as base64 string
+              image_file:reader.result
             },
           
         },
@@ -339,7 +369,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
   reader.readAsDataURL(file);
 };
 
-useEffect(() => {
+/*useEffect(() => {
   if (!logo) {
     console.log("!log")
     setLogoImage(null);
@@ -357,7 +387,7 @@ useEffect(() => {
   img.onerror = () => {
     console.error("Failed to load logo image", logo);
   };
-}, [logo]);
+}, [logo]);*/
 
 
   console.log(newTemplates?.[selectedTemplate]?.photo?.circle_positionx)
@@ -378,11 +408,40 @@ useEffect(() => {
 
   }, []);
 
-  useEffect(() => {
+  useEffect(() => {  //get the saved template
   dispatch(getTemplate()).then((action) => {
+    console.log(action)
     const dataitem = action.payload;
+    console.log(dataitem);
+    console.log(selectedTemplate)
+    const matchingTemplate=dataitem.find(data=>
+      data.type===selectedTemplate
+    )
+    console.log(matchingTemplate)
+    const img = new window.Image();
+      img.crossOrigin = 'anonymous'; // Optional: in case image is from another origin
+      img.src = `http://localhost:8000/cors-image/${matchingTemplate.file}`;
+      
 
-    if (dataitem && typeof dataitem === 'object') {
+
+      img.onload = () => {
+        if (matchingTemplate.type === 'front') {
+          setFrontImage(img);
+          setTemplateImage(img);
+        } else if (matchingTemplate.type === 'back') {
+          setBackImage(img);
+          setTemplateImage(img);
+        } else if (matchingTemplate.type === 'badge') {
+          setBackImage(img);
+          setTemplateImage(img);
+        }
+      };
+
+      img.onerror = (e) => {
+        console.error("Failed to load image", e);
+      };
+    
+    /*if (dataitem && typeof dataitem === 'object') {
       
 
       const keys = Object.keys(dataitem);
@@ -395,53 +454,134 @@ useEffect(() => {
       }
     } else {
       console.warn("Invalid template payload.");
-    }
+    }*/
   }).catch((error) => {
     console.error("Error loading templates:", error);
   });
+}, [dispatch,selectedTemplate]);
+console.log('front image',frontImage)
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [idDetailsAction, templatesAction] = await Promise.all([
+        dispatch(getIdDetails()),
+        dispatch(getTemplate())
+      ]);
+
+      const idDetails = idDetailsAction.payload;
+      console.log(idDetails)
+      const templateList = templatesAction.payload;
+
+      const templates = {};
+
+      idDetails.forEach((item) => {
+        const template = templateList.find((t) => t.id === item.template_id);
+        const templateType = template?.type || "front";
+
+        if (!templates[templateType]) {
+          templates[templateType] = {
+            imageFields: {},
+            textFields: {}
+          };
+        }
+
+        if (item.field_name === "photo" || item.field_name === "logo" ||item.field_name==="qrcode") {
+          templates[templateType].imageFields[item.field_name] = {
+            field_label: item.field_label,
+            field_name: item.field_name,
+            label_length: item.label_length,
+            type: item.type,
+            status: item.status,
+            image_file: item.image_file,
+            image_height: item.image_height,
+            image_width: item.image_width,
+            has_mask: item.has_mask,
+            circle_diameter: item.circle_diameter,
+            circle_mask_thickness: item.circle_mask_thickness,
+            circle_positionx: item.circle_positionx,
+            circle_positiony: item.circle_positiony,
+            circle_background: item.circle_background
+          };
+        } else {
+          templates[templateType].textFields[item.field_name] = {
+            field_label: item.field_label,
+            field_name: item.field_name,
+            label_length: item.label_length,
+            type: item.type,
+            status:item.status,
+            text_content: item.text_content,
+            text_font_color: item.text_font_color,
+            text_font_size: item.text_font_size,
+            text_font_type: item.text_font_type,
+            text_positionx: item.text_positionx,
+            text_positiony: item.text_positiony,
+            text_gap: item.text_gap
+          };
+        }
+      });
+
+      setNewTemplates((prev) => ({
+        ...prev,
+        ...templates // merged by template type like 'front', 'back', etc.
+      }));
+
+      setOldTemplates((prev) => ({
+        ...prev,
+        ...templates // merged by template type like 'front', 'back', etc.
+      }));
+
+
+      const enableField = {};
+
+Object.entries(templates).forEach(([templateType, templateData]) => {
+  enableField[templateType] = {};
+
+  // Handle imageFields
+  Object.entries(templateData.imageFields || {}).forEach(([fieldName, fieldData]) => {
+    if (fieldData.status === "active") {
+      enableField[templateType][fieldName] = true;
+    }
+  });
+
+  // Handle textFields
+  Object.entries(templateData.textFields || {}).forEach(([fieldName, fieldData]) => {
+    if (fieldData.status === "active") {
+      enableField[templateType][fieldName] = true;
+    }
+  });
+});
+
+
+setEnableField((prev)=>({
+  ...prev,
+  ...enableField
+}))
+    } catch (error) {
+      console.error("Error fetching ID details or templates:", error);
+    }
+  };
+
+  fetchData();
 }, [dispatch]);
-
-
+console.log(enableField)
 console.log(newTemplates)
 
 
+
+
+
+
+
+  
+
+
+
+
+console.log(templateImage)
+
+
   const [backObj, setBackObj] = useState();
-
-  const handleTemplateImageUpload = (e) => {
-    const file = e.target.files[0];
-
-    if (file) {
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        const imgData = reader.result;
-
-        const konvaImg = new window.Image();
-        konvaImg.src = imgData;
-
-        konvaImg.onload = () => {
-          localStorage.setItem(`templateCards${selectedTemplate}`, imgData);
-
-          setNewTemplates((prevTemplates) => {
-            const updatedTemplate = { ...prevTemplates?.[selectedTemplate] };
-            updatedTemplate.templateBackground = {
-              ...updatedTemplate.templateBackground,
-              image: konvaImg,
-            };
-
-            return {
-              ...prevTemplates,
-              [selectedTemplate]: updatedTemplate,
-            };
-          });
-
-          setBackObj(konvaImg);
-        };
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
 
   useEffect(() => {
     const img = localStorage.getItem(`templateCards${selectedTemplate}`);
@@ -454,6 +594,7 @@ console.log(newTemplates)
       height: newTemplates[selectedTemplate]?.image_height || 150,
     });
   }, [selectedTemplate])
+  
 
   const handleEnableField = (e) => {
   const selectedField = e.target?.previousSibling?.value;
@@ -465,15 +606,16 @@ console.log(newTemplates)
 
   // Enable field toggle
   setEnableField((prev) => ({
-    ...prev,
-    [selectedTemplate]: {
-      ...(prev[selectedTemplate] || {}),
-      [selectedField]: true,
-    },
-  }));
+  ...prev,
+  [selectedTemplate]: {
+    ...prev[selectedTemplate],
+    [selectedField]: true,
+  },
+}));
+
 
   // Update imageFields
-  if (selectedField === "photo" || selectedField === "logo") {
+  if (selectedField === "photo" || selectedField === "logo" || selectedField==="qrcode") {
     setNewTemplates((prev) => {
       const template = prev?.[selectedTemplate] || {};
       const imageFields = template.imageFields || {};
@@ -547,46 +689,39 @@ console.log(newTemplates)
     }));
   }
 
-  const handleDisableImageField = (e, key, selectedField) => {
+  const handleDisableImageField = (e, side, selectedField) => {
     console.log('Disabling:', selectedField);
 
     setEnableField((prev) => ({
       ...prev,
-      [selectedTemplate]: {
-        ...(prev[selectedTemplate] || {}),
+      [side]: {
+        ...(prev[side] || {}),
         [selectedField]: false
       }
     }));
 
     setNewTemplates((prev) => {
-      const template = prev[selectedTemplate];
+      const template = prev[side];
       const field = template.imageFields[selectedField];
       const shared = field.shareddetails || {};
 
       return {
         ...prev,
-        [selectedTemplate]: {
+        [side]: {
           ...template,
           imageFields: {
             ...template.imageFields,
             [selectedField]: {
               ...field,
-              shareddetails: {
-                ...shared,
+
                 status: "inactive"
-              }
+              
             }
           }
         }
       };
     });
   };
-
-
-
-
-
-
 
   const handleTemplateChange = (e, fieldKey) => {
     const { name, value } = e.target;
@@ -616,46 +751,56 @@ console.log(newTemplates)
             ...prev[selectedTemplate].textFields,
             [fieldKey]: {
               ...currentField,
-              [name]: newValue
+              [name]: newValue,
+              field_name: currentField.field_name || fieldKey
             }
           }
         }
       };
     });
   };
+  console.log(newTemplates)
 
 
   console.log(newTemplates)
 
-
-
-
   const handleImageChange = (side, fieldName, key, value) => {
-    const currentField = newTemplates[selectedTemplate].imageFields[fieldName];
-    const isFieldLabelValid = key === "field_label" ? value.length <= currentField.label_length : true;
-    const newValue =
-      key === "label_length" || key.startsWith("circle_position") || key === "image_height" || key === "image_width" || key === "circle_diameter"
-        ? Number(value)
-        : key === "field_label"
-          ? isFieldLabelValid
-            ? value
-            : currentField[key]
-          : value;
+  const currentField = newTemplates[side]?.imageFields?.[fieldName];
 
-    setNewTemplates(prev => ({
-      ...prev,
-      [side]: {
-        ...prev[side],
-        imageFields:{
-          ...prev[side].imageFields,
-          [fieldName]: {
+  if (!currentField) return;
+
+  const isFieldLabelValid = key === "field_label"
+    ? value.length <= (currentField.label_length ?? 255)
+    : true;
+
+  const newValue =
+    key === "label_length" ||
+    key.startsWith("circle_position") ||
+    key === "image_height" ||
+    key === "image_width" ||
+    key === "circle_diameter"
+      ? Number(value)
+      : key === "field_label"
+        ? isFieldLabelValid
+          ? value
+          : currentField[key]
+        : value;
+
+  setNewTemplates(prev => ({
+    ...prev,
+    [side]: {
+      ...prev[side],
+      imageFields: {
+        ...prev[side].imageFields,
+        [fieldName]: {
           ...currentField,
           [key]: newValue,
         },
-        }
       },
-    }));
-  };
+    },
+  }));
+};
+
 
   console.log(newTemplates);
 
@@ -731,7 +876,7 @@ console.log(newTemplates)
   };
 
 
-  const handleSaveTemplate = (newTemplates) => {
+  const handleSaveTemplateDetail = (newTemplates) => {
 
 
     /*const enabledText = () => {
@@ -810,19 +955,12 @@ console.log(newTemplates)
     //dispatch(saveIdDetails({Side:selectedTemplate,Text:enabledText(),TextName:enabledTextName().field_name,Image:enabledImages()}));
     console.log("template data",newTemplates);
     console.log("enabled",enableField);
-    dispatch(saveTemplate({
-  TemplateData: {
-    ...newTemplates,
-    front: {
-      ...newTemplates.front,
-      templateBackground: {
-        ...newTemplates.front.templateBackground,
-        image: null // or remove `image`
-      }
-    }
-  },
-  Enabled: enableField
-}));
+    dispatch(saveIdDetails({side:selectedTemplate,detailData:newTemplates}));
+  }
+
+  const handleSaveTemplate=(newTemplates,selected)=>{
+    console.log(selected)
+    dispatch(saveTemplate({TemplateData:newTemplates,selected:selected,enabled:enableField}));
   }
 
   const handleViewTemplate = (id) => {
@@ -836,6 +974,8 @@ const fieldsToRender = textFieldsToRender
       ([key, field]) => enableField?.[selectedTemplate]?.[key]
     )
   : [];
+
+  console.log(selectedTemplateFields)
 
 
 
@@ -886,7 +1026,16 @@ const fieldsToRender = textFieldsToRender
             <option value="back">Back</option>
             <option value="badge">Badge</option>
           </select>
+
+          
+
+          
           {selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
+            <>
+            <svg ref={qrRef} style={{display:"none"}}>
+          <QRCode value="hi" />
+        </svg>
+
             <Stage className="stage" width={700} height={600}>
               <Layer>
                 <KonvaImage
@@ -895,29 +1044,51 @@ const fieldsToRender = textFieldsToRender
                   height={600}
 
                 />
-                {image && enableField[selectedTemplate]?.['photo'] && (
-                  <>
+                
+  {
+  (
+    image && 
+    newTemplates?.[selectedTemplate]?.imageFields?.['photo']?.status==='active'
+  ) && (
+    <Image
+      x={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positionx) || 50}
+      y={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positiony) || 50}
+      image={image}
+      width={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_width) || 150}
+      height={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_height) || 150}
+      stroke={
+        newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || imageMaskColor
+      }
+      strokeWidth={
+        Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_mask_thickness) || 2
+      }
+      cornerRadius={
+        Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || imageCircleDiameter) / 2
+      }
+      rotation={0}
+    />
+  )
+}
 
-                    <Image
-                      x={newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positionx || 50}
-                      y={newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positiony || 50}
-                      image={image}
-                      width={newTemplates[selectedTemplate]?.imageFields?.photo?.image_width || 150}
-                      height={newTemplates[selectedTemplate]?.imageFields?.photo?.image_height || 150}
-                      stroke={newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || imageMaskColor}
-                      strokeWidth={newTemplates[selectedTemplate]?.imageFields?.photo?.imageMaskThickness || 2}
-                      cornerRadius={
-                        //newTemplates[selectedTemplate]?.photo?.is_circle
-                           (newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || imageCircleDiameter) / 2
-                         // : 0
-                      }
-                      rotation={0}
-                    />
-                  </>
-                )}
+{(qrCodeImage && newTemplates?.[selectedTemplate]?.imageFields?.['qrcode']?.status==='active')&&(
+  <>
+  <Image image={qrCodeImage}
+ x={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positionx || 50} 
+ y={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positiony || 50}
+  width={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_width || 150} 
+  height={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_height || 150}/>
+  </>
+)}
 
 
-                {logo && enableField[selectedTemplate]?.['logo'] && (
+
+
+
+
+                {(
+    logo && 
+    newTemplates?.[selectedTemplate]?.imageFields?.['logo']?.status==='active'
+  ) && (
                   <>
 
 
@@ -925,11 +1096,11 @@ const fieldsToRender = textFieldsToRender
                     <Image
                       x={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positionx || 50}
                       y={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positiony || 50}
-                      image={logoImage}
+                      image={logo}
                       width={newTemplates[selectedTemplate]?.imageFields?.logo?.image_width || 150}
                       height={newTemplates[selectedTemplate]?.imageFields?.logo?.image_height || 150}
                       stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || imageMaskColor}
-                      strokeWidth={newTemplates[selectedTemplate]?.imageFields?.logo?.imageMaskThickness || 2}
+                      strokeWidth={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_mask_thickness || 2}
                       cornerRadius={
                         //newTemplates[selectedTemplate]?.logo?.logo_is_circle
                            (newTemplates[selectedTemplate]?.imageFields?.logo?.circle_diameter || imageCircleDiameter) / 2
@@ -941,85 +1112,63 @@ const fieldsToRender = textFieldsToRender
                 )}
                 {newTemplates?.[selectedTemplate]?.textFields &&
   Object.entries(newTemplates[selectedTemplate].textFields)
-    .filter(([key, field]) => field.status==="active")
-    .map(([key, field]) =>   {
+    .filter(([_, field]) => field.status !== "inactive")
+    .map(([fieldKey, field]) => {
+      // Optional debugging:
+      // console.log('Rendering field:', fieldKey, field);
 
-                
-                  let fieldValue = "N/A";
-                  switch (field.field_name) {
-                    case "orgname":
-                      fieldValue = orgname;
-                      break;
-                    case "motto":
-                      fieldValue = motto;
-                      break;
-                    case "mission":
-                      fieldValue = mission;
-                      break;
-                    case "vision":
-                      fieldValue = vision;
-                      break;
-                    case "coreValue":
-                      fieldValue = coreValue;
-                      break;
-                    case "orgAddress":
-                      fieldValue = orgAddress;
-                      break;
-                    case "orgPhone":
-                      fieldValue = orgPhone;
-                      break;
-                    case "orgAddress":
-                      fieldValue = orgAddress;
-                      break;
-                    case "website":
-                      fieldValue = website;
-                      break;
-                    case "orgEmail":
-                      fieldValue = orgEmail;
-                      break;
-                    case "fax":
-                      fieldValue = fax;
-                      break;
-                    case "tin":
-                      fieldValue = tin;
-                      break;
-                    case "abbreviation":
-                      fieldValue = abbreviation;
-                      break;
-                    default:
-                      fieldValue = sampleProfile?.[field.field_name] ?? "N/A";
-                  }
-                  const displayText = Array.isArray(fieldValue)
-                    ? fieldValue[0]
-                    : (fieldValue || "N/A");
+      let fieldValue = "N/A";
+      switch (field.field_name) {
+        case "orgname": fieldValue = orgname; break;
+        case "motto": fieldValue = motto; break;
+        case "mission": fieldValue = mission; break;
+        case "vision": fieldValue = vision; break;
+        case "coreValue": fieldValue = coreValue; break;
+        case "orgAddress": fieldValue = orgAddress; break;
+        case "orgPhone": fieldValue = orgPhone; break;
+        case "website": fieldValue = website; break;
+        case "orgEmail": fieldValue = orgEmail; break;
+        case "fax": fieldValue = fax; break;
+        case "tin": fieldValue = tin; break;
+        case "abbreviation": fieldValue = abbreviation; break;
+        default:
+          fieldValue = sampleProfile?.[field.field_name] ?? "N/A";
+      }
 
-                  const xPos = field.text_positionx ? Number(field.text_positionx) : 0;
-                  const yPos = field.text_positiony ? Number(field.text_positiony) : 0;
-                  const gap = Number(field.gap) || 0;
-                  return (
-                    <Group key={key}>
-                      <Text
-                        x={xPos}
-                        y={yPos}
-                        text={field.field_label}
-                        fill={field.text_font_color}
-                        fontFamily={field.text_font_type}
-                        fontSize={Number(field.text_font_size)}
-                        fontStyle="bold"
-                      />
-                      <Text
-                        x={xPos + gap}
-                        y={yPos}
-                        text={displayText}
-                        fill={field.text_font_color}
-                        fontFamily={field.text_font_type}
-                        fontSize={Number(field.text_font_size)}
-                      />
-                    </Group>
-                  );
-                })}
+      const displayText = Array.isArray(fieldValue)
+        ? fieldValue[0]
+        : (fieldValue || "N/A");
+
+      const xPos = field.text_positionx ? Number(field.text_positionx) : 0;
+      const yPos = field.text_positiony ? Number(field.text_positiony) : 0;
+      const gap = Number(field.text_gap) || 0;
+
+      return (
+        <Group key={fieldKey}>
+          <Text
+            x={xPos}
+            y={yPos}
+            text={field.field_label}
+            fill={field.text_font_color || "black"}
+            fontFamily={field.text_font_type || "Arial"}
+            fontSize={Number(field.text_font_size) || 16}
+            fontStyle="bold"
+          />
+          <Text
+            x={xPos + gap}
+            y={yPos}
+            text={displayText}
+            fill={field.text_font_color || "black"}
+            fontFamily={field.text_font_type || "Arial"}
+            fontSize={Number(field.text_font_size) || 16}
+          />
+        </Group>
+      );
+    })}
+
               </Layer>
             </Stage>
+            </>
           )}
 
 
@@ -1225,7 +1374,7 @@ const fieldsToRender = textFieldsToRender
                     </tr>
                   </tbody>
                 </table>
-                <button className="btn btn-primary" onClick={() => handleSaveTemplate(newTemplates)}>Save Template</button>
+                <button className="btn btn-primary" onClick={() => handleSaveTemplate(newTemplates,selectedTemplate)}>Save Template</button>
               </div>
 
             </div>
@@ -1233,6 +1382,7 @@ const fieldsToRender = textFieldsToRender
               <label>Choose fields to include</label>
               <select className="form-select">
                 <option value="photo" name="photo">Image</option>
+                <option value="qrcode" name="qrcode">QRCode</option>
                 <option value="en_name" name="en_name">Name</option>
                 <option value="job_position" name="job_position">Role</option>
                 <option value="id_issue_date" name="id_issue_date">Issue Date</option>
@@ -1276,7 +1426,7 @@ const fieldsToRender = textFieldsToRender
                 <Group>
                   <details className="collapsable">
                     <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'photo')} style={{ marginRight: '8px' }}></i>
+                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, selectedTemplate, 'photo')} style={{ marginRight: '8px' }}></i>
                       {newTemplates[selectedTemplate]?.['photo']?.field_label || 'PHOTO'}
                     </summary>
 
@@ -1409,8 +1559,8 @@ const fieldsToRender = textFieldsToRender
                         <input
                           type="number"
                           className="form-control"
-                          name="mask_thickness"
-                          onChange={handleMaskThickness}
+                          name="circle_mask_thickness"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name,e.target.value)}
 
                           disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
 
@@ -1472,6 +1622,209 @@ const fieldsToRender = textFieldsToRender
                 </Group>
 
               </Group>)}
+
+
+              {enableField[selectedTemplate]?.['qrcode'] && (<Group className="controls">
+                <Group>
+                  <details className="collapsable">
+                    <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
+                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'qrcode')} style={{ marginRight: '8px' }}></i>
+                      {newTemplates[selectedTemplate]?.['qrcode']?.field_label || 'qrcode'}
+                    </summary>
+
+
+                    <div className="nested-fields">
+
+                      <input
+                        type="radio"
+                        name="type"
+                        className="form-control"
+                        value="text"
+                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "text"}
+                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Text
+
+                      <input
+                        type="radio"
+                        name="type"
+                        className="form-control"
+                        value="number"
+                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "number"}
+                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Number
+
+                      <input
+                        type="radio"
+                        name="type"
+                        className="form-control"
+                        value="image"
+                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "image"}
+                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Image
+
+                      <details className="collapsable">
+                        <summary className="field">Field Label</summary>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="field_label"
+                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                          onChange={(e) =>
+                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                          }
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Label Length</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="label_length"
+                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                          onChange={(e) =>
+                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                          }
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Image X Position</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="circle_positionx"
+                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                          onChange={(e) =>
+                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                          }
+                        />
+                      </details>
+                      <details className="collapsable">
+                        <summary className="field">Image Y Position</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="circle_positiony"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Image Width</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="image_width"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+                          placeholder="width"
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Image Height</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="image_height"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+                          placeholder="height"
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Mask</summary>
+                        <label>
+                          <input
+                            type="radio"
+                            name="has_mask"
+                            className="form-control"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, true)}
+                          />
+                          Apply
+                        </label>
+
+                        <label style={{ marginLeft: '1rem' }}>
+                          <input
+                            type="radio"
+                            name="has_mask"
+                            className="form-control"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, false)}
+                          />
+                          Disable
+                        </label>
+
+                      </details>
+                      <details className="collapsable">
+                        <summary className="field">Mask thickness</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="circle_mask_thickness"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name,e.target.value)}
+
+                          disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
+
+                        />
+                      </details>
+                      <details className="collapsable">
+                        <summary className="field">Mask color</summary>
+                        <input
+                          type="color"
+                          className="form-control"
+                          name="circle_background"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+                          disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
+
+                        />
+                      </details>
+
+                      <details className="collapsable">
+                        <summary className="field">Circle</summary>
+                        <label>
+                          <input
+                            type="radio"
+                            className="form-control"
+                            name="is_circle"
+
+                            onChange={(e) => handleCircle(e, true)}
+                          />
+                          Apply
+                        </label>
+
+                        <label style={{ marginLeft: '1rem' }}>
+                          <input
+                            type="radio"
+                            className="form-control"
+                            name="is_circle"
+
+                            onChange={(e) => handleCircle(e, false)}
+                          />
+                          Disable
+                        </label>
+
+                      </details>
+                      <details className="collapsable">
+                        <summary className="field">Circle Diameter</summary>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="circle_diameter"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+                         // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
+                        />
+                      </details>
+
+
+                    </div>
+                  </details>
+
+
+                </Group>
+
+              </Group>)}
+
 
               {enableField[selectedTemplate]?.['logo'] && (<Group className="controls">
 
@@ -1613,10 +1966,10 @@ const fieldsToRender = textFieldsToRender
                         <input
                           type="number"
                           className="form-control"
-                          name="logo_mask_thickness"
-                          onChange={handleLogoMaskThickness}
+                          name="circle_mask_thickness"
+                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name,e.target.value)}
 
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.logo_has_mask}
+                          disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
 
                         />
                       </details>
@@ -1712,6 +2065,7 @@ const fieldsToRender = textFieldsToRender
                         checked={field.type === "image"}
                         onChange={(e) => handleTemplateChange(e, key)} />Image
 
+                      <label className="field">X Position</label>
                       <input
                         type="number"
                         className="form-control"
@@ -1720,6 +2074,7 @@ const fieldsToRender = textFieldsToRender
                         onChange={(e) => handleTemplateChange(e, key)}
 
                       />
+                      <label className="field">Y Position</label>
                       <input
                         type="number"
                         className="form-control"
@@ -1728,6 +2083,7 @@ const fieldsToRender = textFieldsToRender
                         onChange={(e) => handleTemplateChange(e, key)}
 
                       />
+                      <label className="field">Font Size</label>
                       <input
                         type="number"
                         className="form-control"
@@ -1736,17 +2092,20 @@ const fieldsToRender = textFieldsToRender
                         onChange={(e) => handleTemplateChange(e, key)}
 
                       />
+                      <label className="field">Label length</label>
                       <input type="number"
                         className="form-control"
                         name="label_length"
                         value={field.label_length ?? 'Label length'}
                         onChange={(e) => handleTemplateChange(e, key)} />
+                        <label className="field">Field Label</label>
                       <input
                         type="text"
                         className="form-control"
                         name="field_label"
                         value={field.field_label ?? ''}
                         onChange={(e) => handleTemplateChange(e, key)} />
+                        <label className="field">Font Color</label>
                       <input
                         type="color"
                         className="form-control"
@@ -1754,12 +2113,14 @@ const fieldsToRender = textFieldsToRender
                         value={field.text_font_color ?? ''}
                         onChange={(e) => handleTemplateChange(e, key)}
                       />
+                      <label className="field">Text gap</label>
                       <input
                         type="number"
                         className="form-control"
-                        name="gap"
-                        value={field.gap ?? ''}
+                        name="text_gap"
+                        value={field.text_gap ?? ''}
                         onChange={(e) => handleTemplateChange(e, key)} />
+                        <label className="field">Font Type</label>
                       <select
                         name="text_font_type"
                         value={field.text_font_type ?? ''}
@@ -1776,7 +2137,7 @@ const fieldsToRender = textFieldsToRender
 
                   </div>
                 ))}
-                <button className="btn btn-primary" onClick={() => handleSaveTemplate(newTemplates)}>Update</button>
+                <button className="btn btn-primary" onClick={() => handleSaveTemplateDetail(newTemplates)}>Update</button>
 
               </div>
             </div>
