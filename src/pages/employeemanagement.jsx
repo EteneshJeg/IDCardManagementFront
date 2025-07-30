@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
+
 
 import { useState } from "react"
 
 import { createProfile, getProfile, updateProfile, deleteProfile, deleteProfileBunch, } from "../features/profileSlice"
+import { getUser } from "../features/userSlice";
 
 import { fetchJobPositions } from "../features/jobPositionSlice";
 import { fetchJobTitleCategories } from "../features/jobTitleCategorySlice";
@@ -14,10 +13,12 @@ import { getRegion } from "../features/regionSlice";
 import { getMaritalStatus } from "../features/maritalStatusSlice";
 import { fetchOrganizationUnits } from "../features/organizationUnitSlice";
 import { getZone } from "../features/zoneSlice";
-import { generateIdBunch } from "../features/idCardSlice";
+
+import { fetchRoles } from "../features/roleSlice";
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router"
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 export default function EmployeeManagement() {
   useEffect(() => {
@@ -35,9 +36,11 @@ export default function EmployeeManagement() {
       document.body.removeChild(script);
     };
   }, []);
+  const {t}=useTranslation();
 
   const dispatch = useDispatch();
 
+  const [userInfo, setUserInfo] = useState();
   const [zoneInfo, setZoneInfo] = useState();
   const [woredaInfo, setWoredaInfo] = useState();
   const [regionInfo, setRegionInfo] = useState();
@@ -46,7 +49,9 @@ export default function EmployeeManagement() {
   const [jobTitleCatInfo, setJobTitleCatInfo] = useState();
   const [organizationUnitInfo, setOrganizationUnitInfo] = useState();
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [currentUser,setCurrentUser]=useState(null);
+  const [currentRole,setCurrentRole]=useState([]);
+
 
   const [profilePhoto, setProfilePhoto] = useState();
 
@@ -54,12 +59,30 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getZone())
       .then((data) => {
-       
+
         const dataitem = data.payload;
-      
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setZoneInfo(normalizedData);
+      })
+      .catch((error) => {
+        console.log('Error fetching data', error);
+      })
+      .finally(() => setIsLoading(false));
+  }, [dispatch]);
+
+  //get user data
+  useEffect(() => {
+    setIsLoading(true);
+    dispatch(getUser())
+      .then((data) => {
+
+        const dataitem = data.payload;
+        console.log(dataitem)
+
+        const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+        setUserInfo(normalizedData);
       })
       .catch((error) => {
         console.log('Error fetching data', error);
@@ -71,9 +94,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getRegion())
       .then((data) => {
-        
+
         const dataitem = data.payload;
-        
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setRegionInfo(normalizedData);
@@ -88,9 +111,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getWoreda())
       .then((data) => {
-        
+
         const dataitem = data.payload;
-        
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setWoredaInfo(normalizedData);
@@ -105,9 +128,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(getMaritalStatus())
       .then((data) => {
-        
+
         const dataitem = data.payload;
-        
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setMaritalInfo(normalizedData);
@@ -122,9 +145,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchOrganizationUnits())
       .then((data) => {
-        
+
         const dataitem = data.payload.data;
-        
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setOrganizationUnitInfo(normalizedData);
@@ -141,9 +164,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchJobPositions())
       .then((data) => {
-        
+
         const dataitem = data.payload;
-        
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setJobPositionInfo(normalizedData);
@@ -158,9 +181,9 @@ export default function EmployeeManagement() {
     setIsLoading(true);
     dispatch(fetchJobTitleCategories())
       .then((data) => {
-       
+
         const dataitem = data.payload;
-       
+
 
         const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
         setJobTitleCatInfo(normalizedData);
@@ -172,7 +195,7 @@ export default function EmployeeManagement() {
   }, [dispatch]);
 
 
-  const [selectedUsers, setSelectedUsers] = useState({});
+  const [selectedEmployees, setSelectedEmployees] = useState({});
   const [startSelection, setStartSelection] = useState(false);
   const { profiles } = useSelector((state => state.profile));
   const [selectedFilter, setSelectedFilter] = useState("show all");
@@ -182,6 +205,10 @@ export default function EmployeeManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isIdModalOpen, setIsIdModalOpen] = useState(false);
+  const [permissions, setPermissions] = useState([]);
+  const role = useSelector((state) => state.user.role);
+  const user=useSelector((state)=>state.user.user);
+  console.log(role)
 
   const [formData, setFormData] = useState({
     id: '',
@@ -190,7 +217,7 @@ export default function EmployeeManagement() {
     sex: '',
     date_of_birth: '',
     joined_date: '',
-    email: '',
+    user_id: '',
     photo: '',
     phone_number: '',
     organization_unit_id: '',
@@ -219,7 +246,7 @@ export default function EmployeeManagement() {
     sex: FormData?.sex || "",
     date_of_birth: FormData?.date_of_birth || "",
     joined_date: FormData?.joined_date || "",
-    email: FormData?.email || "",
+    user_id: FormData?.user_id || "",
     photo: FormData?.photo || "",
     phone_number: FormData?.phone_number || "",
     organization_unit_id: FormData?.organization_unit_id || "",
@@ -246,7 +273,7 @@ export default function EmployeeManagement() {
 
 
   const [employeeProfile, setEmployeeProfile] = useState([]);
-  const [selectedUser, setSelectedUser] = useState({});
+  const [selectedEmployee, setSelectedEmployee] = useState({});
   const [searchItem, setSearch] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -260,26 +287,72 @@ export default function EmployeeManagement() {
   const currentdata = (employeeProfile || []).slice(firstItemIndex, lastItemIndex);
 
   const [extractData, setExtractData] = useState([]);
+  
 
-  const nextPage = () => {
-    console.log(currentPage)
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+useEffect(()=>{
+let token=JSON.parse(localStorage.getItem('token'));
+if(token){
+  let userId=JSON.parse(localStorage.getItem('userId'));
+   console.log(userId);
+   async function fetchUser(){
+      let response=await axios.get(`http://localhost:8000/api/users/${userId}`,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      })
+      console.log(response);
+      let data=response.data;
+      console.log(data);
+      setCurrentUser(data.user);
+      setCurrentRole(data.role);
+   }
+   fetchUser();
+  
+}
+else{
+  console.log('no current user');
+}
+},[user]);
 
-  }
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      //setRoles(normalizedData);
+      if(role.length!==0)
+        {const rolesExist = normalizedData.filter(data => role.includes(data.name)).map(data => ({
+        id: data.id,
+        name: data.name,
+        permissions: data.permissions
+      }))
+      console.log(rolesExist);
+      const allPermissions = rolesExist.flatMap(role => role.permissions);
+      setPermissions(allPermissions);}
+      else{
+        console.log(currentRole)
+        const rolesExist=dataitem.filter(data=>currentRole.includes(data.name)).map(data=>({
+        id:data.id,
+        name:data.name,
+        permissions:data.permissions
+      }))
+      console.log(rolesExist);
+      const allPermissions = rolesExist.flatMap(role => role.permissions);
+      setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch,currentRole]);
 
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  }
+  console.log(permissions)
 
   const handleChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
     setFormData({ ...formData, [e.target.name]: e.target.value });
     //console.log(formData);
   }
+  console.log(formData);
 
   useEffect(() => {
     const users = Object.values(profileData || {});
@@ -303,7 +376,7 @@ export default function EmployeeManagement() {
           if (Array.isArray(action.payload) && action.payload.length > 0) {
             setEmployeeProfile(action.payload[0]?.data);
             setProfilePhoto(action.payload[0]?.data?.photo_url);
-           
+
           } else {
             // Handle empty or unexpected payload gracefully
             setEmployeeProfile(null);
@@ -341,63 +414,66 @@ export default function EmployeeManagement() {
     }
   }
 
-  const validateForm = (formData) => {
+  const PHONE_REGX=/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
+  const NAME_REGX=/^[\p{L}\s\-.'’]+$/u;
 
 
+  const [validName,setValidName]=useState();
+  const [validPhone,setValidPhone]=useState();
 
-    if (formData.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+  const [nameFocus,setNameFocus]=useState();
+  const [phoneFocus,setPhoneFocus]=useState();
 
-      toast.error('Email format is incorrect');
+   useEffect(()=>{
+      const res=NAME_REGX.test(formData.en_name);
+      console.log(res);
+      console.log(formData.en_name);
+      setValidName(res);
+    },[formData]);
 
-      return false;
-
-    }
-
-    else if (formData.phone_number && !/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(formData.phone_number)) {
-
-      toast.error('Phone format is incorrect');
-
-      return false;
-
-    }
-
-
-
-    else return true;
-
-  }
+    useEffect(()=>{
+      const res=PHONE_REGX.test(formData.phone_number);
+      console.log(res);
+      console.log(formData.phone_number);
+      setValidPhone(res);
+    },[formData]);
 
   const handleCreateProfile = () => {
-    if (!formData.employment_id) {
-
-      toast.error('Employment ID is required');
-
-      return;
-
-    }
-
-    if (!formData.email) {
-
-      toast.error('Employee email is required');
+    if (!validName||!formData.sex||!formData.title||!formData.user_id||!formData.employment_id||!validPhone||
+      !formData.organization_unit_id||!formData.job_position_id||!formData.job_title_category_id||!formData.marital_status_id||!formData.nation||
+      !formData.region_id||!formData.zone_id||!formData.woreda_id
+     ) {
+console.log(validName);
+console.log(validPhone)
+      toast.error(t('therearemissingfields'));
 
       return;
 
     }
-
-    if (validateForm(formData)) {
-
+    else{
       dispatch(createProfile(formData));
-
-      setIsCreateModalOpen(false);
-
+      setIsCreateModalOpen(false)
     }
   }
 
   const handleUpdateProfile = (id) => {
     console.log(id);
     console.log(formData)
-    dispatch(updateProfile({ Id: id, rawForm: formData }));
+    if (!validName||!formData.sex||!formData.title||!formData.user_id||!formData.employment_id||!validPhone||
+      !formData.organization_unit_id||!formData.job_position_id||!formData.job_title_category||!formData.marital_status_id||!formData.nation||
+      !formData.region_id||!formData.zone_id||!formData.woreda_id
+     ) {
+
+      toast.error(t('therearemissingfields'));
+
+      return;
+
+    }
+    else{
+      dispatch(updateProfile({ Id: id, rawForm: formData }));
     setIsEditModalOpen(false);
+    }
+    
   }
 
   const handleDeleteProfile = (id) => {
@@ -408,7 +484,7 @@ export default function EmployeeManagement() {
 
   const handleSelectedRows = (rowId) => {
 
-    setSelectedUsers((prev) => {
+    setSelectedEmployees((prev) => {
 
       const updatedSelection = {
 
@@ -449,11 +525,11 @@ export default function EmployeeManagement() {
 
   const handleSelectAll = () => {
 
-    if (Object.keys(selectedUsers).length === employeeProfile.length) {
+    if (Object.keys(selectedEmployees).length === employeeProfile.length) {
 
 
 
-      setSelectedUsers({});
+      setSelectedEmployees({});
 
       setStartSelection({});
 
@@ -469,7 +545,7 @@ export default function EmployeeManagement() {
 
       });
 
-      setSelectedUsers(newSelected);
+      setSelectedEmployees(newSelected);
 
       setStartSelection(newSelected)
 
@@ -480,8 +556,8 @@ export default function EmployeeManagement() {
 
 
   const handleDeleteBunch = () => {
-    console.log(selectedUsers);
-    dispatch(deleteProfileBunch(selectedUsers)).then((data) => {
+    console.log(selectedEmployees);
+    dispatch(deleteProfileBunch(selectedEmployees)).then((data) => {
       console.log("Updated Users:", data.payload);
     });
   };
@@ -489,6 +565,8 @@ export default function EmployeeManagement() {
     setExtractData({ ...extractData, [e.target.name]: e.target.value })
     console.log(extractData);
   }
+
+
 
   const handleDownload = async () => {
     if (!frontRef.current || !backRef.current) {
@@ -550,21 +628,60 @@ export default function EmployeeManagement() {
 
   const handleCreateId = () => {
 
-    dispatch(generateIdBunch({ selectedUsers: selectedUsers, FormData: extractData }));
+  
+      
+
+        const selectedIds = Object.keys(selectedEmployees).map(Number); // convert ["12", "18"] to [12, 18]
+
+const matchingSelectedEmployees = employeeProfile.filter(employee =>
+  selectedIds.includes(employee.id)
+);
+
+
+        
+       //   dispatch(generateIdBunch({Employees:matchingSelectedEmployees,rawForm:extractData}));
 
     setIsCreateModalOpen(false)
 
   }
+const CloseIcon = () => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        opacity="0.5"
+        x="6"
+        y="17.3137"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(-45 6 17.3137)"
+        fill="currentColor"
+      />
+      <rect
+        x="7.41422"
+        y="6"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(45 7.41422 6)"
+        fill="currentColor"
+      />
+    </svg>
+  );
 
-  
 
-const Loader = () => (
-  <div className="d-flex justify-content-center py-10">
-    <div className="spinner-border text-primary" role="status">
-      <span className="visually-hidden">Loading...</span>
+  const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
     </div>
-  </div>
-);
+  );
 
 
 
@@ -584,7 +701,7 @@ const Loader = () => (
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Employee Management
+              {t('employeemanagement')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
@@ -592,51 +709,56 @@ const Loader = () => (
                   href="/"
                   className="text-muted text-hover-primary"
                 >
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">Employee Management</li>
+              <li className="breadcrumb-item text-muted">{t('employeemanagement')}</li>
             </ul>
           </div>
 
           {/* Buttons */}
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <a
-              href="#"
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsCreateModalOpen(true);
-              }}
-            >
-              Add Employee
-            </a>
-            <a
-              href="#"
-              className={Object.keys(selectedUsers).length > 0
-                ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                : "hide"
-              }
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </a>
-            <a
-              href="#"
-              className={Object.keys(selectedUsers).length > 0
-                ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                : "hide"
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setIsIdModalOpen(true);
-              }}
-            >
-              Issue bunch ids
-            </a>
+            {permissions.some(p =>
+              p.name.includes('create Employee')) ? (<a
+                href="#"
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsCreateModalOpen(true);
+                }}
+              >
+                {t('addemployee')}
+              </a>) : null}
+
+            {permissions.some(p =>
+              p.name.includes('delete Employee')) ? (<a
+                href="#"
+                className={Object.keys(selectedEmployees).length > 0
+                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                  : "hide"
+                }
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </a>) : null}
+
+            {permissions.some(p =>
+              p.name.includes('create IdentityCardTemplateDetail')) ? (<a
+                href="#"
+                className={Object.keys(selectedEmployees).length > 0
+                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                  : "hide"
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsIdModalOpen(true);
+                }}
+              >
+                Issue bunch ids
+              </a>) : null}
           </div>
           {isCreateModalOpen && (
             <div
@@ -648,64 +770,79 @@ const Loader = () => (
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">
-                    <h5 className="modal-title">Add Employee</h5>
-
+                    <h5 className="modal-title">{t('addemployee')}</h5>
+             
+              <span className="svg-icon svg-icon-1" onClick={() => setIsCreateModalOpen(false)}>
+                    <CloseIcon /></span>
                   </div>
 
                   <fieldset>
-                    <legend>Profile Details</legend>
+                    <legend>{t('employeedetails')}</legend>
                     {formData.photo ? <img src={formData.photo || ""} /> : null}
                     <input type="file" onChange={imageUploader}></input>
                     <form className="p-5 bg-white rounded shadow-sm">
                       <div className="row g-4">
                         {/* Name */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Name</label>
-                          <input type="text" name="en_name" className="form-control" onChange={handleChange} />
+                          <label className="form-label fw-semibold required">{t('name')}</label>
+                          <input type="text" name="en_name" className="form-control" onChange={handleChange}
+                           onFocus={()=>setNameFocus(true)} 
+                           onBlur={()=>setNameFocus(false)}/>
                         </div>
+                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={nameFocus&&!validName?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
+                         Please enter a correct name</p>
 
                         {/* Title */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Title</label>
+                          <label className="form-label fw-semibold required">{t('title')}</label>
                           <input type="text" name="title" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Sex */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Sex</label>
+                          <label className="form-label fw-semibold required">{t('sex')}</label>
                           <select className="form-select" name="sex" onChange={handleChange}>
-                            <option value="">Select...</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                            <option value="">{t('select')}</option>
+                            <option value="male">{t('male')}</option>
+                            <option value="female">{t('female')}</option>
                           </select>
                         </div>
 
                         {/* Date of Birth */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Date of Birth</label>
+                          <label className="form-label fw-semibold">{t('dateofbirth')}</label>
                           <input type="date" name="date_of_birth" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Joined Date */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Joined Date</label>
+                          <label className="form-label fw-semibold">{t('joineddate')}</label>
                           <input type="date" name="joined_date" className="form-control" onChange={handleChange} />
                         </div>
 
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Email</label>
-                          <input type="email" name="email" className="form-control" onChange={handleChange} />
+                          <label className="form-label fw-semibold required">{t('username')}</label>
+                          <select className="form-select" name="user_id" onChange={handleChange}>
+                            <option value="">{t('select')}</option>
+                            {userInfo.map((data) => {
+                              return <option value={data.id}>{data.name}</option>
+                            })}
+                          </select>
                         </div>
 
                         {/* Phone Number */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Phone Number</label>
-                          <input type="tel" name="phone_number" className="form-control" onChange={handleChange} />
+                          <label className="form-label fw-semibold required">{t('phonenumber')}</label>
+                          <input type="tel" name="phone_number" className="form-control" onChange={handleChange}
+                          onFocus={()=>setPhoneFocus(true)}
+                          onBlur={()=>setPhoneFocus(false)} />
                         </div>
+                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={phoneFocus&&!validPhone?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
+                         Please enter a correct phone number</p>
 
                         {/* Organization Unit */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Organization Unit</label>
+                          <label className="form-label fw-semibold required">{t('organizationunit')}</label>
                           <select className="form-select" name="organization_unit_id" onChange={handleChange}>
                             <option value="">Select...</option>
                             {organizationUnitInfo.map((data) => {
@@ -716,9 +853,9 @@ const Loader = () => (
 
                         {/* Job Position */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Job Position</label>
+                          <label className="form-label fw-semibold required">{t('jobposition')}</label>
                           <select className="form-select" name="job_position_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {jobPositionInfo.map((data) => {
                               return <option value={data.id}>{data.job_description}</option>
                             })}
@@ -727,9 +864,9 @@ const Loader = () => (
 
                         {/* Job Title Category */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Job Title Category</label>
+                          <label className="form-label fw-semibold required">{t('jobtitlecategory')}</label>
                           <select className="form-select" name="job_title_category_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {jobTitleCatInfo.map((data) => {
                               return <option value={data.id}>{data.name}</option>
                             })}
@@ -738,15 +875,15 @@ const Loader = () => (
 
                         {/* Salary Amount */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Salary Amount</label>
+                          <label className="form-label fw-semibold">{t('salary')}</label>
                           <input type="text" name="salary" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Marital Status */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Marital Status</label>
+                          <label className="form-label fw-semibold required">{t('maritalstatus')}</label>
                           <select className="form-select" name="marital_status_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {maritalInfo.map((data) => {
                               console.log(maritalInfo)
                               return <option value={data.id}>{data.name}</option>
@@ -756,45 +893,45 @@ const Loader = () => (
 
                         {/* Nation */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Nation</label>
+                          <label className="form-label fw-semibold required">{t('nation')}</label>
                           <input type="text" name="nation" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Employment ID */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold required">Employment ID</label>
+                          <label className="form-label fw-semibold required">{t('employmentid')}</label>
                           <input type="text" name="employment_id" className="form-control" onChange={handleChange} required />
                         </div>
 
                         {/* Job Position Start */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Job Position Start Date</label>
+                          <label className="form-label fw-semibold">{t('jobpositionstartdate')}</label>
                           <input type="date" name="job_position_start_date" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Job Position End */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Job Position End Date</label>
+                          <label className="form-label fw-semibold">{t('jobpositionenddate')}</label>
                           <input type="date" name="job_position_end_date" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Address */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Address</label>
+                          <label className="form-label fw-semibold">{t('address')}</label>
                           <input type="text" name="address" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* House Number */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">House Number</label>
+                          <label className="form-label fw-semibold">{t('housenumber')}</label>
                           <input type="text" name="house_number" className="form-control" onChange={handleChange} />
                         </div>
 
                         {/* Region */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Region</label>
+                          <label className="form-label fw-semibold required">{t('region')}</label>
                           <select className="form-select" name="region_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {regionInfo.map((data) => {
                               return <option value={data.id}>{data.name}</option>
                             })}
@@ -803,9 +940,9 @@ const Loader = () => (
 
                         {/* Zone */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Zone</label>
+                          <label className="form-label fw-semibold required">{t('zone')}</label>
                           <select className="form-select" name="zone_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {zoneInfo.map((data) => {
                               console.log(zoneInfo)
                               return <option value={data.id}>{data.name}</option>
@@ -815,9 +952,9 @@ const Loader = () => (
 
                         {/* Woreda */}
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Woreda</label>
+                          <label className="form-label fw-semibold required">{t('woreda')}</label>
                           <select className="form-select" name="woreda_id" onChange={handleChange}>
-                            <option value="">Select...</option>
+                            <option value="">{t('select')}</option>
                             {woredaInfo.map((data) => {
                               return <option value={data.id}>{data.name}</option>
                             })}
@@ -831,15 +968,9 @@ const Loader = () => (
                   </fieldset>
 
                   <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-light"
-                      onClick={() => setIsCreateModalOpen(false)}
-                    >
-                      Close
-                    </button>
+                    
                     <button type="button" className="btn btn-primary" onClick={handleCreateProfile}>
-                      Save changes
+                      {t('savechanges')}
                     </button>
                   </div>
                 </div>
@@ -921,7 +1052,7 @@ const Loader = () => (
               <div className="card-header pt-7">
                 {/*begin::Title*/}
                 <h3 className="card-title align-items-start flex-column">
-                  <span className="card-label fw-bold text-gray-800">Employee Information</span>
+                  <span className="card-label fw-bold text-gray-800">{t('employeeinformation')}</span>
 
                 </h3>
                 {/*end::Title*/}
@@ -932,7 +1063,7 @@ const Loader = () => (
                     {/*begin::Destination*/}
                     <div className="d-flex align-items-center fw-bold">
                       {/*begin::Label*/}
-                      <div className="text-gray-400 fs-7 me-2">ID Status</div>
+                      <div className="text-gray-400 fs-7 me-2">{t('idstatus')}</div>
                       {/*end::Label*/}
                       {/*begin::Select*/}
                       <select className="form-select form-select-transparent text-graY-800 fs-base lh-1 fw-bold py-0 ps-3 w-auto"
@@ -940,7 +1071,7 @@ const Loader = () => (
                         data-placeholder="ID status" value={selectedFilter}
                         onChange={(e) => setSelectedFilter(e.target.value)}>
 
-                        <option value="show all" >Show All</option>
+                        <option value="show all" >{t('showall')}</option>
                         <option value="Active">Active</option>
                         <option value="Expired">Expired</option>
                       </select>
@@ -960,7 +1091,7 @@ const Loader = () => (
                         </svg>
                       </span>
                       {/*end::Svg Icon*/}
-                      <input type="text" data-kt-table-widget-4="search" className="form-control w-150px fs-7 ps-12" placeholder="Search" onChange={(e) => setSearch(e.target.value)} />
+                      <input type="text" data-kt-table-widget-4="search" className="form-control w-150px fs-7 ps-12" placeholder={t('search')} onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     {/*end::Search*/}
                   </div>
@@ -978,31 +1109,31 @@ const Loader = () => (
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <div className="d-flex align-items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={Object.keys(selectedUsers).length === (employeeProfile?.length || 0)}
+                        <div className="d-flex align-items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={Object.keys(selectedEmployees).length === (employeeProfile?.length || 0)}
 
-                              onChange={handleSelectAll}
-                              title={
-                                Object.keys(selectedUsers).length === (employeeProfile?.length || 0)
-                                  ? 'Deselect All'
-                                  : 'Select All'
-                              }
+                            onChange={handleSelectAll}
+                            title={
+                              Object.keys(selectedEmployees).length === (employeeProfile?.length || 0)
+                                ? 'Deselect All'
+                                : 'Select All'
+                            }
 
-                              style={{ cursor: 'pointer' }}
-                            />      S.N.
+                            style={{ cursor: 'pointer' }}
+                          />      {t('sn')}.
                         </div>
                       </th>
-                      <th className="text-start min-w-100px">Profile Picture</th>
-                      <th className="text-start min-w-100px">Name</th>
-                      <th className="text-start min-w-125px">Employment ID</th>
-                      <th className="text-start min-w-100px">Sex</th>
-                      <th className="text-start min-w-100px">Phone Number</th>
-                      <th className="text-start min-w-100px">Organization Unit</th>
-                      <th className="text-start min-w-100px">Job Position</th>
-                      <th className="text-start min-w-100px">ID Status</th>
-                      <th className="text-start min-w-100px">Actions</th>
+                      <th className="text-start min-w-100px">{t('profilepicture')}</th>
+                      <th className="text-start min-w-100px">{t('name')}</th>
+                      <th className="text-start min-w-125px">{t('employmentid')}</th>
+                      <th className="text-start min-w-100px">{t('sex')}</th>
+                      <th className="text-start min-w-100px">{t('phonenumber')}</th>
+                      <th className="text-start min-w-100px">{t('organizationunit')}</th>
+                      <th className="text-start min-w-100px">{t('jobposition')}</th>
+                      <th className="text-start min-w-100px">{t('idstatus')}</th>
+                      <th className="text-start min-w-100px">{t('actions')}</th>
 
                     </tr>
                     {/*end::Table row*/}
@@ -1012,438 +1143,472 @@ const Loader = () => (
                   <tbody className="fw-bold text-gray-600">
 
                     {isLoading ? (
-                        <tr>
-                          <td colSpan="8" className="text-center">
-                            <Loader />
-                          </td>
-                        </tr>
-                      ) :
-                    Array.isArray(employeeProfile) ? (
-                      currentdata.length > 0 ? (
-                        currentdata.filter((row) => {
-                          // console.log(row);
-                          const matchSearch = searchItem.toLowerCase() === ''
-                            ? true
-                            : String(row.en_name).toLowerCase().includes(searchItem.toLowerCase());
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader />
+                        </td>
+                      </tr>
+                    ) :
+                      Array.isArray(employeeProfile) ? (
+                        currentdata.length > 0 ? (
+                          currentdata.filter((row) => {
+                            // console.log(row);
+                            const matchSearch = searchItem.toLowerCase() === ''
+                              ? true
+                              : String(row.en_name).toLowerCase().includes(searchItem.toLowerCase());
 
-                          //console.log(matchSearch)
-                          const matchFilter =
-                            selectedFilter === 'show all' ||
-                            row.id_status?.toLowerCase() === selectedFilter.toLowerCase();
-                          /*console.log(row.id_status)
-                          console.log(selectedFilter);
-                          console.log(matchFilter)*/
+                            //console.log(matchSearch)
+                            const matchFilter =
+                              selectedFilter === 'show all' ||
+                              row.id_status?.toLowerCase() === selectedFilter.toLowerCase();
+                            /*console.log(row.id_status)
+                            console.log(selectedFilter);
+                            console.log(matchFilter)*/
 
-                          return matchSearch && matchFilter
-                        })
-                          .map((row, index) => {
+                            return matchSearch && matchFilter
+                          })
+                            .map((row, index) => {
 
-                            return (
-                              <tr key={index} data-kt-table-widget-4="subtable_template">
-                                <td >
-                                  <div className="d-flex align-items-center gap-2">
-                                      <input type="checkbox" 
-                                      checked={!!selectedUsers[row.id]} 
-                                      onChange={() => handleSelectedRows(row.id)} />
-                                          {index + 1}
-                                  </div>
-                                </td>
-                                <td className="text-start pe-4">
-                                  <img
-  src={`http://localhost:8000/cors-image/${row.photo_url}`}
-  width="100"
-  height="100"
-  alt="User"
-  style={{
-    borderRadius: '50%',
-    objectFit: 'cover'
-  }}
-/>
+                              return (
+                                <tr key={index} data-kt-table-widget-4="subtable_template">
+                                  <td >
+                                    <div className="d-flex align-items-center gap-4">
+                                      <input type="checkbox"
+                                        checked={!!selectedEmployees[row.id]}
+                                        onChange={() => handleSelectedRows(row.id)} />
+                                      {index + 1}
+                                    </div>
+                                  </td>
+                                  <td className="text-start pe-4">
+                                    <img
+                                      src={`http://localhost:8000/cors-image/${row.photo_url}`}
+                                      width="50"
+                                      height="50"
+                                      alt="User"
+                                      style={{
+                                        borderRadius: '50%',
+                                        objectFit: 'cover'
+                                      }}
+                                    />
 
-                                </td>
+                                  </td>
 
-                                <td className="text-start">
-                                  {row.en_name}
-                                </td>
-                                <td className="text-start">
-                                  {row.employment_id}
-                                </td>
-                                <td className="text-start">
-                                  {row.sex}
-                                </td>
-                                <td className="text-start">
-                                  {row.phone_number}
-                                </td>
-                                <td className="text-start">
-                                  {row?.organization_unit?.en_name}
-                                </td>
-                                <td className="text-start">
-                                  {row?.job_position?.job_description}
-                                </td>
+                                  <td className="text-start">
+                                    {row.en_name}
+                                  </td>
+                                  <td className="text-start">
+                                    {row.employment_id}
+                                  </td>
+                                  <td className="text-start">
+                                    {row.sex}
+                                  </td>
+                                  <td className="text-start">
+                                    {row.phone_number}
+                                  </td>
+                                  <td className="text-start">
+                                    {row?.organization_unit?.en_name}
+                                  </td>
+                                  <td className="text-start">
+                                    {row?.job_position?.job_description}
+                                  </td>
 
-                                <td className="text-start">
-                                  <span className={`badge badge-${row.id_status && row.id_status.toLowerCase() === 'active' ? 'success' : 'danger'
-                                    }`}>
-                                    {row.id_status || 'Unknown'}
-                                  </span>
-                                </td>
+                                  <td className="text-start">
+                                    <span className={`badge badge-${row.id_status && row.id_status.toLowerCase() === 'active' ? 'success' : 'danger'
+                                      }`}>
+                                      {row.id_status || 'Unknown'}
+                                    </span>
+                                  </td>
 
-                                <td className="text-start">
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}> <i className="bi bi-eye-fill fs-4"></i></button>
+                                  
+
+                                  <td className="text-start">
+                                    {permissions.some(p =>
+                                      p.name.includes('read IdentityCardTemplateDetail')) ? (
+                                        <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}>
+                                           <i className="bi bi-eye-fill"></i>
+                                           </button>
+                                      ) : null}
+                                    
+
+                                      {permissions.some(p =>
+                                      p.name.includes('update Employee')) ? (
+                                        <button disabled={permissions.some(p =>
+                                      p.name.includes('update Employee')) ? false : true} className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" 
+                                      onClick={() => {
+                                        setFormData(row),
+                                       setIsEditModalOpen(true),
+                                        setSelectedEmployee(row) }}><i className="bi bi-pencil-fill"></i></button>
+                                      ) : null}
+
+                                    
+                                    {isEditModalOpen && (
+                                      <div
+                                        className="modal fade show"
+                                        tabIndex="-1"
+                                        id="kt_modal_scrollable_1"
+                                        style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.1)' }}
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">{t('editemployee')}</h5>
+
+                              <span className="svg-icon svg-icon-1" onClick={() => setIsEditModalOpen(false)}>
+                                                  <CloseIcon />
+                                                  </span>
+                                            </div>
+
+                                            <fieldset>
+                                              <legend className="text-start">{t('employeedetails')}</legend>
+                                              <form className="p-5 bg-white rounded shadow-sm text-start">
+                                                <div className="row g-4">
+                                                  {/* Image Preview and Upload */}
+                                                  <div className="col-12 text-center">
+                                                    {formData.image && <img src={formData.image} alt="Preview" className="img-thumbnail mb-3" />}
+                                                    <input type="file" onChange={imageUploader} className="form-control" />
+                                                  </div>
+
+                                                  {/* Name */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('name')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                       value={formData?.en_name || ""}
+                                                      name="en_name"
+                                                      onChange={handleChange}
+                                                      required
+                                                     onFocus={()=>setNameFocus(true)} 
+                           onBlur={()=>setNameFocus(false)}/>
+                        </div>
+                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={nameFocus&&!validName?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
+                         Please enter a correct name</p>
+
+                                                  {/* Title */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('title')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                       value={formData?.title || ""}
+                                                      name="title"
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Gender */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('sex')}</label>
+                                                    <select
+                                                      className="form-select"
+                                                      name="sex"
+                                                      value={formData?.sex || ""}
+                                                      onChange={handleChange}
+                                                    >
+                                                      <option value="">{t('select')}</option>
+                                                      <option value="male">{t('male')}</option>
+                                                      <option value="female">{t('female')}</option>
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Date of Birth */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('dateofbirth')}</label>
+                                                    <input
+                                                      type="date"
+                                                      className="form-control"
+                                                      name="date_of_birth"
+                                                      value={formData?.date_of_birth || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Joined Date */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('joineddate')}</label>
+                                                    <input
+                                                      type="date"
+                                                      className="form-control"
+                                                      value={formData?.joined_date || ""}
+                                                      name="joined_date"
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  <div className="col-md-6">
+                          <label className="form-label fw-semibold required">{t('username')}</label>
+                          <select className="form-select" name="user_id" onChange={handleChange}>
+                            <option value={formData?.sex || ""}>{t('select')}</option>
+                            {userInfo.map((data) => {
+                              return <option value={data.id}>{data.name}</option>
+                            })}
+                          </select>
+                        </div>
+                                                  
+
+                                                  {/* Phone Number */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('phonenumber')}</label>
+                                                    <input
+                                                      type="tel"
+                                                      className="form-control"
+                                                      name="phone_number"
+                                                       value={formData?.phone_number || ""}
+                                                      onChange={handleChange}
+                                                     onFocus={()=>setPhoneFocus(true)} 
+                           onBlur={()=>setPhoneFocus(false)}/>
+                        </div>
+                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={phoneFocus&&!validPhone?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
+                         Please enter a correct name</p>
+
+                                                  {/* Organization Unit */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('organizationunit')}</label>
+                                                    <select className="form-select" name="organization_unit_id" value={formData?.organization_unit_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {organizationUnitInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.en_name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Job Position */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('jobposition')}</label>
+                                                    <select className="form-select" name="job_position_id" value={formData?.job_position_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {jobPositionInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.job_description}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Job Title Category */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('jobtitlecategory')}</label>
+                                                    <select className="form-select" name="job_title_category_id" value={formData?.job_title_category_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {jobTitleCatInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Salary Amount */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('salary')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                       value={formData?.salary || ""}
+                                                      name="salary"
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Marital Status */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('maritalstatus')}</label>
+                                                    <select className="form-select" name="marital_status_id" value={formData?.marital_status_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {maritalInfo.map((data) => {
+
+                                                        return <option key={data.id} value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Nation */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('nation')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                      name="nation"
+                                                      value={formData?.nation || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Employment ID */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('employmentid')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                      name="employment_id"
+                                                      value={formData?.employment_id || ""}
+                                                      onChange={handleChange}
+                                                      required
+                                                    />
+                                                  </div>
+
+                                                  {/* Job Position Start Date */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('jobpositionstartdate')}</label>
+                                                    <input
+                                                      type="date"
+                                                      className="form-control"
+                                                      name="job_position_start_date"
+                                                       value={formData?.job_position_start_date || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Job Position End Date */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('jobpositionenddate')}</label>
+                                                    <input
+                                                      type="date"
+                                                      className="form-control"
+                                                      name="job_position_end_date"
+                                                       value={formData?.job_position_end_date || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Address */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('address')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                      name="address"
+                                                       value={formData?.address || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* House Number */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">{t('housenumber')}</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                      name="house_number"
+                                                      value={formData?.house_number || ""}
+                                                      onChange={handleChange}
+                                                    />
+                                                  </div>
+
+                                                  {/* Region */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('region')}</label>
+                                                    <select className="form-select" name="region_id" value={formData?.region_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {regionInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Zone */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('zone')}</label>
+                                                    <select className="form-select" name="zone_id" value={formData?.zone_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {zoneInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
+                                                  {/* Woreda */}
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('woreda')}</label>
+                                                    <select className="form-select" name="woreda_id" value={formData?.woreda_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
+                                                      {woredaInfo.map((data) => {
+                                                        return <option key={data.id} value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+                                                </div>
+                                              </form>
 
 
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-warning btn-sm me-2" onClick={() => { setIsEditModalOpen(true), setSelectedUser(row) }}><i className="bi bi-pencil-fill"></i></button>
-                                  {isEditModalOpen && (
-                                    <div
+                                            </fieldset>
+
+                                            <div className="modal-footer">
+                                              
+                                              <button type="button" className="btn btn-primary" onClick={() => handleUpdateProfile(selectedEmployee.id)}>
+                                                {t('savechanges')}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {permissions.some(p =>
+                                      p.name.includes('delete Employee')) ? (
+                                        <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm" 
+                                      onClick={() => { setSelectedEmployee(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
+                                      ) : null}
+                                    
+                                    {isDeleteModalOpen && (
+                                      <div
                                       className="modal fade show"
                                       tabIndex="-1"
-                                      id="kt_modal_scrollable_1"
-                                      style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.1)' }}
+                                      style={{
+                                        display: "block",
+                                        backgroundColor: "rgba(0,0,0,0.1)",
+                                      }}
                                     >
                                       <div className="modal-dialog">
                                         <div className="modal-content">
+                                          {/* Modal Header */}
                                           <div className="modal-header">
-                                            <h5 className="modal-title">Edit Profile</h5>
-
+                                            <h5 className="modal-title">
+                                              {t('confirmdeletion')}
+                                            </h5>
+                                            <div
+                                              className="btn btn-icon btn-sm btn-active-icon-primary"
+                                              onClick={() =>
+                                                setIsDeleteModalOpen(false)
+                                              }
+                                            >
+                                              <span className="svg-icon svg-icon-1">
+                                                <CloseIcon />
+                                              </span>
+                                            </div>
                                           </div>
 
-                                          <fieldset>
-                                            <legend className="text-start">Profile Details</legend>
-                                            <form className="p-5 bg-white rounded shadow-sm text-start">
-                                              <div className="row g-4">
-                                                {/* Image Preview and Upload */}
-                                                <div className="col-12 text-center">
-                                                  {formData.image && <img src={formData.image} alt="Preview" className="img-thumbnail mb-3" />}
-                                                  <input type="file" onChange={imageUploader} className="form-control" />
-                                                </div>
+                                          {/* Modal Body */}
+                                          <div className="modal-body text-center">
+                                            <p className="fs-5 text-gray-800">
+                                              {t('areyousureyouwanttopermanentlydeletethisemployee')}?
+                                              <br />
+                                              {t('thisactioncannotbeundone')}
+                                            </p>
+                                          </div>
 
-                                                {/* Name */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Name</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                   // value={selectedUser?.en_name || ""}
-                                                    name="en_name"
-                                                    onChange={handleChange}
-                                                    required
-                                                  />
-                                                </div>
-
-                                                {/* Title */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Title</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                   // value={selectedUser?.title || ""}
-                                                    name="title"
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Gender */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Sex</label>
-                                                  <select
-                                                    className="form-select"
-                                                    name="sex"
-                                                    //value={selectedUser?.sex || ""}
-                                                    onChange={handleChange}
-                                                  >
-                                                    <option value="">Select</option>
-                                                    <option value="male">Male</option>
-                                                    <option value="female">Female</option>
-                                                  </select>
-                                                </div>
-
-                                                {/* Date of Birth */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Date of Birth</label>
-                                                  <input
-                                                    type="date"
-                                                    className="form-control"
-                                                    name="date_of_birth"
-                                                    //value={selectedUser?.date_of_birth || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Joined Date */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Joined Date</label>
-                                                  <input
-                                                    type="date"
-                                                    className="form-control"
-                                                   // value={selectedUser?.joined_date || ""}
-                                                    name="joined_date"
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Email */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Email</label>
-                                                  <input
-                                                    type="email"
-                                                    className="form-control"
-                                                    name="email"
-                                                    //value={selectedUser?.email || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Phone Number */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Phone Number</label>
-                                                  <input
-                                                    type="tel"
-                                                    className="form-control"
-                                                    name="phone_number"
-                                                   // value={selectedUser?.phone_number || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Organization Unit */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Organization Unit</label>
-                                                  <select className="form-select" name="organization_unit_id" /*value={selectedUser?.organization_unit_id || ""}*/ onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {organizationUnitInfo.map((data) => {
-                                                      return <option key={data.id} value={data.id}>{data.en_name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Job Position */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Job Position</label>
-                                                  <select className="form-select" name="job_position_id" /*value={selectedUser?.job_position_id || ""}*/onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {jobPositionInfo.map((data) => {
-                                                      return <option  key={data.id} value={data.id}>{data.position_code}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Job Title Category */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Job Title Category</label>
-                                                  <select className="form-select" name="job_title_category_id" /*value={selectedUser?.job_title_category_id || ""}*/onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {jobTitleCatInfo.map((data) => {
-                                                      return <option key={data.id} value={data.id}>{data.name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Salary Amount */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Salary Amount</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                   // value={selectedUser?.salary || ""}
-                                                    name="salary"
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Marital Status */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Marital Status</label>
-                                                  <select className="form-select" name="marital_status_id" /*value={selectedUser?.marital_status_id || ""}*/ onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {maritalInfo.map((data) => {
-                                                      
-                                                      return <option key={data.id} value={data.id}>{data.name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Nation */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Nation</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="nation"
-                                                   // value={selectedUser?.nation || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Employment ID */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Employment ID</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="employment_id"
-                                                   // value={selectedUser?.employment_id || ""}
-                                                    onChange={handleChange}
-                                                    required
-                                                  />
-                                                </div>
-
-                                                {/* Job Position Start Date */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Job Position Start Date</label>
-                                                  <input
-                                                    type="date"
-                                                    className="form-control"
-                                                    name="job_position_start_date"
-                                                   // value={selectedUser?.job_position_start_date || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Job Position End Date */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Job Position End Date</label>
-                                                  <input
-                                                    type="date"
-                                                    className="form-control"
-                                                    name="job_position_end_date"
-                                                   // value={selectedUser?.job_position_end_date || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Address */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Address</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="address"
-                                                   // value={selectedUser?.address || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* House Number */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">House Number</label>
-                                                  <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="house_number"
-                                                   // value={selectedUser?.house_number || ""}
-                                                    onChange={handleChange}
-                                                  />
-                                                </div>
-
-                                                {/* Region */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Region</label>
-                                                  <select className="form-select" name="region_id" /*value={selectedUser?.region_id || ""}*/ onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {regionInfo.map((data) => {
-                                                      return <option key={data.id} value={data.id}>{data.name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Zone */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Zone</label>
-                                                  <select className="form-select" name="zone_id" /*value={selectedUser?.zone_id || ""}*/ onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {zoneInfo.map((data) => {
-                                                      return <option key={data.id} value={data.id}>{data.name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-
-                                                {/* Woreda */}
-                                                <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">Woreda</label>
-                                                  <select className="form-select" name="woreda_id" /*value={selectedUser?.woreda_id || ""}*/ onChange={handleChange}>
-                                                    <option value="">Select...</option>
-                                                    {woredaInfo.map((data) => {
-                                                      return <option key={data.id} value={data.id}>{data.name}</option>
-                                                    })}
-                                                  </select>
-                                                </div>
-                                              </div>
-                                            </form>
-
-
-                                          </fieldset>
-
+                                          {/* Modal Footer */}
                                           <div className="modal-footer">
                                             <button
                                               type="button"
-                                              className="btn btn-light"
-                                              onClick={() => setIsEditModalOpen(false)}
+                                              className="btn btn-danger"
+                                              onClick={() => handleDeleteProfile(selectedEmployee.id)}
                                             >
-                                              Close
-                                            </button>
-                                            <button type="button" className="btn btn-primary" onClick={() => handleUpdateProfile(selectedUser.id)}>
-                                              Save changes
+                                              {t('deletepermanently')}
                                             </button>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                  )}
-                                  <button className="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onClick={() => { setSelectedUser(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
-                                  {isDeleteModalOpen && (
-                                    <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      id="kt_modal_scrollable_1"
-                                      style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.1)' }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content" style={{ textAlign: 'center' }}>
-                                          <div className="modal-header">
-
-
-                                          </div>
-
-                                          <fieldset>
-                                            <legend>Employee Details</legend>
-                                            <p>Delete Employee?</p>
-
-                                          </fieldset>
-
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => handleDeleteProfile(selectedUser.id)}
-                                            >
-                                              Delete
-                                            </button>
-
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => setIsDeleteModalOpen(false)}
-                                            >
-                                              Close
-                                            </button>
-
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
+                                      
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                        ) : (
+                          <tr><td colSpan="8">No data available</td></tr>
+                        )
                       ) : (
-                        <tr><td colSpan="8">No data available</td></tr>
-                      )
-                    ) : (
-                      <tr>
-                        <td colSpan="8">No users found</td>
-                      </tr>
-                    )}
+                        <tr>
+                          <td colSpan="8">No users found</td>
+                        </tr>
+                      )}
                   </tbody>
                   {/*end::Table body*/}
                 </table>
@@ -1451,9 +1616,9 @@ const Loader = () => (
                 {/*end::Table*/}
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
                   <div>
-                    Showing {Math.min((currentPage - 1) * itemsPerPage + 1, (filteredData?.length || 0))} to{' '}
+                    {t('showing')} {Math.min((currentPage - 1) * itemsPerPage + 1, (filteredData?.length || 0))} to{' '}
                     {Math.min(currentPage * itemsPerPage, (filteredData?.length || 0))} of{' '}
-                    {(filteredData?.length || 0)} entries
+                    {(filteredData?.length || 0)} {t('entries')}
                   </div>
 
                   <div className="d-flex gap-2">
@@ -1465,7 +1630,7 @@ const Loader = () => (
                       <i className="bi bi-chevron-left"></i>
                     </button>
                     <span className="px-3 d-flex align-items-center">
-                      Page {currentPage} of {totalPages}
+                      {t('page')} {currentPage} {t('of')} {totalPages}
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"

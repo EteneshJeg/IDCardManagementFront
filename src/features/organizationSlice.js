@@ -1,5 +1,6 @@
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import i18next from "i18next";
 
 
 export const createOrganizationInfo = createAsyncThunk(
@@ -43,10 +44,10 @@ console.log(value);
                   Authorization:`Bearer ${token}`
                 }
               }).then(response=>{
-                toast.success('Organization created');
+                toast.success(i18next.t('organizationcreated'));
                 console.log(response);
               }).catch(error=>{
-                toast.error('Failed to create organization');
+                toast.error(i18next.t('failedtocreateorganization'));
                 console.log(error.response)
               })
             }catch(error){
@@ -74,61 +75,23 @@ for (const key in rawData) {
                 }
               });
               console.log(response);
-              toast.success('Updated');
+              toast.success(i18next.t('organizationupdated'));
               }catch(error){
                 console.log('Caught error:', error);
   console.log('Full error object:', error?.response?.data || error.message);
-  toast.error('Failed to update organization');
+  toast.error(i18next.t('failedtoupdateorganization'));
               }
             }catch(error){
               return rejectWithValue(error.message);
             }
         }
         
-        /*let storedOrganizationInfo = JSON.parse(localStorage.getItem('organizationInfo')) || [];
-        console.log(storedOrganizationInfo);
-        
-        if (!Array.isArray(storedOrganizationInfo)) {
-          storedOrganizationInfo = [storedOrganizationInfo];
-        }
-  
-        const newOrg = {
-          en_name: FormData?.en_name || storedOrganizationInfo[0]?.en_name,
-          motto: FormData?.motto || storedOrganizationInfo[0]?.motto,
-          mission: FormData?.mission || storedOrganizationInfo[0]?.mission,
-          vision: FormData?.vision || storedOrganizationInfo[0]?.vision,
-          core_value: FormData?.core_value || storedOrganizationInfo[0]?.core_value,
-          logo: FormData?.logo || storedOrganizationInfo[0]?.logo,
-          address: FormData?.address || storedOrganizationInfo[0]?.address,
-          website: FormData?.website || storedOrganizationInfo[0]?.website,
-          email: FormData?.email || storedOrganizationInfo[0]?.email,
-          phone_number: FormData?.phone_number || storedOrganizationInfo[0]?.phone_number,
-          fax_number: FormData?.fax_number || storedOrganizationInfo[0]?.fax_number,
-          po_box: FormData?.po_box || storedOrganizationInfo[0]?.po_box,
-          tin_number: FormData?.tin_number || storedOrganizationInfo[0]?.tin_number,
-          abbreviation: FormData?.abbreviation || storedOrganizationInfo[0]?.abbreviation,
-        };
-
         
   
-        if (storedOrganizationInfo.length === 0) {
-          // If no organization exists, add the new one
-          storedOrganizationInfo.push(newOrg);
-          console.log('saved ');
-        } else {
-          // Update the first organization in the array
-          storedOrganizationInfo[0] = newOrg;
-          console.log('pushed');
-        }
-        console.log(storedOrganizationInfo);
-        localStorage.setItem('organizationInfo', JSON.stringify(storedOrganizationInfo));
-       
-        toast.success('Organization infromation saved');  //this isn't showing
-  
-        return newOrg;*/
+        
         
       } catch (error) {
-        toast.error('Organization infromation was not saved');
+        toast.error(i18next.t('failedtosaveorganizationinformation'));
         return rejectWithValue(error);
       }
     }
@@ -148,7 +111,7 @@ export const getOrganizationInfo=createAsyncThunk(
 
         console.log(response);
         if (response.data.message?.toLowerCase() === 'no record available') {
-  toast.info('No information available');
+  toast.info(i18next.t('noinformationavailable'));
   return rejectWithValue('No record found');
 }
 
@@ -163,13 +126,13 @@ export const getOrganizationInfo=createAsyncThunk(
             return storedOrganizationInfo;*/
     
       }catch(error){
-        toast.error('Fetch unsuccessful');
+        toast.error(t('fetchunsuccessful'));
         return rejectWithValue(error.message);
       }
     }
 )
 
-export const deleteOrganizationInfo=createAsyncThunk(
+/*export const deleteOrganizationInfo=createAsyncThunk(
   'organization/delete',
   async(_,{rejectWithValue})=>{
     try{
@@ -190,7 +153,7 @@ export const deleteOrganizationInfo=createAsyncThunk(
       return rejectWithValue(error.message);
     }
   }
-)
+)*/
 
 
 const organizationSlice=createSlice({

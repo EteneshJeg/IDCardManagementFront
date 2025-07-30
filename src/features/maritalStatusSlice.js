@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+
 export const createMaritalStatus = createAsyncThunk(
   'maritalstatus/create',
   async ({ FormData }, { rejectWithValue }) => {
@@ -11,6 +12,7 @@ export const createMaritalStatus = createAsyncThunk(
         FormData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);

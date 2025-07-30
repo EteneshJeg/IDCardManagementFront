@@ -1,19 +1,19 @@
-import { useEffect,useRef } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
+import { useEffect, useRef } from "react";
+
 
 import { useState } from "react"
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Stage, Layer, Text, Image, Circle, Group, Image as KonvaImage } from "react-konva";
-import { toast } from "react-toastify";
 
 
+import { fetchRoles } from "../features/roleSlice";
 import { getOrganizationInfo } from "../features/organizationSlice";
-import { saveTemplate, getTemplate, saveIdDetails,getIdDetails } from "../features/idCardSlice";
+import { saveTemplate, getTemplate, saveIdDetails, getIdDetails } from "../features/idCardSlice";
 import QRCode from "react-qr-code";
+import { useTranslation } from "react-i18next";
 
 export default function IdDetails() {
+  const { t } = useTranslation();
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "/assets/js/scripts.bundle.js";
@@ -30,10 +30,13 @@ export default function IdDetails() {
     };
   }, []);
 
+
+  const { user } = useSelector((state) => state.user.user);
+
   const dispatch = useDispatch();
   const [image, setImage] = useState(null);
-  const qrRef=useRef();
-  const [qrCodeImage,setQrCodeImage]=useState();
+  const qrRef = useRef();
+  const [qrCodeImage, setQrCodeImage] = useState();
   const backImg = new window.Image();
   backImg.src = 'https://th.bing.com/th/id/OIP.Rv8GJCOZZhXXpr-MEfSOugAAAA?rs=1&pid=ImgDetMain'
 
@@ -58,20 +61,20 @@ export default function IdDetails() {
       //console.log(data);
       const org = data.payload;
       console.log(org);
-      
+
       if (org) {
         setOrgName(org.en_name);
-        setMotto(org.email);
+        setMotto(org.motto);
         setMission(org.mission);
         setVision(org.vision);
         setCoreValue(org.core_value);
         console.log(org.logo)
         const img = new window.Image();
-img.onload = () => setLogo(img);
-img.onerror = (e) => console.error('Image failed to load:', e);
-img.crossOrigin = 'anonymous'; // only if you need CORS / pixel access
-img.src = `http://localhost:8000/cors-logo/${org.logo}`;
-		
+        img.onload = () => setLogo(img);
+        img.onerror = (e) => console.error('Image failed to load:', e);
+        img.crossOrigin = 'anonymous'; // only if you need CORS / pixel access
+        img.src = `http://localhost:8000/cors-logo/${org.logo}`;
+
 
 
         setOrgAddress(org.address);
@@ -91,10 +94,10 @@ img.src = `http://localhost:8000/cors-logo/${org.logo}`;
   console.log(logo)
 
 
-  const imageFields = ['photo', 'logo','qrcode'];
+  const imageFields = ['photo', 'logo', 'qrcode'];
   const textFields = [
     'en_name', 'job_position', 'id_issue_date', 'id_expire_date', 'title',
-    'sex', 'date_of_birth', 'joined_date', 'email', 'phone_number', 'organization_unit',
+    'sex', 'date_of_birth', 'joined_date', 'phone_number', 'organization_unit',
     'job_title_category', 'salary_id', 'marital_status', 'nation', 'employment_id',
     'job_position_end_date', 'job_position_start_date', 'address', 'house_number',
     'region', 'zone', 'woreda', 'orgname', 'motto', 'mission', 'vision', 'orgEmail',
@@ -110,7 +113,7 @@ img.src = `http://localhost:8000/cors-logo/${org.logo}`;
     circle_positionx: 30,
     circle_positiony: 80,
     circle_background: 'black',
-    circle_mask_thickness:0
+    circle_mask_thickness: 0
 
 
   }
@@ -123,7 +126,7 @@ img.src = `http://localhost:8000/cors-logo/${org.logo}`;
     text_font_type: 'arial',
     text_font_size: 18,
     text_font_color: 'black',
-    text_gap:200
+    text_gap: 200
   }
 
   const shareddetails = {
@@ -131,7 +134,7 @@ img.src = `http://localhost:8000/cors-logo/${org.logo}`;
     status: 'inactive', //to be filled when generated,
     label_length: 20
   }
-  
+
   const [newTemplates, setNewTemplates] = useState({
     front: {
       imageFields: Object.fromEntries(
@@ -198,26 +201,26 @@ img.src = `http://localhost:8000/cors-logo/${org.logo}`;
     }
   });
 
-  const [oldTemplates,setOldTemplates]=useState();
+  const [oldTemplates, setOldTemplates] = useState();
 
   console.log(newTemplates?.front?.textFields?.en_name?.field_name);
 
 
-useEffect(()=>{
-      const canvas=qrRef.current;
-      if(canvas){
-        const svgData=new XMLSerializer().serializeToString(canvas);
-        const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-        const img=new window.Image();
-        img.onload=()=>{
-          setQrCodeImage(img)
-          URL.revokeObjectURL(url);
-        };
-        img.src=url
-      }
-      
-    },[]);
+  useEffect(() => {
+    const canvas = qrRef.current;
+    if (canvas) {
+      const svgData = new XMLSerializer().serializeToString(canvas);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new window.Image();
+      img.onload = () => {
+        setQrCodeImage(img)
+        URL.revokeObjectURL(url);
+      };
+      img.src = url
+    }
+
+  }, []);
 
 
 
@@ -241,9 +244,8 @@ useEffect(()=>{
       sex: false,
       date_of_birth: false,
       joined_date: false,
-      email: false,
       photo: false,
-      qr_code:false,
+      qr_code: false,
       phone_number: false,
       organization_unit: false,
       job_position: false,
@@ -267,6 +269,70 @@ useEffect(()=>{
 
     }
   }
+  const [currentUser, setCurrentUser] = useState();
+  const [currentRole, setCurrentRole] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const role = useSelector((state) => state.user.role);
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
 
   const [enableField, setEnableField] = useState(loadFieldState);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -292,11 +358,11 @@ useEffect(()=>{
   const [selectedTemplate, setSelectedTemplate] = useState("front");
   const selectedTemplateFields = newTemplates?.[selectedTemplate] || {};
 
-  const [frontImage,setFrontImage]=useState();
-  const [backImage,setBackImage]=useState();
-  const [badgeImage,setBadgeImage]=useState();
-  const [templateImage,setTemplateImage]=useState();
-  const [logoImage,setLogoImage]=useState();
+  const [frontImage, setFrontImage] = useState();
+  const [backImage, setBackImage] = useState();
+  const [badgeImage, setBadgeImage] = useState();
+  const [templateImage, setTemplateImage] = useState();
+  const [logoImage, setLogoImage] = useState();
 
   /*useEffect(() => {
   const imageUrl = newTemplates?.[selectedTemplate]?.templateBackground?.image_file||newTemplates?.[selectedTemplate]?.templateBackground?.imageUrl;
@@ -320,74 +386,74 @@ useEffect(()=>{
 
 
   const handleImageSelect = (e, viewType) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new window.Image();
-    img.src = reader.result;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.src = reader.result;
 
-    img.onload = () => {
-      switch (viewType) {
-        case 'front':
-          setFrontImage(img);
-          setTemplateImage(img);
-          break;
-        case 'back':
-          setBackImage(img);
-          setTemplateImage(img);
-          break;
-        case 'badge':
-          setBadgeImage(img);
-          setTemplateImage(img);
-          break;
-        default:
-          break;
-      }
+      img.onload = () => {
+        switch (viewType) {
+          case 'front':
+            setFrontImage(img);
+            setTemplateImage(img);
+            break;
+          case 'back':
+            setBackImage(img);
+            setTemplateImage(img);
+            break;
+          case 'badge':
+            setBadgeImage(img);
+            setTemplateImage(img);
+            break;
+          default:
+            break;
+        }
 
-      // Optional: update your template metadata (e.g., for preview)
-      setNewTemplates((prev) => ({
-        ...prev,
-        [viewType]: {
-          ...prev[viewType],
+        // Optional: update your template metadata (e.g., for preview)
+        setNewTemplates((prev) => ({
+          ...prev,
+          [viewType]: {
+            ...prev[viewType],
             templateBackground: {
               ...(prev[viewType]?.templateBackground || {}),
               imageUrl: file, // <-- if you want to store as base64 string
-              image_file:reader.result
+              image_file: reader.result
             },
-          
-        },
-      }));
+
+          },
+        }));
+      };
+
+      img.onerror = () => {
+        console.error("Failed to load image");
+      };
     };
 
+    reader.readAsDataURL(file);
+  };
+
+  /*useEffect(() => {
+    if (!logo) {
+      console.log("!log")
+      setLogoImage(null);
+      return;
+    }
+  
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";  // add if you get CORS issues
+    img.src = logo; // logo is the URL string
+  
+    img.onload = () => {
+      setLogoImage(img);
+    };
+  
     img.onerror = () => {
-      console.error("Failed to load image");
+      console.error("Failed to load logo image", logo);
     };
-  };
-
-  reader.readAsDataURL(file);
-};
-
-/*useEffect(() => {
-  if (!logo) {
-    console.log("!log")
-    setLogoImage(null);
-    return;
-  }
-
-  const img = new window.Image();
-  img.crossOrigin = "anonymous";  // add if you get CORS issues
-  img.src = logo; // logo is the URL string
-
-  img.onload = () => {
-    setLogoImage(img);
-  };
-
-  img.onerror = () => {
-    console.error("Failed to load logo image", logo);
-  };
-}, [logo]);*/
+  }, [logo]);*/
 
 
   console.log(newTemplates?.[selectedTemplate]?.photo?.circle_positionx)
@@ -402,26 +468,26 @@ useEffect(()=>{
     img.src = "https://th.bing.com/th/id/OIP.30Yq02E10j8tn6kKBO1qdQHaHa?rs=1&pid=ImgDetMain";
     img.onload = () => setImage(img);
     img.onerror = () => {
-  console.error("Failed to load image:", imageUrl);
-};
+      console.error("Failed to load image:", imageUrl);
+    };
 
 
   }, []);
 
   useEffect(() => {  //get the saved template
-  dispatch(getTemplate()).then((action) => {
-    console.log(action)
-    const dataitem = action.payload;
-    console.log(dataitem);
-    console.log(selectedTemplate)
-    const matchingTemplate=dataitem.find(data=>
-      data.type===selectedTemplate
-    )
-    console.log(matchingTemplate)
-    const img = new window.Image();
+    dispatch(getTemplate()).then((action) => {
+      console.log(action)
+      const dataitem = action.payload;
+      console.log(dataitem);
+      console.log(selectedTemplate)
+      const matchingTemplate = dataitem.find(data =>
+        data.type === selectedTemplate
+      )
+      console.log(matchingTemplate)
+      const img = new window.Image();
       img.crossOrigin = 'anonymous'; // Optional: in case image is from another origin
       img.src = `http://localhost:8000/cors-image/${matchingTemplate.file}`;
-      
+
 
 
       img.onload = () => {
@@ -440,145 +506,147 @@ useEffect(()=>{
       img.onerror = (e) => {
         console.error("Failed to load image", e);
       };
-    
-    /*if (dataitem && typeof dataitem === 'object') {
-      
 
-      const keys = Object.keys(dataitem);
-      if (keys.length === 0) {
-        console.log("No templates found.");
-        setNewTemplates(null);
-      } else {
-        console.log("Loaded templates:", dataitem);
-        setNewTemplates(dataitem); // optional: auto-select first template
-      }
-    } else {
-      console.warn("Invalid template payload.");
-    }*/
-  }).catch((error) => {
-    console.error("Error loading templates:", error);
-  });
-}, [dispatch,selectedTemplate]);
-console.log('front image',frontImage)
-
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [idDetailsAction, templatesAction] = await Promise.all([
-        dispatch(getIdDetails()),
-        dispatch(getTemplate())
-      ]);
-
-      const idDetails = idDetailsAction.payload;
-      console.log(idDetails)
-      const templateList = templatesAction.payload;
-
-      const templates = {};
-
-      idDetails.forEach((item) => {
-        const template = templateList.find((t) => t.id === item.template_id);
-        const templateType = template?.type || "front";
-
-        if (!templates[templateType]) {
-          templates[templateType] = {
-            imageFields: {},
-            textFields: {}
-          };
-        }
-
-        if (item.field_name === "photo" || item.field_name === "logo" ||item.field_name==="qrcode") {
-          templates[templateType].imageFields[item.field_name] = {
-            field_label: item.field_label,
-            field_name: item.field_name,
-            label_length: item.label_length,
-            type: item.type,
-            status: item.status,
-            image_file: item.image_file,
-            image_height: item.image_height,
-            image_width: item.image_width,
-            has_mask: item.has_mask,
-            circle_diameter: item.circle_diameter,
-            circle_mask_thickness: item.circle_mask_thickness,
-            circle_positionx: item.circle_positionx,
-            circle_positiony: item.circle_positiony,
-            circle_background: item.circle_background
-          };
-        } else {
-          templates[templateType].textFields[item.field_name] = {
-            field_label: item.field_label,
-            field_name: item.field_name,
-            label_length: item.label_length,
-            type: item.type,
-            status:item.status,
-            text_content: item.text_content,
-            text_font_color: item.text_font_color,
-            text_font_size: item.text_font_size,
-            text_font_type: item.text_font_type,
-            text_positionx: item.text_positionx,
-            text_positiony: item.text_positiony,
-            text_gap: item.text_gap
-          };
-        }
-      });
-
-      setNewTemplates((prev) => ({
-        ...prev,
-        ...templates // merged by template type like 'front', 'back', etc.
-      }));
-
-      setOldTemplates((prev) => ({
-        ...prev,
-        ...templates // merged by template type like 'front', 'back', etc.
-      }));
-
-
-      const enableField = {};
-
-Object.entries(templates).forEach(([templateType, templateData]) => {
-  enableField[templateType] = {};
-
-  // Handle imageFields
-  Object.entries(templateData.imageFields || {}).forEach(([fieldName, fieldData]) => {
-    if (fieldData.status === "active") {
-      enableField[templateType][fieldName] = true;
-    }
-  });
-
-  // Handle textFields
-  Object.entries(templateData.textFields || {}).forEach(([fieldName, fieldData]) => {
-    if (fieldData.status === "active") {
-      enableField[templateType][fieldName] = true;
-    }
-  });
-});
-
-
-setEnableField((prev)=>({
-  ...prev,
-  ...enableField
-}))
-    } catch (error) {
-      console.error("Error fetching ID details or templates:", error);
-    }
-  };
-
-  fetchData();
-}, [dispatch]);
-console.log(enableField)
-console.log(newTemplates)
-
-
-
-
-
-
-
+      /*if (dataitem && typeof dataitem === 'object') {
+        
   
+        const keys = Object.keys(dataitem);
+        if (keys.length === 0) {
+          console.log("No templates found.");
+          setNewTemplates(null);
+        } else {
+          console.log("Loaded templates:", dataitem);
+          setNewTemplates(dataitem); // optional: auto-select first template
+        }
+      } else {
+        console.warn("Invalid template payload.");
+      }*/
+    }).catch((error) => {
+      console.error("Error loading templates:", error);
+    });
+  }, [dispatch, selectedTemplate]);
+  console.log('front image', frontImage)
+
+  useEffect(() => {
+
+    const fetchData = async () => {
+      try {
+        const [idDetailsAction, templatesAction] = await Promise.all([
+          dispatch(getIdDetails()),
+          dispatch(getTemplate())
+        ]);
+
+        const idDetails = idDetailsAction.payload;
+        console.log(idDetails)
+        const templateList = templatesAction.payload;
+
+        const templates = {};
+
+        idDetails.forEach((item) => {
+          const template = templateList.find((t) => t.id === item.template_id);
+          const templateType = template?.type || "front";
+
+          if (!templates[templateType]) {
+            templates[templateType] = {
+              imageFields: {},
+              textFields: {}
+            };
+          }
+
+          if (item.field_name === "photo" || item.field_name === "logo" || item.field_name === "qrcode") {
+            templates[templateType].imageFields[item.field_name] = {
+              field_label: item.field_label,
+              field_name: item.field_name,
+              label_length: item.label_length,
+              type: item.type,
+              status: item.status,
+              image_file: item.image_file,
+              image_height: item.image_height,
+              image_width: item.image_width,
+              has_mask: item.has_mask,
+              circle_diameter: item.circle_diameter,
+              circle_mask_thickness: item.circle_mask_thickness,
+              circle_positionx: item.circle_positionx,
+              circle_positiony: item.circle_positiony,
+              circle_background: item.circle_background
+            };
+          } else {
+            templates[templateType].textFields[item.field_name] = {
+              field_label: item.field_label,
+              field_name: item.field_name,
+              label_length: item.label_length,
+              type: item.type,
+              status: item.status,
+              text_content: item.text_content,
+              text_font_color: item.text_font_color,
+              text_font_size: item.text_font_size,
+              text_font_type: item.text_font_type,
+              text_positionx: item.text_positionx,
+              text_positiony: item.text_positiony,
+              text_gap: item.text_gap
+            };
+          }
+        });
+
+        setNewTemplates((prev) => ({
+          ...prev,
+          ...templates // merged by template type like 'front', 'back', etc.
+        }));
+
+        setOldTemplates((prev) => ({
+          ...prev,
+          ...templates // merged by template type like 'front', 'back', etc.
+        }));
+
+
+        const enableField = {};
+
+        Object.entries(templates).forEach(([templateType, templateData]) => {
+          enableField[templateType] = {};
+
+          // Handle imageFields
+          Object.entries(templateData.imageFields || {}).forEach(([fieldName, fieldData]) => {
+            if (fieldData.status === "active") {
+              enableField[templateType][fieldName] = true;
+            }
+          });
+
+          // Handle textFields
+          Object.entries(templateData.textFields || {}).forEach(([fieldName, fieldData]) => {
+            if (fieldData.status === "active") {
+              enableField[templateType][fieldName] = true;
+            }
+          });
+        });
+
+
+        setEnableField((prev) => ({
+          ...prev,
+          ...enableField
+        }))
+      } catch (error) {
+        console.error("Error fetching ID details or templates:", error);
+      }
+    };
+
+    fetchData();
+
+  }, [dispatch]);
+  console.log(enableField)
+  console.log(newTemplates)
 
 
 
 
-console.log(templateImage)
+
+
+
+
+
+
+
+
+  console.log(templateImage)
 
 
   const [backObj, setBackObj] = useState();
@@ -594,72 +662,72 @@ console.log(templateImage)
       height: newTemplates[selectedTemplate]?.image_height || 150,
     });
   }, [selectedTemplate])
-  
+
 
   const handleEnableField = (e) => {
-  const selectedField = e.target?.previousSibling?.value;
+    const selectedField = e.target?.previousSibling?.value;
 
-  if (!selectedTemplate || !selectedField) {
-    console.warn("Missing selected template or field");
-    return;
-  }
+    if (!selectedTemplate || !selectedField) {
+      console.warn("Missing selected template or field");
+      return;
+    }
 
-  // Enable field toggle
-  setEnableField((prev) => ({
-  ...prev,
-  [selectedTemplate]: {
-    ...prev[selectedTemplate],
-    [selectedField]: true,
-  },
-}));
+    // Enable field toggle
+    setEnableField((prev) => ({
+      ...prev,
+      [selectedTemplate]: {
+        ...prev[selectedTemplate],
+        [selectedField]: true,
+      },
+    }));
 
 
-  // Update imageFields
-  if (selectedField === "photo" || selectedField === "logo" || selectedField==="qrcode") {
-    setNewTemplates((prev) => {
-      const template = prev?.[selectedTemplate] || {};
-      const imageFields = template.imageFields || {};
-      const field = imageFields[selectedField] || {};
+    // Update imageFields
+    if (selectedField === "photo" || selectedField === "logo" || selectedField === "qrcode") {
+      setNewTemplates((prev) => {
+        const template = prev?.[selectedTemplate] || {};
+        const imageFields = template.imageFields || {};
+        const field = imageFields[selectedField] || {};
 
-      return {
-        ...prev,
-        [selectedTemplate]: {
-          ...template,
-          imageFields: {
-            ...imageFields,
-            [selectedField]: {
-              ...field,
-              status: "active",
+        return {
+          ...prev,
+          [selectedTemplate]: {
+            ...template,
+            imageFields: {
+              ...imageFields,
+              [selectedField]: {
+                ...field,
+                status: "active",
+              },
             },
           },
-        },
-      };
-    });
-  }
+        };
+      });
+    }
 
-  // Update textFields
-  else {
-    setNewTemplates((prev) => {
-      const template = prev?.[selectedTemplate] || {};
-      const textFields = template.textFields || {};
-      const field = textFields[selectedField] || {};
+    // Update textFields
+    else {
+      setNewTemplates((prev) => {
+        const template = prev?.[selectedTemplate] || {};
+        const textFields = template.textFields || {};
+        const field = textFields[selectedField] || {};
 
-      return {
-        ...prev,
-        [selectedTemplate]: {
-          ...template,
-          textFields: {
-            ...textFields,
-            [selectedField]: {
-              ...field,
-              status: "active",
+        return {
+          ...prev,
+          [selectedTemplate]: {
+            ...template,
+            textFields: {
+              ...textFields,
+              [selectedField]: {
+                ...field,
+                status: "active",
+              },
             },
           },
-        },
-      };
-    });
-  }
-};
+        };
+      });
+    }
+  };
 
   console.log(enableField)
 
@@ -714,8 +782,8 @@ console.log(templateImage)
             [selectedField]: {
               ...field,
 
-                status: "inactive"
-              
+              status: "inactive"
+
             }
           }
         }
@@ -765,41 +833,41 @@ console.log(templateImage)
   console.log(newTemplates)
 
   const handleImageChange = (side, fieldName, key, value) => {
-  const currentField = newTemplates[side]?.imageFields?.[fieldName];
+    const currentField = newTemplates[side]?.imageFields?.[fieldName];
 
-  if (!currentField) return;
+    if (!currentField) return;
 
-  const isFieldLabelValid = key === "field_label"
-    ? value.length <= (currentField.label_length ?? 255)
-    : true;
+    const isFieldLabelValid = key === "field_label"
+      ? value.length <= (currentField.label_length ?? 255)
+      : true;
 
-  const newValue =
-    key === "label_length" ||
-    key.startsWith("circle_position") ||
-    key === "image_height" ||
-    key === "image_width" ||
-    key === "circle_diameter"
-      ? Number(value)
-      : key === "field_label"
-        ? isFieldLabelValid
-          ? value
-          : currentField[key]
-        : value;
+    const newValue =
+      key === "label_length" ||
+        key.startsWith("circle_position") ||
+        key === "image_height" ||
+        key === "image_width" ||
+        key === "circle_diameter"
+        ? Number(value)
+        : key === "field_label"
+          ? isFieldLabelValid
+            ? value
+            : currentField[key]
+          : value;
 
-  setNewTemplates(prev => ({
-    ...prev,
-    [side]: {
-      ...prev[side],
-      imageFields: {
-        ...prev[side].imageFields,
-        [fieldName]: {
-          ...currentField,
-          [key]: newValue,
+    setNewTemplates(prev => ({
+      ...prev,
+      [side]: {
+        ...prev[side],
+        imageFields: {
+          ...prev[side].imageFields,
+          [fieldName]: {
+            ...currentField,
+            [key]: newValue,
+          },
         },
       },
-    },
-  }));
-};
+    }));
+  };
 
 
   console.log(newTemplates);
@@ -953,32 +1021,66 @@ console.log(templateImage)
     }*/
     //console.log(enableField)
     //dispatch(saveIdDetails({Side:selectedTemplate,Text:enabledText(),TextName:enabledTextName().field_name,Image:enabledImages()}));
-    console.log("template data",newTemplates);
-    console.log("enabled",enableField);
-    dispatch(saveIdDetails({side:selectedTemplate,detailData:newTemplates}));
+    console.log("template data", newTemplates);
+    console.log("enabled", enableField);
+    dispatch(saveIdDetails({ side: selectedTemplate, detailData: newTemplates }));
   }
 
-  const handleSaveTemplate=(newTemplates,selected)=>{
+  const handleSaveTemplate = (newTemplates, selected) => {
     console.log(selected)
-    dispatch(saveTemplate({TemplateData:newTemplates,selected:selected,enabled:enableField}));
+    dispatch(saveTemplate({ TemplateData: newTemplates, selected: selected, enabled: enableField }));
   }
 
   const handleViewTemplate = (id) => {
     setSelectedTemplate(id);
   }
 
-const textFieldsToRender = newTemplates?.[selectedTemplate]?.textFields;
+  const textFieldsToRender = newTemplates?.[selectedTemplate]?.textFields;
 
-const fieldsToRender = textFieldsToRender
-  ? Object.entries(textFieldsToRender).filter(
+  const fieldsToRender = textFieldsToRender
+    ? Object.entries(textFieldsToRender).filter(
       ([key, field]) => enableField?.[selectedTemplate]?.[key]
     )
-  : [];
+    : [];
 
   console.log(selectedTemplateFields)
+  const CloseIcon = () => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        opacity="0.5"
+        x="6"
+        y="17.3137"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(-45 6 17.3137)"
+        fill="currentColor"
+      />
+      <rect
+        x="7.41422"
+        y="6"
+        width="16"
+        height="2"
+        rx="1"
+        transform="rotate(45 7.41422 6)"
+        fill="currentColor"
+      />
+    </svg>
+  );
 
-
-
+  const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -995,7 +1097,7 @@ const fieldsToRender = textFieldsToRender
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              ID Details
+              {t('iddetails')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
@@ -1003,13 +1105,13 @@ const fieldsToRender = textFieldsToRender
                   href="/"
                   className="text-muted text-hover-primary"
                 >
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">ID Details</li>
+              <li className="breadcrumb-item text-muted">{t('iddetails')}</li>
             </ul>
           </div>
 
@@ -1022,152 +1124,158 @@ const fieldsToRender = textFieldsToRender
       <div className="page-flexed">
         <div className="template">
           <select className='select-pag' value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}>
-            <option value="front">Front</option>
-            <option value="back">Back</option>
-            <option value="badge">Badge</option>
+            <option value="front">{t('front')}</option>
+            <option value="back">{t('back')}</option>
+            <option value="badge">{t('badge')}</option>
           </select>
 
-          
 
-          
-          {selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
+
+
+          {isLoading ? (
+            <tr>
+              <td colSpan="8" className="text-center">
+                <Loader /> {/* Use the loader here */}
+              </td>
+            </tr>
+          ) : selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
             <>
-            <svg ref={qrRef} style={{display:"none"}}>
-          <QRCode value="hi" />
-        </svg>
+              <svg ref={qrRef} style={{ display: "none" }}>
+                <QRCode value="hi" />
+              </svg>
 
-            <Stage className="stage" width={700} height={600}>
-              <Layer>
-                <KonvaImage
-                  image={templateImage}
-                  width={700}
-                  height={600}
+              <Stage className="stage" width={700} height={600}>
+                <Layer>
+                  <KonvaImage
+                    image={templateImage}
+                    width={700}
+                    height={600}
 
-                />
-                
-  {
-  (
-    image && 
-    newTemplates?.[selectedTemplate]?.imageFields?.['photo']?.status==='active'
-  ) && (
-    <Image
-      x={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positionx) || 50}
-      y={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positiony) || 50}
-      image={image}
-      width={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_width) || 150}
-      height={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_height) || 150}
-      stroke={
-        newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || imageMaskColor
-      }
-      strokeWidth={
-        Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_mask_thickness) || 2
-      }
-      cornerRadius={
-        Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || imageCircleDiameter) / 2
-      }
-      rotation={0}
-    />
-  )
-}
+                  />
 
-{(qrCodeImage && newTemplates?.[selectedTemplate]?.imageFields?.['qrcode']?.status==='active')&&(
-  <>
-  <Image image={qrCodeImage}
- x={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positionx || 50} 
- y={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positiony || 50}
-  width={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_width || 150} 
-  height={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_height || 150}/>
-  </>
-)}
+                  {
+                    (
+                      image &&
+                      newTemplates?.[selectedTemplate]?.imageFields?.['photo']?.status === 'active'
+                    ) && (
+                      <Image
+                        x={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positionx) || 50}
+                        y={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_positiony) || 50}
+                        image={image}
+                        width={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_width) || 150}
+                        height={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_height) || 150}
+                        stroke={
+                          newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || imageMaskColor
+                        }
+                        strokeWidth={
+                          Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_mask_thickness) || 2
+                        }
+                        cornerRadius={
+                          Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || imageCircleDiameter) / 2
+                        }
+                        rotation={0}
+                      />
+                    )
+                  }
 
-
+                  {(qrCodeImage && newTemplates?.[selectedTemplate]?.imageFields?.['qrcode']?.status === 'active') && (
+                    <>
+                      <Image image={qrCodeImage}
+                        x={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positionx || 50}
+                        y={newTemplates[selectedTemplate]?.imageFields?.qrcode?.circle_positiony || 50}
+                        width={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_width || 150}
+                        height={newTemplates[selectedTemplate]?.imageFields?.qrcode?.image_height || 150} />
+                    </>
+                  )}
 
 
 
 
-                {(
-    logo && 
-    newTemplates?.[selectedTemplate]?.imageFields?.['logo']?.status==='active'
-  ) && (
-                  <>
+
+
+                  {(
+                    logo &&
+                    newTemplates?.[selectedTemplate]?.imageFields?.['logo']?.status === 'active'
+                  ) && (
+                      <>
 
 
 
-                    <Image
-                      x={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positionx || 50}
-                      y={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positiony || 50}
-                      image={logo}
-                      width={newTemplates[selectedTemplate]?.imageFields?.logo?.image_width || 150}
-                      height={newTemplates[selectedTemplate]?.imageFields?.logo?.image_height || 150}
-                      stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || imageMaskColor}
-                      strokeWidth={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_mask_thickness || 2}
-                      cornerRadius={
-                        //newTemplates[selectedTemplate]?.logo?.logo_is_circle
-                           (newTemplates[selectedTemplate]?.imageFields?.logo?.circle_diameter || imageCircleDiameter) / 2
-                         // : 0
-                      }
-                      rotation={0}
-                    />
-                  </>
-                )}
-                {newTemplates?.[selectedTemplate]?.textFields &&
-  Object.entries(newTemplates[selectedTemplate].textFields)
-    .filter(([_, field]) => field.status !== "inactive")
-    .map(([fieldKey, field]) => {
-      // Optional debugging:
-      // console.log('Rendering field:', fieldKey, field);
+                        <Image
+                          x={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positionx || 50}
+                          y={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_positiony || 50}
+                          image={logo}
+                          width={newTemplates[selectedTemplate]?.imageFields?.logo?.image_width || 150}
+                          height={newTemplates[selectedTemplate]?.imageFields?.logo?.image_height || 150}
+                          stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || imageMaskColor}
+                          strokeWidth={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_mask_thickness || 2}
+                          cornerRadius={
+                            //newTemplates[selectedTemplate]?.logo?.logo_is_circle
+                            (newTemplates[selectedTemplate]?.imageFields?.logo?.circle_diameter || imageCircleDiameter) / 2
+                            // : 0
+                          }
+                          rotation={0}
+                        />
+                      </>
+                    )}
+                  {newTemplates?.[selectedTemplate]?.textFields &&
+                    Object.entries(newTemplates[selectedTemplate].textFields)
+                      .filter(([_, field]) => field.status !== "inactive")
+                      .map(([fieldKey, field]) => {
+                        // Optional debugging:
+                        // console.log('Rendering field:', fieldKey, field);
 
-      let fieldValue = "N/A";
-      switch (field.field_name) {
-        case "orgname": fieldValue = orgname; break;
-        case "motto": fieldValue = motto; break;
-        case "mission": fieldValue = mission; break;
-        case "vision": fieldValue = vision; break;
-        case "coreValue": fieldValue = coreValue; break;
-        case "orgAddress": fieldValue = orgAddress; break;
-        case "orgPhone": fieldValue = orgPhone; break;
-        case "website": fieldValue = website; break;
-        case "orgEmail": fieldValue = orgEmail; break;
-        case "fax": fieldValue = fax; break;
-        case "tin": fieldValue = tin; break;
-        case "abbreviation": fieldValue = abbreviation; break;
-        default:
-          fieldValue = sampleProfile?.[field.field_name] ?? "N/A";
-      }
+                        let fieldValue = "N/A";
+                        switch (field.field_name) {
+                          case "orgname": fieldValue = orgname; break;
+                          case "motto": fieldValue = motto; break;
+                          case "mission": fieldValue = mission; break;
+                          case "vision": fieldValue = vision; break;
+                          case "coreValue": fieldValue = coreValue; break;
+                          case "orgAddress": fieldValue = orgAddress; break;
+                          case "orgPhone": fieldValue = orgPhone; break;
+                          case "website": fieldValue = website; break;
+                          case "orgEmail": fieldValue = orgEmail; break;
+                          case "fax": fieldValue = fax; break;
+                          case "tin": fieldValue = tin; break;
+                          case "abbreviation": fieldValue = abbreviation; break;
+                          default:
+                            fieldValue = sampleProfile?.[field.field_name] ?? "N/A";
+                        }
 
-      const displayText = Array.isArray(fieldValue)
-        ? fieldValue[0]
-        : (fieldValue || "N/A");
+                        const displayText = Array.isArray(fieldValue)
+                          ? fieldValue[0]
+                          : (fieldValue || "N/A");
 
-      const xPos = field.text_positionx ? Number(field.text_positionx) : 0;
-      const yPos = field.text_positiony ? Number(field.text_positiony) : 0;
-      const gap = Number(field.text_gap) || 0;
+                        const xPos = field.text_positionx ? Number(field.text_positionx) : 0;
+                        const yPos = field.text_positiony ? Number(field.text_positiony) : 0;
+                        const gap = Number(field.text_gap) || 0;
 
-      return (
-        <Group key={fieldKey}>
-          <Text
-            x={xPos}
-            y={yPos}
-            text={field.field_label}
-            fill={field.text_font_color || "black"}
-            fontFamily={field.text_font_type || "Arial"}
-            fontSize={Number(field.text_font_size) || 16}
-            fontStyle="bold"
-          />
-          <Text
-            x={xPos + gap}
-            y={yPos}
-            text={displayText}
-            fill={field.text_font_color || "black"}
-            fontFamily={field.text_font_type || "Arial"}
-            fontSize={Number(field.text_font_size) || 16}
-          />
-        </Group>
-      );
-    })}
+                        return (
+                          <Group key={fieldKey}>
+                            <Text
+                              x={xPos}
+                              y={yPos}
+                              text={field.field_label}
+                              fill={field.text_font_color || "black"}
+                              fontFamily={field.text_font_type || "Arial"}
+                              fontSize={Number(field.text_font_size) || 16}
+                              fontStyle="bold"
+                            />
+                            <Text
+                              x={xPos + gap}
+                              y={yPos}
+                              text={displayText}
+                              fill={field.text_font_color || "black"}
+                              fontFamily={field.text_font_type || "Arial"}
+                              fontSize={Number(field.text_font_size) || 16}
+                            />
+                          </Group>
+                        );
+                      })}
 
-              </Layer>
-            </Stage>
+                </Layer>
+              </Stage>
             </>
           )}
 
@@ -1176,10 +1284,10 @@ const fieldsToRender = textFieldsToRender
         <div className="template-settings">
           <ul className="nav nav-tabs nav-line-tabs nav-line-tabs-2x mb-5 fs-6">
             <li className="nav-item">
-              <a className="nav-link active" data-bs-toggle="tab" href="#kt_tab_pane_4">Template</a>
+              <a className="nav-link active" data-bs-toggle="tab" href="#kt_tab_pane_4">{t('template')}</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" data-bs-toggle="tab" href="#kt_tab_pane_5">Edit Details</a>
+              <a className="nav-link" data-bs-toggle="tab" href="#kt_tab_pane_5">{t('editdetails')}</a>
             </li>
 
           </ul>
@@ -1191,24 +1299,26 @@ const fieldsToRender = textFieldsToRender
                   <thead>
                     <tr>
                       <td>#</td>
-                      <td>Template Type</td>
-                      <td>File</td>
-                      <td>Actions</td>
+                      <td>{t('templatetype')}</td>
+                      <td>{t('file')}</td>
+                      <td>{t('actions')}</td>
                     </tr>
 
                   </thead>
                   <tbody>
                     <tr>
                       <td>1</td>
-                      <td>Front Template</td>
+                      <td>{t('fronttemplate')}</td>
                       <td>
-                        <i
-                          className="bi bi-eye-fill"
-                          onClick={() => {
-                            setIsViewModalOpen(true);
-                            handleViewTemplate('front');
-                          }}
-                        ></i>
+                        {permissions.some(p =>
+                          p.name.includes('read IdentityCardTemplate')) ? (<i
+
+                            className="bi bi-eye-fill"
+                            onClick={() => {
+                              setIsViewModalOpen(true);
+                              handleViewTemplate('front');
+                            }}
+                          ></i>) : null}
 
 
                         <div
@@ -1220,10 +1330,10 @@ const fieldsToRender = textFieldsToRender
                           <div className="modal-dialog">
                             <div className="modal-content">
                               <div className="modal-body">
-                                {backObj && (
+                                {templateImage && (
                                   <Stage width={300} height={200}>
                                     <Layer>
-                                      <Image image={backObj} />
+                                      <Image image={templateImage} />
                                     </Layer>
                                   </Stage>
                                 )}
@@ -1234,7 +1344,10 @@ const fieldsToRender = textFieldsToRender
                                   className="btn btn-light"
                                   onClick={() => setIsViewModalOpen(false)}
                                 >
-                                  Close
+                                  <span className="svg-icon svg-icon-1">
+                                    <CloseIcon />
+                                  </span>
+                                  {t('close')}
                                 </button>
                               </div>
                             </div>
@@ -1244,29 +1357,38 @@ const fieldsToRender = textFieldsToRender
 
                       <td>
                         <label htmlFor="template-front">
-                          <i className="bi bi-pencil-fill"></i>
+                          {permissions.some(p =>
+                            p.name.includes('update IdentityCardTemplate') || p.name.includes('create IdentityCardTemplate')) ? (<i
+
+                              className="bi bi-pencil-fill"></i>) : null}
                         </label>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageSelect(e,"front")}
+                          onChange={(e) => handleImageSelect(e, "front")}
                           style={{ display: 'none' }}
                           id="template-front"
                         />
-                        <label><i className="bi bi-trash-fill" onClick={() => setBackObj(null)}></i></label>
+                        <label>
+                          {permissions.some(p =>
+                            p.name.includes('delete IdentityCardTemplate')) ? (<i
+
+                              className="bi bi-trash-fill" onClick={() => setTemplateImage(null)}></i>) : null}
+                        </label>
                       </td>
                     </tr>
                     <tr>
                       <td>2</td>
-                      <td>Back Template</td>
+                      <td>{t('backtemplate')}e</td>
                       <td>
-                        <i
-                          className="bi bi-eye-fill"
-                          onClick={() => {
-                            setIsViewModalOpen(true);
-                            handleViewTemplate('back');
-                          }}
-                        ></i>
+                        {permissions.some(p =>
+                          p.name.includes('read IdentityCardTemplate')) ? (<i
+                            className="bi bi-eye-fill"
+                            onClick={() => {
+                              setIsViewModalOpen(true);
+                              handleViewTemplate('back');
+                            }}
+                          ></i>) : null}
 
 
                         <div
@@ -1278,10 +1400,10 @@ const fieldsToRender = textFieldsToRender
                           <div className="modal-dialog">
                             <div className="modal-content">
                               <div className="modal-body">
-                                {backObj && (
+                                {templateImage && (
                                   <Stage width={300} height={200}>
                                     <Layer>
-                                      <Image image={backObj} />
+                                      <Image image={templateImage} />
                                     </Layer>
                                   </Stage>
                                 )}
@@ -1292,7 +1414,7 @@ const fieldsToRender = textFieldsToRender
                                   className="btn btn-light"
                                   onClick={() => setIsViewModalOpen(false)}
                                 >
-                                  Close
+                                  {t('close')}
                                 </button>
                               </div>
                             </div>
@@ -1302,29 +1424,33 @@ const fieldsToRender = textFieldsToRender
 
                       <td>
                         <label htmlFor="template-back">
-                          <i className="bi bi-pencil-fill"></i>
+                          {permissions.some(p =>
+                            p.name.includes('update IdentityCardTemplate') || p.name.includes('create IdentityCardTemplate')) ? (<i className="bi bi-pencil-fill"></i>) : null}
                         </label>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageSelect(e,"back")}
+                          onChange={(e) => handleImageSelect(e, "back")}
                           style={{ display: 'none' }}
                           id="template-back"
                         />
-                        <label><i className="bi bi-trash-fill" onClick={() => setBackObj(null)}></i></label>
+                        <label>{
+                          permissions.some(p =>
+                            p.name.includes('delete IdentityCardTemplate')) ? (<i className="bi bi-trash-fill" onClick={() => setTemplateImage(null)}></i>) : null}</label>
                       </td>
                     </tr>
                     <tr>
                       <td>3</td>
-                      <td>Badge Template</td>
+                      <td>{t('badgetemplate')}</td>
                       <td>
-                        <i
-                          className="bi bi-eye-fill"
-                          onClick={() => {
-                            setIsViewModalOpen(true);
-                            handleViewTemplate('badge');
-                          }}
-                        ></i>
+                        {permissions.some(p =>
+                          p.name.includes('read IdentityCardTemplate')) ? (<i
+                            className="bi bi-eye-fill"
+                            onClick={() => {
+                              setIsViewModalOpen(true);
+                              handleViewTemplate('badge');
+                            }}
+                          ></i>) : null}
 
 
                         <div
@@ -1336,10 +1462,10 @@ const fieldsToRender = textFieldsToRender
                           <div className="modal-dialog">
                             <div className="modal-content">
                               <div className="modal-body">
-                                {backObj && (
+                                {templateImage && (
                                   <Stage width={300} height={200}>
                                     <Layer>
-                                      <Image image={backObj} />
+                                      <Image image={templateImage} />
                                     </Layer>
                                   </Stage>
                                 )}
@@ -1350,7 +1476,7 @@ const fieldsToRender = textFieldsToRender
                                   className="btn btn-light"
                                   onClick={() => setIsViewModalOpen(false)}
                                 >
-                                  Close
+                                  {t('close')}
                                 </button>
                               </div>
                             </div>
@@ -1360,784 +1486,891 @@ const fieldsToRender = textFieldsToRender
 
                       <td>
                         <label htmlFor="template-badge">
-                          <i className="bi bi-pencil-fill"></i>
+                          {permissions.some(p =>
+                            p.name.includes('update IdentityCardTemplate') || p.name.includes('create IdentityCardTemplate')) ? (<i className="bi bi-pencil-fill"></i>) : null}
                         </label>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageSelect(e,"badge")}
+                          onChange={(e) => handleImageSelect(e, "badge")}
                           style={{ display: 'none' }}
                           id="template-badge"
                         />
-                        <label><i className="bi bi-trash-fill" onClick={() => setBackObj(null)}></i></label>
+                        <label>{permissions.some(p =>
+                          p.name.includes('delete IdentityCardTemplate')) ? (<i className="bi bi-trash-fill" onClick={() => setTemplateImage(null)}></i>) : null}</label>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <button className="btn btn-primary" onClick={() => handleSaveTemplate(newTemplates,selectedTemplate)}>Save Template</button>
+                <button className="btn btn-primary" onClick={() => handleSaveTemplate(newTemplates, selectedTemplate)}>{t('savetemplate')}</button>
               </div>
 
             </div>
             <div className="tab-pane fade" id="kt_tab_pane_5" role="tabpanel">
-              <label>Choose fields to include</label>
+              <label>{t('choosefieldstoinclude')}</label>
               <select className="form-select">
-                <option value="photo" name="photo">Image</option>
-                <option value="qrcode" name="qrcode">QRCode</option>
-                <option value="en_name" name="en_name">Name</option>
-                <option value="job_position" name="job_position">Role</option>
-                <option value="id_issue_date" name="id_issue_date">Issue Date</option>
-                <option value="id_expire_date" name="id_expire_date">Expiry Date</option>
-                <option value="phone_number" name="phone_number">Phone Number</option>
-                <option value="email" name="email">Email Address</option>
-                <option value="address" name="address">Address</option>
-                <option value="sex" name="sex">Sex</option>
-                <option value="title" name="title">Title</option>
-                <option value="date_of_birth" name="date_of_birth">Date of Birth</option>
-                <option value="joined_date" name="joined_date">Joined Date</option>
-                <option value="job_title_category" name="job_title_category">Job Title Category</option>
-                <option value="nation" name="nation">Nation</option>
-                <option value="region" name="region">Region</option>
-                <option value="zone" name="zone">Zone</option>
-                <option value="woreda" name="woreda">Woreda</option>
-                <option value="house_number" name="house_number">House Number</option>
-                <option value="marital_status" name="marital_status">Marital Status</option>
-                <option value="salary_amount" name="salary_amount">Salary ID</option>
-                <option value="job_position_start_date" name="job_position_start_date">Job Position Start Date</option>
-                <option value="job_position_end_date" name="job_position_end_date">Job Position End Date</option>
-                <option value="employment_id" name="employment_id">Employment ID</option>
-                <option value="organization_unit" name="organization_unit">Organization Unit</option>
-                <option value="orgname" name="orgname">Organization Name</option>
-                <option value="motto" name="motto">Motto</option>
-                <option value="mission" name="mission">Mission</option>
-                <option value="vision" name="vision">Vision</option>
-                <option value="coreValue" name="coreValue">Core Value</option>
-                <option value="logo" name="logo">Logo</option>
-                <option value="orgAddress" name="orgAddress"> Organization Address</option>
-                <option value="website" name="website">Website</option>
-                <option value="orgPhone" name="orgPhone">Organization Phone</option>
-                <option value="fax" name="fax">Fax number</option>
-                <option value="poBox" name="poBox">P.O.Box</option>
-                <option value="tin" name="tin">Tin Number</option>
-                <option value="abbreviation" name="abbreviation">Abbreviation</option>
+                <option value="photo" name="photo">{t('image')}</option>
+                <option value="qrcode" name="qrcode">{t('qrcode')}</option>
+                <option value="en_name" name="en_name">{t('name')}</option>
+                <option value="job_position" name="job_position">{t('role')}</option>
+                <option value="id_issue_date" name="id_issue_date">{t('issuedate')}</option>
+                <option value="id_expire_date" name="id_expire_date">{t('expirydate')}</option>
+                <option value="phone_number" name="phone_number">{t('phonenumber')}</option>
+                <option value="address" name="address">{t('address')}</option>
+                <option value="sex" name="sex">{t('sex')}</option>
+                <option value="title" name="title">{t('title')}</option>
+                <option value="date_of_birth" name="date_of_birth">{t('dateofbirth')}</option>
+                <option value="joined_date" name="joined_date">{t('joineddate')}</option>
+                <option value="job_title_category" name="job_title_category">{t('jobtitlecategory')}</option>
+                <option value="nation" name="nation">{t('nation')}</option>
+                <option value="region" name="region">{t('region')}</option>
+                <option value="zone" name="zone">{t('zone')}</option>
+                <option value="woreda" name="woreda">{t('woreda')}</option>
+                <option value="house_number" name="house_number">{t('housenumber')}</option>
+                <option value="marital_status" name="marital_status">{t('maritalstatus')}</option>
+                <option value="salary_amount" name="salary_amount">{t('salary')}</option>
+                <option value="job_position_start_date" name="job_position_start_date">{t('jobpositionstartdate')}</option>
+                <option value="job_position_end_date" name="job_position_end_date">{t('jobpositionenddate')}</option>
+                <option value="employment_id" name="employment_id">{t('employmentid')}</option>
+                <option value="organization_unit" name="organization_unit">{t('organizationunit')}</option>
+                <option value="orgname" name="orgname">{t('organizationname')}</option>
+                <option value="motto" name="motto">{t('motto')}</option>
+                <option value="mission" name="mission">{t('mission')}</option>
+                <option value="vision" name="vision">{t('vision')}</option>
+                <option value="coreValue" name="coreValue">{t('corevalues')}</option>
+                <option value="logo" name="logo">{t('logo')}</option>
+                <option value="orgAddress" name="orgAddress"> {t('organizationaddress')}</option>
+                <option value="website" name="website">{t('website')}</option>
+                <option value="orgPhone" name="orgPhone">{t('organizationphone')}</option>
+                <option value="fax" name="fax">{t('faxnumber')}</option>
+                <option value="poBox" name="poBox">{t('pobox')}</option>
+                <option value="tin" name="tin">{t('tinnumber')}</option>
+                <option value="abbreviation" name="abbreviation">{t('abbreviation')}</option>
 
               </select>
-              <button className="btn btn-primary" onClick={(e) => handleEnableField(e)}>Add Field</button>
-              {enableField[selectedTemplate]?.['photo'] && (<Group className="controls">
-                <Group>
-                  <details className="collapsable">
-                    <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, selectedTemplate, 'photo')} style={{ marginRight: '8px' }}></i>
-                      {newTemplates[selectedTemplate]?.['photo']?.field_label || 'PHOTO'}
-                    </summary>
+              {permissions.some(p =>
+                p.name.includes('create IdentityCardDetail')) ? (<button className="btn btn-primary" onClick={(e) => handleEnableField(e)}>{t('addfield')}</button>) : null}
 
 
-                    <div className="nested-fields">
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="text"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "text"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'photo',e.target.name,e.target.value)} />Text
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="number"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "number"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'photo',e.target.name,e.target.value)} />Number
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="image"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "image"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'photo',e.target.name,e.target.value)} />Image
-
-                      <details className="collapsable">
-                        <summary className="field">Field Label</summary>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="field_label"
-                          //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Label Length</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="label_length"
-                          //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image X Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positionx"
-                          //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Image Y Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positiony"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image Width</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_width"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-
-                          placeholder="width"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image Height</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_height"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-
-                          placeholder="height"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Mask</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            name="has_mask"
-                            className="form-control"
-                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            name="has_mask"
-                            className="form-control"
-                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask thickness</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_mask_thickness"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name,e.target.value)}
-
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
-
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask color</summary>
-                        <input
-                          type="color"
-                          className="form-control"
-                          name="circle_background"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Circle</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="is_circle"
-
-                            onChange={(e) => handleCircle(e, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="is_circle"
-
-                            onChange={(e) => handleCircle(e, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Circle Diameter</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_diameter"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-                         // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
-                        />
-                      </details>
-
-
-                    </div>
-                  </details>
-
-
-                </Group>
-
-              </Group>)}
-
-
-              {enableField[selectedTemplate]?.['qrcode'] && (<Group className="controls">
-                <Group>
-                  <details className="collapsable">
-                    <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'qrcode')} style={{ marginRight: '8px' }}></i>
-                      {newTemplates[selectedTemplate]?.['qrcode']?.field_label || 'qrcode'}
-                    </summary>
-
-
-                    <div className="nested-fields">
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="text"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "text"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Text
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="number"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "number"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Number
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="image"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.type === "image"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'qrcode',e.target.name,e.target.value)} />Image
-
-                      <details className="collapsable">
-                        <summary className="field">Field Label</summary>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="field_label"
-                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Label Length</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="label_length"
-                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image X Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positionx"
-                          //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Image Y Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positiony"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
-
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image Width</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_width"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
-
-                          placeholder="width"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Image Height</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_height"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
-
-                          placeholder="height"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Mask</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            name="has_mask"
-                            className="form-control"
-                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            name="has_mask"
-                            className="form-control"
-                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask thickness</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_mask_thickness"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name,e.target.value)}
-
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
-
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask color</summary>
-                        <input
-                          type="color"
-                          className="form-control"
-                          name="circle_background"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Circle</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="is_circle"
-
-                            onChange={(e) => handleCircle(e, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="is_circle"
-
-                            onChange={(e) => handleCircle(e, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Circle Diameter</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_diameter"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
-                         // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
-                        />
-                      </details>
-
-
-                    </div>
-                  </details>
-
-
-                </Group>
-
-              </Group>)}
-
-
-              {enableField[selectedTemplate]?.['logo'] && (<Group className="controls">
-
-                <Group>
-                  <details className="collapsable">
-                    <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-                      <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'logo')} style={{ marginRight: '8px' }}></i>
-                      {newTemplates[selectedTemplate]?.['logo']?.field_label || 'LOGO'}
-                    </summary>
-
-
-                    <div className="nested-fields">
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="text"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "text"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'logo',e.target.name,e.target.value)} />Text
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="number"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "number"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'logo',e.target.name,e.target.value)} />Number
-
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="image"
-                        checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "image"}
-                        onChange={(e) => handleImageChange(selectedTemplate, 'logo',e.target.name,e.target.value)} />Image
-
-                      <details className="collapsable">
-                        <summary className="field">Field Label</summary>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="field_label"
-                          //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Label length</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="label_length"
-                          //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
-                          onChange={(e) =>
-                            handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
-                          }
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Logo X Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positionx"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-
-                          placeholder="x-axis"
-
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Logo Y Position</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_positiony"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Logo Width</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_width"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-
-                          placeholder="width"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Logo Height</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="image_height"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-
-                          placeholder="height"
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Mask</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="has_mask"
-
-                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="has_mask"
-
-                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask thickness</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_mask_thickness"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name,e.target.value)}
-
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
-
-                        />
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Mask color</summary>
-                        <input
-                          type="color"
-                          className="form-control"
-                          name="circle_background"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-                          disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
-
-                        />
-                      </details>
-
-                      <details className="collapsable">
-                        <summary className="field">Circle</summary>
-                        <label>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="logo_is_circle"
-
-                            onChange={(e) => handleLogoCircle(e, true)}
-                          />
-                          Apply
-                        </label>
-
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input
-                            type="radio"
-                            className="form-control"
-                            name="logo_is_circle"
-
-                            onChange={(e) => handleLogoCircle(e, false)}
-                          />
-                          Disable
-                        </label>
-
-                      </details>
-                      <details className="collapsable">
-                        <summary className="field">Circle Diameter</summary>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="circle_diameter"
-                          onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
-                          //disabled={!newTemplates[selectedTemplate]?.logo?.logo_is_circle}
-                        />
-                      </details>
-
-                    </div>
-                  </details>
-
-
-                </Group>
-
-              </Group>)}
-
-              <div className="temp-settings">
-                {fieldsToRender.map(([key, field]) => (
-                  <div key={key}>
+              {permissions.some(p =>
+                p.name.includes('update IdentityCardTemplate')) ? (enableField[selectedTemplate]?.['photo'] && (<Group className="controls">
+                  <Group>
                     <details className="collapsable">
-
                       <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-                        <i className="bi bi-x-lg" onClick={(e) => handleDisableField(e, key, field.field_name)} style={{ marginRight: '8px' }}></i>
-                        {console.log('LABEL:', field.field_label)
-                        }
-                        {field.field_label}
+                        <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, selectedTemplate, 'photo')} style={{ marginRight: '8px' }}></i>
+                        {newTemplates[selectedTemplate]?.['photo']?.field_label || 'PHOTO'}
                       </summary>
 
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="text"
-                        checked={field.type === "text"}
-                        onChange={(e) => handleTemplateChange(e, key)} />Text
 
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="number"
-                        checked={field.type === "number"}
-                        onChange={(e) => handleTemplateChange(e, key)} />Number
+                      <div className="nested-fields">
+                        <details className="collapsable">
+                          <summary className="field">{t("type")}</summary>
+                          <div className="flex items-center gap-x-6 border border-red-500 p-4">
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="text"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "text"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Text</span>
+                            </label>
 
-                      <input
-                        type="radio"
-                        name="type"
-                        className="form-control"
-                        value="image"
-                        checked={field.type === "image"}
-                        onChange={(e) => handleTemplateChange(e, key)} />Image
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="number"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "number"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Number</span>
+                            </label>
 
-                      <label className="field">X Position</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="text_positionx"
-                        value={field.text_positionx ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)}
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="image"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['photo'].type === "image"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Image</span>
+                            </label>
+                          </div>
+                        </details>
 
-                      />
-                      <label className="field">Y Position</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="text_positiony"
-                        value={field.text_positiony ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)}
 
-                      />
-                      <label className="field">Font Size</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="text_font_size"
-                        value={field.text_font_size ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)}
 
-                      />
-                      <label className="field">Label length</label>
-                      <input type="number"
-                        className="form-control"
-                        name="label_length"
-                        value={field.label_length ?? 'Label length'}
-                        onChange={(e) => handleTemplateChange(e, key)} />
-                        <label className="field">Field Label</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="field_label"
-                        value={field.field_label ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)} />
-                        <label className="field">Font Color</label>
-                      <input
-                        type="color"
-                        className="form-control"
-                        name="text_font_color"
-                        value={field.text_font_color ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)}
-                      />
-                      <label className="field">Text gap</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="text_gap"
-                        value={field.text_gap ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)} />
-                        <label className="field">Font Type</label>
-                      <select
-                        name="text_font_type"
-                        value={field.text_font_type ?? ''}
-                        onChange={(e) => handleTemplateChange(e, key)}
-                        className="form-select"
-                      >
-                        <option value="arial">Arial</option>
-                        <option value="calibri">Calibri</option>
-                        <option value="gothic">Gothic</option>
-                      </select>
 
+
+
+                        <details className="collapsable">
+                          <summary className="field">{t('fieldlabel')}</summary>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="field_label"
+                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('labellength')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="label_length"
+                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagexposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positionx"
+                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('imageyposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positiony"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagewidth')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_width"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+
+                            placeholder="width"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imageheight')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_height"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+
+                            placeholder="height"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('frame')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              name="has_mask"
+                              className="form-control"
+                              onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              name="has_mask"
+                              className="form-control"
+                              onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framethickness')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_mask_thickness"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
+
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framecolor')}</summary>
+                          <input
+                            type="color"
+                            className="form-control"
+                            name="circle_background"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('circle')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="is_circle"
+
+                              onChange={(e) => handleCircle(e, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="is_circle"
+
+                              onChange={(e) => handleCircle(e, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('circlediameter')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_diameter"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
+                          // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
+                          />
+                        </details>
+
+
+                      </div>
                     </details>
 
 
-                  </div>
-                ))}
-                <button className="btn btn-primary" onClick={() => handleSaveTemplateDetail(newTemplates)}>Update</button>
+                  </Group>
+
+                </Group>)) : null}
+
+
+              {permissions.some(p =>
+                p.name.includes('update IdentityCardTemplate') || p.name.includes('create IdentityCardTemplate')) ? (enableField[selectedTemplate]?.['qrcode'] && (<Group className="controls">
+                  <Group>
+                    <details className="collapsable">
+                      <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
+                        <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'qrcode')} style={{ marginRight: '8px' }}></i>
+                        {newTemplates[selectedTemplate]?.['qrcode']?.field_label || 'qrcode'}
+                      </summary>
+
+
+                      <div className="nested-fields">
+                        <details className="collapsable">
+                          <summary className="field">{t("type")}</summary>
+                          <div className="flex items-center gap-x-6 border border-red-500 p-4">
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="text"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode'].type === "text"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Text</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="number"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode'].type === "number"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Number</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="image"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['qrcode'].type === "image"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Image</span>
+                            </label>
+                          </div>
+                        </details>
+
+
+
+
+
+                        <details className="collapsable">
+                          <summary className="field">{t('fieldlabel')}</summary>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="field_label"
+                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('labellength')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="label_length"
+                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagexposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positionx"
+                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('imageyposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positiony"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagewidth')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_width"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+                            placeholder="width"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imageheight')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_height"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+                            placeholder="height"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('frame')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              name="has_mask"
+                              className="form-control"
+                              onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              name="has_mask"
+                              className="form-control"
+                              onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framethickness')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_mask_thickness"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
+
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framecolor')}</summary>
+                          <input
+                            type="color"
+                            className="form-control"
+                            name="circle_background"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('circle')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="is_circle"
+
+                              onChange={(e) => handleCircle(e, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="is_circle"
+
+                              onChange={(e) => handleCircle(e, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('circlediameter')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_diameter"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
+                          // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
+                          />
+                        </details>
+
+
+                      </div>
+                    </details>
+
+
+                  </Group>
+
+                </Group>)) : null}
+
+
+              {permissions.some(p =>
+                p.name.includes('update IdentityCardTemplate')) ? (enableField[selectedTemplate]?.['logo'] && (<Group className="controls">
+
+                  <Group>
+                    <details className="collapsable">
+                      <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
+                        <i className="bi bi-x-lg" onClick={(e) => handleDisableImageField(e, 'front', 'logo')} style={{ marginRight: '8px' }}></i>
+                        {newTemplates[selectedTemplate]?.['logo']?.field_label || 'LOGO'}
+                      </summary>
+
+
+                      <div className="nested-fields">
+                        <details className="collapsable">
+                          <summary className="field">{t('type')}</summary>
+                          <div className="flex items-center gap-x-6 border border-red-500 p-4">
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="text"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "text"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Text</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="number"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "number"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Number</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="image"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "image"}
+                                onChange={(e) =>
+                                  handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
+                                }
+                                className="w-4 h-4"
+                              />
+                              <span>Image</span>
+                            </label>
+                          </div>
+                        </details>
+
+
+
+                        <details className="collapsable">
+                          <summary className="field">{t('fieldlabel')}</summary>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="field_label"
+                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('labellength')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="label_length"
+                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            onChange={(e) =>
+                              handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
+                            }
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagexposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positionx"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+
+                            placeholder="x-axis"
+
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('imageyposition')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_positiony"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imagewidth')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_width"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+
+                            placeholder="width"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('imageheight')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="image_height"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+
+                            placeholder="height"
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('frame')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="has_mask"
+
+                              onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="has_mask"
+
+                              onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framethickness')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_mask_thickness"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
+
+                          />
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('framecolor')}</summary>
+                          <input
+                            type="color"
+                            className="form-control"
+                            name="circle_background"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+                            disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
+
+                          />
+                        </details>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('circle')}</summary>
+                          <label>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="logo_is_circle"
+
+                              onChange={(e) => handleLogoCircle(e, true)}
+                            />
+                            Apply
+                          </label>
+
+                          <label style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="radio"
+                              className="form-control"
+                              name="logo_is_circle"
+
+                              onChange={(e) => handleLogoCircle(e, false)}
+                            />
+                            Disable
+                          </label>
+
+                        </details>
+                        <details className="collapsable">
+                          <summary className="field">{t('circlediameter')}</summary>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="circle_diameter"
+                            onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
+                          //disabled={!newTemplates[selectedTemplate]?.logo?.logo_is_circle}
+                          />
+                        </details>
+
+                      </div>
+                    </details>
+
+
+                  </Group>
+
+                </Group>)) : null}
+
+              <div className="temp-settings">
+                {permissions.some(p =>
+                  p.name.includes('update IdentityCardTemplate')) ? (fieldsToRender.map(([key, field]) => (
+                    <div key={key}>
+                      <details className="collapsable">
+
+                        <summary className="field" style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
+                          <i className="bi bi-x-lg" onClick={(e) => handleDisableField(e, key, field.field_name)} style={{ marginRight: '8px' }}></i>
+                          {console.log('LABEL:', field.field_label)
+                          }
+                          {field.field_label}
+                        </summary>
+
+                        <details className="collapsable">
+                          <summary className="field">{t('type')}</summary>
+                          <div className="flex items-center gap-x-6 border border-red-500 p-4">
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="text"
+                                checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "text"}
+                                onChange={(e) => handleTemplateChange(e, key)}
+                                className="w-4 h-4"
+                              />
+                              <span>Text</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="text"
+                                checked={field.type === "number"}
+                                onChange={(e) => handleTemplateChange(e, key)}
+                                className="w-4 h-4"
+                              />
+                              <span>Number</span>
+                            </label>
+
+                            <label className="inline-flex items-center gap-2 border border-blue-300 p-2">
+                              <input
+                                type="radio"
+                                name="type"
+                                value="image"
+                                checked={field.type === "image"}
+                                onChange={(e) => handleTemplateChange(e, key)}
+                                className="w-4 h-4"
+                              />
+                              <span>Image</span>
+                            </label>
+                          </div>
+                        </details>
+
+
+
+                        <label className="field">{t('xposition')}</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="text_positionx"
+                          value={field.text_positionx ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)}
+
+                        />
+                        <label className="field">{t('yposition')}</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="text_positiony"
+                          value={field.text_positiony ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)}
+
+                        />
+                        <label className="field">{t('fontsize')}</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="text_font_size"
+                          value={field.text_font_size ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)}
+
+                        />
+                        <label className="field">{t('labellength')}</label>
+                        <input type="number"
+                          className="form-control"
+                          name="label_length"
+                          value={field.label_length ?? 'Label length'}
+                          onChange={(e) => handleTemplateChange(e, key)} />
+
+                        <label className="field">{t('fieldlabel')}</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          name="field_label"
+                          value={field.field_label ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)} />
+
+                        <label className="field">{t('fontcolor')}</label>
+                        <input
+                          type="color"
+                          className="form-control"
+                          name="text_font_color"
+                          value={field.text_font_color ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)}
+                        />
+                        <label className="field">{t('textgap')}</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="text_gap"
+                          value={field.text_gap ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)} />
+                        <label className="field">{t('fonttype')}</label>
+                        <select
+                          name="text_font_type"
+                          value={field.text_font_type ?? ''}
+                          onChange={(e) => handleTemplateChange(e, key)}
+                          className="form-select"
+                        >
+                          <option value="arial">Arial</option>
+                          <option value="calibri">Calibri</option>
+                          <option value="gothic">Gothic</option>
+                        </select>
+
+                      </details>
+
+
+                    </div>
+                  ))) : null}
+                {permissions.some(p =>
+                  p.name.includes('update IdentityCardTemplate')) ? (<button className="btn btn-primary" onClick={() => handleSaveTemplateDetail(newTemplates)}>{t('update')}</button>) : null}
 
               </div>
             </div>

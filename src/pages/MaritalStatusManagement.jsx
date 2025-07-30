@@ -1,10 +1,8 @@
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 
 import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import {
   createMaritalStatus,
@@ -13,6 +11,7 @@ import {
   deleteMaritalStatus,
   deleteBunch,
 } from "../features/maritalStatusSlice";
+import { fetchRoles } from "../features/roleSlice";
 
 // SVG Close Icon
 const CloseIcon = () => (
@@ -69,7 +68,7 @@ export default function MaritalStatus() {
       document.body.removeChild(script);
     };
   }, []);
-  
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   // Fixed selector to match Redux store key
@@ -77,7 +76,7 @@ export default function MaritalStatus() {
     (state) => state.maritalStatus || {}, // Ensure this matches your Redux store key
     shallowEqual
   );
-  
+
   // Memoized selector results
   const { data: maritalStatuses = [], status } = useMemo(() => {
     return {
@@ -86,6 +85,11 @@ export default function MaritalStatus() {
     };
   }, [maritalStatusState]);
 
+  const { user } = useSelector((state) => state.user.user);
+  const { role } = useSelector((state) => state.user.role);
+  const [permissions, setPermissions] = useState();
+  const [currentUser, setCurrentUser] = useState();
+  const [currentRole, setCurrentRole] = useState([]);
   const [startSelection, setStartSelection] = useState(false);
   const [searchItem, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("show all");
@@ -106,9 +110,9 @@ export default function MaritalStatus() {
   // Memoized filtered data
   const filteredData = useMemo(() => {
     return maritalStatuses.filter(item => {
-      const matchesSearch = searchItem === "" || 
+      const matchesSearch = searchItem === "" ||
         item.name?.toLowerCase().includes(searchItem.toLowerCase());
-      const matchesFilter = selectedFilter === "show all" || 
+      const matchesFilter = selectedFilter === "show all" ||
         item.status?.toLowerCase() === selectedFilter.toLowerCase();
       return matchesSearch && matchesFilter;
     });
@@ -122,7 +126,7 @@ export default function MaritalStatus() {
   const itemsPerPage = 5;
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Calculate pagination safely
   const currentdata = useMemo(() => {
     const lastItemIndex = currentPage * itemsPerPage;
@@ -143,11 +147,70 @@ export default function MaritalStatus() {
   };
 
   useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
+
+  useEffect(() => {
     setIsLoading(true);
     dispatch(getMaritalStatus())
       .catch((error) => {
         console.log("Error fetching data", error);
-        toast.error("Failed to load data");
+        toast.error(t('failedtoloaddata'));
       })
       .finally(() => setIsLoading(false));
   }, [dispatch]);
@@ -195,13 +258,13 @@ export default function MaritalStatus() {
 
   const handleSaveMaritalStatus = () => {
     if (!formData.name || !formData.description) {
-      toast.error("There are missing fields");
+      toast.error(t('therearemissingfields'));
       return;
     } else {
       dispatch(createMaritalStatus({ FormData: formData }))
         .unwrap()
         .then(() => {
-          toast.success("Marital status created successfully");
+          toast.success(t('maritalstatuscreatedsuccessfully'));
           dispatch(getMaritalStatus());
           setFormData({ id: "", name: "", description: "" });
         })
@@ -213,24 +276,30 @@ export default function MaritalStatus() {
   };
 
   const handleUpdateMaritalStatus = (Id) => {
-    dispatch(updateMaritalStatus({ Id, FormData: formData }))
-      .unwrap()
-      .then(() => {
-        toast.success("Marital status updated successfully");
-        dispatch(getMaritalStatus());
-        setFormData({ id: "", name: "", description: "" });
-      })
-      .catch((error) => {
-        toast.error(`Error: ${error.message}`);
-      });
-    setIsEditModalOpen(false);
+    if (!formData.name || !formData.description) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
+    else {
+      dispatch(updateMaritalStatus({ Id, FormData: formData }))
+        .unwrap()
+        .then(() => {
+          toast.success(t('maritalstatusupdatedsuccessfully'));
+          dispatch(getMaritalStatus());
+          setFormData({ id: "", name: "", description: "" });
+        })
+        .catch((error) => {
+          toast.error(`Error: ${error.message}`);
+        });
+      setIsEditModalOpen(false);
+    }
   };
 
   const handleDeleteMaritalStatus = (Id) => {
     dispatch(deleteMaritalStatus({ Id }))
       .unwrap()
       .then(() => {
-        toast.success("Marital status deleted successfully");
+        toast.success(t('maritalstatusdeletedsuccessfully'));
       })
       .catch((error) => {
         toast.error(`Error: ${error.message}`);
@@ -241,11 +310,11 @@ export default function MaritalStatus() {
 
   const handleDeleteBunch = () => {
     const ids = Object.keys(selectedUsers)
-    
+
     dispatch(deleteBunch({ Id: ids }))
       .unwrap()
       .then(() => {
-        toast.success("Selected items deleted successfully");
+        toast.success(t('selecteditemsdeletedsuccessfully'));
         setSelectedUsers({});
         setStartSelection(false);
       })
@@ -253,13 +322,13 @@ export default function MaritalStatus() {
         toast.error(`Error: ${error.message}`);
       });
   };
-  
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShowModalOpen, setIsShowModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Reset form when add modal opens
   useEffect(() => {
     if (isModalOpen) {
@@ -277,47 +346,49 @@ export default function MaritalStatus() {
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Marital Status Management
+              {t('maritalstatusmanagement')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
                 <a href="/" className="text-muted text-hover-primary">
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
               <li className="breadcrumb-item text-muted">
-                Marital Status Management
+                {t('maritalstatusmanagement')}
               </li>
             </ul>
           </div>
 
           {/* Buttons */}
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <a
-              href="#"
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsModalOpen(true);
-              }}
-            >
-              Add Marital Status
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('create')) ? (<a
+                href="#"
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
+              >
+                {t('addmaritalstatus')}
+              </a>) : null}
 
-            <a
-              href="#"
-              className={
-                Object.keys(selectedUsers).length > 0
-                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                  : "d-none"
-              }
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('delete')) ? (<a
+                href="#"
+                className={
+                  Object.keys(selectedUsers).length > 0
+                    ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                    : "d-none"
+                }
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </a>) : null}
           </div>
           {isModalOpen && (
             <div
@@ -329,7 +400,7 @@ export default function MaritalStatus() {
                 <div className="modal-content">
                   {/* Modal Header */}
                   <div className="modal-header">
-                    <h5 className="modal-title">Add Marital Status</h5>
+                    <h5 className="modal-title">{t('addmaritalstatus')}</h5>
                     <div
                       className="btn btn-icon btn-sm btn-active-icon-primary"
                       onClick={() => setIsModalOpen(false)}
@@ -344,7 +415,7 @@ export default function MaritalStatus() {
                   <div className="modal-body">
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Marital Status Name
+                        {t('maritalstatusname')}
                       </label>
                       <input
                         type="text"
@@ -352,14 +423,14 @@ export default function MaritalStatus() {
                         name="name"
                         onChange={handleChange}
                         required
-                        placeholder="Marital status name"
+                        placeholder={t('maritalstatusname')}
                         value={formData.name}
                       />
                     </div>
 
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Marital Status Description
+                        {t('maritalstatusdescription')}
                       </label>
                       <input
                         type="text"
@@ -367,7 +438,7 @@ export default function MaritalStatus() {
                         name="description"
                         onChange={handleChange}
                         required
-                        placeholder="Marital status description"
+                        placeholder={t('maritalstatusdescription')}
                         value={formData.description}
                       />
                     </div>
@@ -380,7 +451,7 @@ export default function MaritalStatus() {
                       className="btn btn-primary"
                       onClick={handleSaveMaritalStatus}
                     >
-                      Save changes
+                      {t('savechanges')}
                     </button>
                   </div>
                 </div>
@@ -401,7 +472,7 @@ export default function MaritalStatus() {
                 {/*begin::Title*/}
                 <h3 className="card-title align-items-start flex-column">
                   <span className="card-label fw-bold text-gray-800">
-                    Marital status table
+                    {t('maritalstatustable')}
                   </span>
                 </h3>
                 <div className="card-toolbar">
@@ -439,7 +510,7 @@ export default function MaritalStatus() {
                         type="text"
                         data-kt-table-widget-4="search"
                         className="form-control w-150px fs-7 ps-12"
-                        placeholder="Search"
+                        placeholder={t('search')}
                         onChange={(e) => setSearch(e.target.value)}
                       />
                     </div>
@@ -458,63 +529,64 @@ export default function MaritalStatus() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                         <div className="d-flex align-items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={
-                                Object.keys(selectedUsers).length ===
-                                maritalStatuses.length && maritalStatuses.length > 0
-                              }
-                              onChange={handleSelectAll}
-                              disabled={maritalStatuses.length === 0}
-                              title={
-                                Object.keys(selectedUsers).length ===
+                        <div className="d-flex align-items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={
+                              Object.keys(selectedUsers).length ===
+                              maritalStatuses.length && maritalStatuses.length > 0
+                            }
+                            onChange={handleSelectAll}
+                            disabled={maritalStatuses.length === 0}
+                            title={
+                              Object.keys(selectedUsers).length ===
                                 maritalStatuses.length
-                                  ? "Deselect All"
-                                  : "Select All"
-                              }
-                              style={{ cursor: "pointer" }}
-                            />
-                            S.N.
-                          </div>
+                                ? "Deselect All"
+                                : "Select All"
+                            }
+                            style={{ cursor: "pointer" }}
+                          />
+                          {t('sn')}.
+                        </div>
                       </th>
-                      <th className="text-start min-w-100px">Name</th>
-                      <th className="text-start min-w-125px">Description</th>
-                      <th className="text-start min-w-100px">Action</th>
+                      <th className="text-start min-w-100px">{t('name')}</th>
+                      <th className="text-start min-w-125px">{t('description')}</th>
+                      <th className="text-start min-w-100px">{t('actions')}</th>
                     </tr>
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                      {isLoading ? (
-                        <tr>
-                          <td colSpan="8" className="text-center">
-                            <Loader />
-                          </td>
-                        </tr>
-                      ) : maritalStatuses.length > 0 ? (
-                        currentdata.map((item, index) => {
-                          if (!item) return null;
-                          return (
-                            <tr
-                              key={item.id}
-                              data-kt-table-widget-4="subtable_template"
-                            >
-                              <td>
-                                <div className="d-flex align-items-center gap-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={!!selectedUsers[item.id]}
-                                        onChange={() => handleSelectedRows(item.id)}
-                                      />
-                                      {(currentPage - 1) * itemsPerPage + index + 1}
-                                </div>
-                              </td>
-                              <td className="text-start">{item.name}</td>
-                              <td className="text-start">
-                                {item.description}
-                              </td>
-                              <td className="text-start">
-                                <button
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader />
+                        </td>
+                      </tr>
+                    ) : maritalStatuses.length > 0 ? (
+                      currentdata.map((item, index) => {
+                        if (!item) return null;
+                        return (
+                          <tr
+                            key={item.id}
+                            data-kt-table-widget-4="subtable_template"
+                          >
+                            <td>
+                              <div className="d-flex align-items-center gap-4">
+                                <input
+                                  type="checkbox"
+                                  checked={!!selectedUsers[item.id]}
+                                  onChange={() => handleSelectedRows(item.id)}
+                                />
+                                {(currentPage - 1) * itemsPerPage + index + 1}
+                              </div>
+                            </td>
+                            <td className="text-start">{item.name}</td>
+                            <td className="text-start">
+                              {item.description}
+                            </td>
+                            <td className="text-start">
+                              {permissions?.some(p =>
+                                p.name.includes('read')) ? (<button
                                   className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
                                   onClick={() => {
                                     setIsShowModalOpen(true);
@@ -522,71 +594,72 @@ export default function MaritalStatus() {
                                   }}
                                 >
                                   {" "}
-                                  <i className="bi bi-eye-fill fs-4"></i>
-                                </button>
+                                  <i className="bi bi-eye-fill"></i>
+                                </button>) : null}
 
-                                {isShowModalOpen && selectedUser && (
+                              {isShowModalOpen && selectedUser && (
+                                <div
+                                  className="modal fade show d-block"
+                                  tabIndex="-1"
+                                  role="dialog"
+                                  style={{
+                                    backgroundColor: "rgba(0,0,0,0.1)",
+                                  }}
+                                >
                                   <div
-                                    className="modal fade show d-block"
-                                    tabIndex="-1"
-                                    role="dialog"
-                                    style={{
-                                      backgroundColor: "rgba(0,0,0,0.1)",
-                                    }}
+                                    className="modal-dialog modal-dialog-centered"
+                                    role="document"
                                   >
-                                    <div
-                                      className="modal-dialog modal-dialog-centered"
-                                      role="document"
-                                    >
-                                      <div className="modal-content">
-                                        {/* Modal Header */}
-                                        <div className="modal-header">
-                                          <h5 className="modal-title">
-                                            Marital Status Details
-                                          </h5>
-                                          <div
-                                            className="btn btn-icon btn-sm btn-icon-primary"
-                                            onClick={() =>
-                                              setIsShowModalOpen(false)
-                                            }
-                                            style={{ cursor: "pointer" }}
-                                          >
-                                            <span className="svg-icon svg-icon-1">
-                                              <CloseIcon />
-                                            </span>
-                                          </div>
+                                    <div className="modal-content">
+                                      {/* Modal Header */}
+                                      <div className="modal-header">
+                                        <h5 className="modal-title">
+                                          {t('maritalstatusdetails')}
+                                        </h5>
+                                        <div
+                                          className="btn btn-icon btn-sm btn-icon-primary"
+                                          onClick={() =>
+                                            setIsShowModalOpen(false)
+                                          }
+                                          style={{ cursor: "pointer" }}
+                                        >
+                                          <span className="svg-icon svg-icon-1">
+                                            <CloseIcon />
+                                          </span>
                                         </div>
-
-                                        {/* Modal Body */}
-                                        <div className="modal-body">
-                                          <div className="mb-3">
-                                            <label className="form-label fw-semibold">
-                                              Marital Status Name
-                                            </label>
-                                            <div className="form-control form-control-solid">
-                                              {selectedUser?.name || "-"}
-                                            </div>
-                                          </div>
-
-                                          <div className="mb-3">
-                                            <label className="form-label fw-semibold">
-                                              Marital Status Description
-                                            </label>
-                                            <div className="form-control form-control-solid">
-                                              {selectedUser?.description ||
-                                                "-"}
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        {/* Modal Footer */}
-                                        <div className="modal-footer"></div>
                                       </div>
+
+                                      {/* Modal Body */}
+                                      <div className="modal-body">
+                                        <div className="mb-3">
+                                          <label className="form-label fw-semibold">
+                                            {t('maritalstatusname')}
+                                          </label>
+                                          <div className="form-control form-control-solid">
+                                            {selectedUser?.name || "-"}
+                                          </div>
+                                        </div>
+
+                                        <div className="mb-3">
+                                          <label className="form-label fw-semibold">
+                                            {t('maritalstatusdescription')}
+                                          </label>
+                                          <div className="form-control form-control-solid">
+                                            {selectedUser?.description ||
+                                              "-"}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Modal Footer */}
+                                      <div className="modal-footer"></div>
                                     </div>
                                   </div>
-                                )}
+                                </div>
+                              )}
 
-                                <button
+                              {permissions?.some(p =>
+                                p.name.includes('update')) ? (<button
                                   className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                                   onClick={() => {
                                     setIsEditModalOpen(true);
@@ -594,89 +667,90 @@ export default function MaritalStatus() {
                                   }}
                                 >
                                   <i className="bi bi-pencil-fill"></i>
-                                </button>
-                                {isEditModalOpen && (
-                                  <div
-                                    className="modal fade show"
-                                    tabIndex="-1"
-                                    style={{
-                                      display: "block",
-                                      backgroundColor: "rgba(0,0,0,0.1)",
-                                    }}
-                                  >
-                                    <div className="modal-dialog">
-                                      <div className="modal-content">
-                                        {/* Modal Header */}
-                                        <div className="modal-header">
-                                          <h5 className="modal-title">
-                                            Edit Marital Status
-                                          </h5>
-                                          <div
-                                            className="btn btn-icon btn-sm btn-active-icon-primary"
-                                            onClick={() =>
-                                              setIsEditModalOpen(false)
-                                            }
-                                            style={{ cursor: "pointer" }}
-                                          >
-                                            <span className="svg-icon svg-icon-1">
-                                              <CloseIcon />
-                                            </span>
-                                          </div>
+                                </button>) : null}
+                              {isEditModalOpen && (
+                                <div
+                                  className="modal fade show"
+                                  tabIndex="-1"
+                                  style={{
+                                    display: "block",
+                                    backgroundColor: "rgba(0,0,0,0.1)",
+                                  }}
+                                >
+                                  <div className="modal-dialog">
+                                    <div className="modal-content">
+                                      {/* Modal Header */}
+                                      <div className="modal-header">
+                                        <h5 className="modal-title">
+                                          {t('editmaritalstatus')}
+                                        </h5>
+                                        <div
+                                          className="btn btn-icon btn-sm btn-active-icon-primary"
+                                          onClick={() =>
+                                            setIsEditModalOpen(false)
+                                          }
+                                          style={{ cursor: "pointer" }}
+                                        >
+                                          <span className="svg-icon svg-icon-1">
+                                            <CloseIcon />
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Modal Body */}
+                                      <div className="modal-body">
+                                        <div className="mb-3">
+                                          <label className="form-label fw-semibold required">
+                                            {t('maritalstatusname')}
+                                          </label>
+                                          <input
+                                            type="text"
+                                            className="form-control"
+                                            name="name"
+                                            onChange={handleChange}
+                                            required
+                                            placeholder={t('maritalstatusname')}
+                                            value={formData.name || ""}
+                                          />
                                         </div>
 
-                                        {/* Modal Body */}
-                                        <div className="modal-body">
-                                          <div className="mb-3">
-                                            <label className="form-label fw-semibold">
-                                              Marital Status Name
-                                            </label>
-                                            <input
-                                              type="text"
-                                              className="form-control"
-                                              name="name"
-                                              onChange={handleChange}
-                                              required
-                                              placeholder="Marital Status Name"
-                                              value={formData.name || ""}
-                                            />
-                                          </div>
-
-                                          <div className="mb-3">
-                                            <label className="form-label fw-semibold">
-                                              Marital Status Description
-                                            </label>
-                                            <input
-                                              type="text"
-                                              className="form-control"
-                                              name="description"
-                                              onChange={handleChange}
-                                              required
-                                              placeholder="Marital Status Description"
-                                              value={formData.description || ""}
-                                            />
-                                          </div>
+                                        <div className="mb-3">
+                                          <label className="form-label fw-semibold required">
+                                            {t('maritalstatusdescription')}
+                                          </label>
+                                          <input
+                                            type="text"
+                                            className="form-control"
+                                            name="description"
+                                            onChange={handleChange}
+                                            required
+                                            placeholder={t('maritalstatusdescription')}
+                                            value={formData.description || ""}
+                                          />
                                         </div>
+                                      </div>
 
-                                        {/* Modal Footer */}
-                                        <div className="modal-footer">
-                                          <button
-                                            type="button"
-                                            className="btn btn-primary"
-                                            onClick={() =>
-                                              handleUpdateMaritalStatus(
-                                                formData.id
-                                              )
-                                            }
-                                          >
-                                            Save changes
-                                          </button>
-                                        </div>
+                                      {/* Modal Footer */}
+                                      <div className="modal-footer">
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary"
+                                          onClick={() =>
+                                            handleUpdateMaritalStatus(
+                                              formData.id
+                                            )
+                                          }
+                                        >
+                                          {t('savechanges')}
+                                        </button>
                                       </div>
                                     </div>
                                   </div>
-                                )}
+                                </div>
+                              )}
 
-                                <button
+                              {permissions?.some(p =>
+                                p.name.includes('delete')) ? (<button
                                   className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
                                   onClick={() => {
                                     setDeletingId(item.id);
@@ -684,91 +758,90 @@ export default function MaritalStatus() {
                                   }}
                                 >
                                   <i className="bi bi-trash-fill"></i>
-                                </button>
-                                {isDeleteModalOpen && (
-                                  <div
-                                    className="modal fade show"
-                                    tabIndex="-1"
-                                    style={{
-                                      display: "block",
-                                      backgroundColor: "rgba(0,0,0,0.1)",
-                                    }}
-                                  >
-                                    <div className="modal-dialog">
-                                      <div className="modal-content text-center">
-                                        {/* Modal Header */}
-                                        <div className="modal-header">
-                                          <h5 className="modal-title">
-                                            Confirm Deletion
-                                          </h5>
-                                          <div
-                                            className="btn btn-icon btn-sm btn-active-icon-primary"
-                                            onClick={() => {
-                                              setIsDeleteModalOpen(false);
-                                              setDeletingId(null);
-                                            }}
-                                            style={{ cursor: "pointer" }}
-                                          >
-                                            <span className="svg-icon svg-icon-1">
-                                              <CloseIcon />
-                                            </span>
-                                          </div>
+                                </button>) : null}
+                              {isDeleteModalOpen && (
+                                <div
+                                  className="modal fade show"
+                                  tabIndex="-1"
+                                  style={{
+                                    display: "block",
+                                    backgroundColor: "rgba(0,0,0,0.1)",
+                                  }}
+                                >
+                                  <div className="modal-dialog">
+                                    <div className="modal-content text-center">
+                                      {/* Modal Header */}
+                                      <div className="modal-header">
+                                        <h5 className="modal-title">
+                                          {t('confirmdeletion')}
+                                        </h5>
+                                        <div
+                                          className="btn btn-icon btn-sm btn-active-icon-primary"
+                                          onClick={() => {
+                                            setIsDeleteModalOpen(false);
+                                            setDeletingId(null);
+                                          }}
+                                          style={{ cursor: "pointer" }}
+                                        >
+                                          <span className="svg-icon svg-icon-1">
+                                            <CloseIcon />
+                                          </span>
                                         </div>
+                                      </div>
 
-                                        {/* Modal Body */}
-                                        <div className="modal-body">
-                                          <fieldset>
-                                            <legend>
-                                              Marital Status Details
-                                            </legend>
-                                            <p>
-                                              Are you sure you want to delete
-                                              this Marital Status?
-                                            </p>
-                                          </fieldset>
-                                        </div>
+                                      {/* Modal Body */}
+                                      <div className="modal-body">
+                                        <fieldset>
+                                          <legend>
+                                            {t('maritalstatusdetails')}
+                                          </legend>
+                                          <p>
+                                            {t('areyousureyouwanttodeletethemaritalstatus')}?
+                                          </p>
+                                        </fieldset>
+                                      </div>
 
-                                        {/* Modal Footer */}
-                                        <div className="modal-footer justify-content-center">
-                                          <button
-                                            type="button"
-                                            className="btn btn-danger"
-                                            onClick={() =>
-                                              handleDeleteMaritalStatus(
-                                                deletingId
-                                              )
-                                            }
-                                          >
-                                            Delete
-                                          </button>
-                                        </div>
+                                      {/* Modal Footer */}
+                                      <div className="modal-footer justify-content-center">
+                                        <button
+                                          type="button"
+                                          className="btn btn-danger"
+                                          onClick={() =>
+                                            handleDeleteMaritalStatus(
+                                              deletingId
+                                            )
+                                          }
+                                        >
+                                          {t('deletepermanently')}
+                                        </button>
                                       </div>
                                     </div>
                                   </div>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      ) : (
-                        <tr>
-                          <td colSpan="8" className="text-center">
-                            No data available
-                          </td>
-                        </tr>
-                      )}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          {t('nodataavailable')}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
                   <div>
-                    Showing{" "}
+                    {t('showing')}{" "}
                     {Math.min(
                       (currentPage - 1) * itemsPerPage + 1,
                       filteredData.length
                     )}{" "}
                     to{" "}
                     {Math.min(currentPage * itemsPerPage, filteredData.length)}{" "}
-                    of {filteredData.length} entries
+                    of {filteredData.length} {t('entries')}
                   </div>
                   <div className="d-flex gap-2">
                     <button
@@ -779,7 +852,7 @@ export default function MaritalStatus() {
                       <i className="bi bi-chevron-left"></i>
                     </button>
                     <span className="px-3 d-flex align-items-center">
-                      Page {currentPage} of {totalPages}
+                      {t('page')} {currentPage} {t('of')} {totalPages}
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"

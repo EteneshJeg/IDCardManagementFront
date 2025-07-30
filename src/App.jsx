@@ -13,8 +13,6 @@ import IdDetails from './pages/iddetails'
 import Login from './pages/login'
 import DynamicDetails from './pages/dynamicdetails'
 import EmployeeDashboard from './pages/employeedashboard'
-import HrDashboard from './pages/hrdashboard'
-import ItStaffDashboard from './pages/itstaffdashboard'
 import OrganizationUnit from './pages/OrganizationUnit';
 import JobTitleCategories from './pages/JobTitleCategories';
 import JobPositions from './pages/JobPositions';

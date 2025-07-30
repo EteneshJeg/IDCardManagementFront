@@ -1,49 +1,61 @@
-import { useEffect,useState } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch } from "react-redux";
 
-import { getProfile } from "../features/idCardSlice";
 
 
-export default function QRScan(){
-    const dispatch=useDispatch();
-    const [id,setId]=useState();
-    const [employeeProfile,setEmployeeProfile]=useState();
-    useEffect(()=>{
-          
-          const querySearchParams=new URLSearchParams(window.location.search);
-          const dataString=querySearchParams.get("data");
-    
-          if(dataString){
-              
-              setId(decodeURIComponent(dataString)); 
-          }
-    
-      },[]);
+export default function QRScan() {
+  
+  const [id, setId] = useState();
+  const [employeeProfile, setEmployeeProfile] = useState();
+  useEffect(() => {
 
-      useEffect(()=>{
-           if(id){
-            dispatch(getProfile({Id:id})).then((data)=>{
-                console.log(data)
-                const dataitem=data.payload;
-                console.log(dataitem);
-                if(dataitem){
-                    setEmployeeProfile(dataitem);
-                    console.log(dataitem)
-                }
-                else{
-                    console.log('no id found');
-                    setEmployeeProfile(null);
-                }
-                
-            })
+    const querySearchParams = new URLSearchParams(window.location.search);
+    const dataString = querySearchParams.get("data");
+
+    if (dataString) {
+
+      setId(decodeURIComponent(dataString));
+    }
+
+  }, []);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const token = JSON.parse(localStorage.getItem("token"));
+        const response = await axios.get("http://localhost:8000/api/employees", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = response.data.data;
+        console.log("All employees:", data);
+
+        if (id != null) {
+          console.log("ID from query:", id);
+          const match = data.filter((d) => d.employment_id == id)
+          console.log("Match(es):", match);
+          setEmployeeProfile(match[0]);
+        } else {
+          console.log("No ID found in URL.");
         }
-        },[dispatch,id])
-    
-        const employeeId=employeeProfile?.id_status
+      } catch (error) {
+        console.error("Failed to fetch employees:", error);
+      }
+    };
 
-    return(
-        <>
-        <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
+    if (id != null) {
+      fetchEmployees();
+    }
+  }, [id]);
+
+
+  const employeeId = employeeProfile?.id_status
+
+  return (
+    <>
+      <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
         <div
           id="kt_app_toolbar_container"
           className="app-container container-xxl d-flex flex-stack"
@@ -75,63 +87,63 @@ export default function QRScan(){
       </div>
 
       <div id="kt_app_content" className="app-content flex-column-fluid">
-  <div id="kt_app_content_container" className="app-container container-xxl">
-    <div className="card mb-5 mb-xl-10" style={{backgroundColor:employeeProfile?.id_status.toLowerCase()==="expired"?"#ff4d4f":"lightgreen"}}>
-        <div className="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-            <div className="card-title m-0">
-                    Employee {id}
+        <div id="kt_app_content_container" className="app-container container-xxl">
+          <div className="card mb-5 mb-xl-10" style={{ backgroundColor: employeeProfile?.id_status.toLowerCase() === "expired" ? "#ff4d4f" : "lightgreen" }}>
+            <div className="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+              <div className="card-title m-0">
+                Employee {id}
+              </div>
             </div>
-        </div>
-        <div id="kt_account_settings_profile_details" className="collapse show">
-            <form id="kt_account_profile_details_form" className="form">
+            <div id="kt_account_settings_profile_details" className="collapse show">
+              <form id="kt_account_profile_details_form" className="form">
                 <div className="card-body border-top p-9">
-                    <div className="row mb-6">
-                        <label className="col-lg-4 col-form-label fw-semibold fs-6">Profile Picture</label>
-                        <div className="col-lg-8">
-                            <img
-  src={`http://localhost:8000/cors-image/${employeeProfile?.photo_url}`}
-  width="200"
-  height="200"
-  alt="User"
-  style={{
-    borderRadius: '50%',
-    objectFit: 'cover'
-  }}
-/>
-                        </div>
-
+                  <div className="row mb-6">
+                    <label className="col-lg-4 col-form-label fw-semibold fs-6">Profile Picture</label>
+                    <div className="col-lg-8">
+                      <img
+                        src={`http://localhost:8000/cors-image/${employeeProfile?.photo_url}`}
+                        width="200"
+                        height="200"
+                        alt="User"
+                        style={{
+                          borderRadius: '50%',
+                          objectFit: 'cover'
+                        }}
+                      />
                     </div>
 
-                     <div className="row mb-6">
-                            <label className="col-lg-4 col-form-label  fw-semibold fs-6">Full Name</label>
-                            <div className="col-lg-8">
-                                {employeeProfile?.en_name}
-                            </div>
-                     </div>
+                  </div>
 
-                     <div className="row mb-6">
-                            <label className="col-lg-4 col-form-label  fw-semibold fs-6">Job Position</label>
-                            <div className="col-lg-8">
-                                {employeeProfile?.job_position}
-                            </div>
-                     </div>
+                  <div className="row mb-6">
+                    <label className="col-lg-4 col-form-label  fw-semibold fs-6">Full Name</label>
+                    <div className="col-lg-8">
+                      {employeeProfile?.en_name}
+                    </div>
+                  </div>
 
-                     <div className="row mb-6">
-                            <label className="col-lg-4 col-form-label  fw-semibold fs-6">Status</label>
-                            <div className="col-lg-8">
-                                {employeeProfile?.id_status}
-                            </div>
-                     </div>
+                  <div className="row mb-6">
+                    <label className="col-lg-4 col-form-label  fw-semibold fs-6">Job Position</label>
+                    <div className="col-lg-8">
+                      {employeeProfile?.job_position?.job_description}
+                    </div>
+                  </div>
+
+                  <div className="row mb-6">
+                    <label className="col-lg-4 col-form-label  fw-semibold fs-6">Status</label>
+                    <div className="col-lg-8">
+                      {employeeProfile?.id_status}
+                    </div>
+                  </div>
 
                 </div>
-            </form>
+              </form>
+            </div>
+          </div>
+
+
         </div>
-    </div>
-  
+      </div>
 
-    </div>
-    </div>
-
-        </>
-    )
+    </>
+  )
 }

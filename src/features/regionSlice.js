@@ -1,5 +1,6 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import i18next from "i18next";
 
 export const createRegion=createAsyncThunk(
     'region/create',
@@ -12,56 +13,16 @@ export const createRegion=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success("Region saved");
+                toast.success(i18next.t('regionsavedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error.response);
-                toast.error("Failed to save region");
+                toast.error(i18next.t('failedtosaveregion'));
                 return;
             })
-            /*let regionId;
-            let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
-            console.log(storedRegions);
-            
-            if (!Array.isArray(storedRegions)) {
-                storedRegions = [storedRegions];
-            }
-
-            if (storedRegions.length === 0) {
-                let lastRegionId=0;
-                regionId=lastRegionId+1;
-            } else {
-                const lastRegion = storedRegions.pop();
-                if (lastRegion && lastRegion.id) {
-                    let lastRegionId = lastRegion.id;
-                     lastRegionId=parseInt(lastRegionId,10);
-                      regionId=lastRegionId+1;
-                      
-                } else {
-                    let lastRegionId=0;
-                    regionId=lastRegionId+1;
-                }
-                storedRegions.push(lastRegion);
-            }
-
-            const isRegionRegistered=storedRegions.some(storedRegion=>storedRegion.code===FormData.code)
-            if(isRegionRegistered){
-                toast.error('Region already exists');
-                return;
-            }
-            
-
-            let newRegion={
-                id:regionId,
-                name:FormData.name,
-                code:FormData.code
-            }
-            storedRegions.push(newRegion);
-            localStorage.setItem('region',JSON.stringify(storedRegions));
-            toast.success('Region saved successfully');
-            return newRegion;*/
+          
         }catch(error){
-            toast.error('Failed to save region');
+            toast.error(i18next.t('failedtosaveregion'));
             return rejectWithValue(error.message);
         }
     }
@@ -83,14 +44,7 @@ export const getRegion=createAsyncThunk(
             let returneddata=Array.isArray(data)?data:[data];
             console.log(returneddata)
             return returneddata;
-            /*let storedRegions=JSON.parse(localStorage.getItem('region'))||[];
-        if(!Array.isArray(storedRegions)){
-            storedRegions=[];
-        }
-        if(storedRegions){
-            return storedRegions;
-        }
-       */
+            
        }catch(error){
             return rejectWithValue(error.message);
         }
@@ -108,47 +62,17 @@ export const updateRegion=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success("Region updated");
+                toast.success(i18next.t('regionupdated'));
                 return;
             }).catch(error=>{
                 console.log(error.response);
-                toast.error("Failed to update region");
+                toast.error(i18next.t('failedtoupdateregion'));
                 return;
             })
-            /*let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
-            console.log(storedRegions);
-            
-            if (!Array.isArray(storedRegions)) {
-                storedRegions = [storedRegions];
-            }
-
-            const regionIndex = storedRegions.findIndex(storedRegion => {
-               
-                return String(storedRegion.id).trim() === String(Id).trim();  
-            });
-
-            console.log(regionIndex)
-
-            if (regionIndex === -1) {
-                return rejectWithValue('Region not found');
-            }
-
-            const updatedRegion={
-                ...storedRegions[regionIndex],
-                name:FormData.name,
-                code:FormData.code
-            }
-
-            console.log(updatedRegion)
-            if(updatedRegion){
-                storedRegions[regionIndex]=updatedRegion;
-                localStorage.setItem('region',JSON.stringify(storedRegions));
-                toast.success('Region Updated Successfully');
-                return updatedRegion
-            }*/
+           
 
         }catch(error){
-            toast.error('Failed to update');
+            toast.error(i18next.t('failedtoupdateregion'));
             return rejectWithValue(error.message);
         }
     }
@@ -165,34 +89,16 @@ export const deleteRegion=createAsyncThunk(
                 }
             })
             .then(response=>{
-                toast.success('Delete Successful');
+                toast.success(i18next.t('regiondeletedsuccessfully'));
                 console.log(response);
             })
             .catch(error=>{
                 console.log(error);
             })
-            /*let storedRegions = JSON.parse(localStorage.getItem('region')) || [];
-            console.log(storedRegions);
             
-            if (!Array.isArray(storedRegions)) {
-                storedRegions = [storedRegions];
-            }
-            
-            storedRegions = storedRegions.filter(storedRegion => {
-                return String(storedRegion.id).trim() !== String(Id).trim();
-              });
-            
-              if(!storedRegions){
-                return rejectWithValue('Region not found');
-             }
-              
-        console.log(storedRegions)
-        localStorage.setItem('region',JSON.stringify(storedRegions));
-        toast.success('Region deleted successfully');
-        return storedRegions;*/
 
         }catch(error){
-            toast.error('Failed to delete region');
+            toast.error(i18next.t('failedtodeleteregion'));
             return rejectWithValue(error.message);
         }
     }

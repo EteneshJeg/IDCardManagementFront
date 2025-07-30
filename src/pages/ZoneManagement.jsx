@@ -1,7 +1,3 @@
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
-
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -14,6 +10,8 @@ import {
   deleteBunch,
 } from "../features/zoneSlice";
 import { getRegion } from "../features/regionSlice";
+import { fetchRoles } from "../features/roleSlice";
+import { useTranslation } from "react-i18next";
 
 // SVG Close Icon
 const CloseIcon = () => (
@@ -69,21 +67,24 @@ export default function Zone() {
       document.body.removeChild(script);
     };
   }, []);
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { zone } = useSelector((state) => state.zone);
+  const { user } = useSelector((state) => state.user.user);
+  const { role } = useSelector((state) => state.user.role);
   const [startSelection, setStartSelection] = useState(false);
   const [zoneData, setZoneData] = useState([]);
   const [region, setRegion] = useState([]);
   const [searchItem, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [filteredData, setFilteredData] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState({});
+  const [selectedZones, setSelectedZones] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     region_id: "",
   });
-  const [selectedUser, setSelectedUser] = useState({
+  const [selectedZone, setSelectedZone] = useState({
     name: "",
     region_id: "",
   });
@@ -112,6 +113,9 @@ export default function Zone() {
     ? zoneData.slice(firstItemIndex, lastItemIndex)
     : [zoneData].slice(firstItemIndex, lastItemIndex);
 
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState([]);
+  const [permissions, setPermissions] = useState();
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -123,6 +127,65 @@ export default function Zone() {
       setCurrentPage(currentPage - 1);
     }
   };
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -175,7 +238,7 @@ export default function Zone() {
   console.log(selectedFilter);
 
   const handleSelectedRows = (rowId) => {
-    setSelectedUsers((prev) => {
+    setSelectedZones((prev) => {
       const updatedSelection = {
         ...prev,
         [rowId]: !prev[rowId],
@@ -198,15 +261,15 @@ export default function Zone() {
   };
 
   const handleSelectAll = () => {
-    if (Object.keys(selectedUsers).length === zoneData.length) {
-      setSelectedUsers({});
+    if (Object.keys(selectedZones).length === zoneData.length) {
+      setSelectedZones({});
       setStartSelection({});
     } else {
       const newSelected = {};
       zoneData.forEach((user) => {
         newSelected[user.id] = true;
       });
-      setSelectedUsers(newSelected);
+      setSelectedZones(newSelected);
       setStartSelection(newSelected);
     }
   };
@@ -218,7 +281,7 @@ export default function Zone() {
 
   const handleSaveZone = () => {
     if (!formData.name || !formData.region_id) {
-      toast.error("There are missing fields");
+      toast.error(t('therearemissingfields'));
       return;
     } else {
       const matchedRegion = region.find((reg) => {
@@ -228,7 +291,7 @@ export default function Zone() {
       });
       console.log(matchedRegion);
       if (!matchedRegion) {
-        toast.error("Invalid region code detected");
+        toast.error(t('invalidregioncodedetected'));
         return;
       }
       dispatch(createZone({ FormData: formData }));
@@ -237,6 +300,10 @@ export default function Zone() {
   };
 
   const handleUpdateZone = (Id) => {
+    if (!formData.name || !formData.region_id) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
     dispatch(updateZone({ Id: Id, FormData: formData }));
     setIsEditModalOpen(false);
   };
@@ -247,8 +314,8 @@ export default function Zone() {
   };
 
   const handleDeleteBunch = () => {
-    console.log(selectedUsers);
-    dispatch(deleteBunch({ Id: selectedUsers }));
+    console.log(selectedZones);
+    dispatch(deleteBunch({ Id: selectedZones }));
   };
 
   return (
@@ -261,45 +328,47 @@ export default function Zone() {
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Zone Management
+              {t('zonemanagement')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
                 <a href="/" className="text-muted text-hover-primary">
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">Zone Management</li>
+              <li className="breadcrumb-item text-muted">{t('zonemanagement')}</li>
             </ul>
           </div>
 
           {/* Buttons */}
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <a
-              href="#"
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsModalOpen(true);
-              }}
-            >
-              Add Zone
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('create')) ? (<a
+                href="#"
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
+              >
+                {t('addzone')}
+              </a>) : null}
 
-            <a
-              href="#"
-              className={
-                Object.keys(selectedUsers).length > 0
-                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                  : "hide"
-              }
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('delete')) ? (<a
+                href="#"
+                className={
+                  Object.keys(selectedZones).length > 0
+                    ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                    : "hide"
+                }
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </a>) : null}
           </div>
           {isModalOpen && (
             <div
@@ -311,7 +380,7 @@ export default function Zone() {
                 <div className="modal-content">
                   {/* Modal Header */}
                   <div className="modal-header">
-                    <h5 className="modal-title">Add Zone</h5>
+                    <h5 className="modal-title">{t('addzone')}</h5>
                     <div
                       className="btn btn-icon btn-sm btn-active-icon-primary"
                       onClick={() => setIsModalOpen(false)}
@@ -327,7 +396,7 @@ export default function Zone() {
                   <div className="modal-body">
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Zone Name
+                        {t('zonename')}
                       </label>
                       <input
                         type="text"
@@ -335,13 +404,13 @@ export default function Zone() {
                         name="name"
                         onChange={handleChange}
                         required
-                        placeholder="Enter zone name"
+                        placeholder={t('enterzonename')}
                       />
                     </div>
 
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Region
+                        {t('region')}
                       </label>
                       <select
                         className="form-select"
@@ -349,7 +418,7 @@ export default function Zone() {
                         onChange={handleChange}
                         required
                       >
-                        <option value="">Select</option>
+                        <option value="">{t('select')}</option>
                         {region.map((data) => (
                           <option key={data.id} value={data.id}>
                             {data.name}
@@ -366,7 +435,7 @@ export default function Zone() {
                       className="btn btn-primary"
                       onClick={handleSaveZone}
                     >
-                      Save changes
+                      {t('savechanges')}
                     </button>
                   </div>
                 </div>
@@ -388,14 +457,14 @@ export default function Zone() {
                 {/*begin::Title*/}
                 <h3 className="card-title align-items-start flex-column">
                   <span className="card-label fw-bold text-gray-800">
-                    Zones table
+                    {t('zonestable')}
                   </span>
                 </h3>
                 <div className="card-toolbar">
                   {/*begin::Filters*/}
                   <div className="d-flex flex-stack flex-wrap gap-4">
                     {/*begin::Destination*/}
-                    <div className="text-gray-400 fs-7 me-2">Category</div>
+                    <div className="text-gray-400 fs-7 me-2">{t('category')}</div>
                     {/*end::Label*/}
                     {/*begin::Select*/}
                     <select
@@ -403,7 +472,7 @@ export default function Zone() {
                       value={selectedFilter}
                       onChange={(e) => setSelectedFilter(e.target.value)}
                     >
-                      <option value="show all">Show all</option>
+                      <option value="show all">{t('showall')}</option>
                       {region.map((data) => {
                         return (
                           <option key={data.id} value={data.name}>
@@ -446,7 +515,7 @@ export default function Zone() {
                         type="text"
                         data-kt-table-widget-4="search"
                         className="form-control w-150px fs-7 ps-12"
-                        placeholder="Search"
+                        placeholder={t('search')}
                         onChange={(e) => setSearch(e.target.value)}
                       />
                     </div>
@@ -464,344 +533,349 @@ export default function Zone() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                          <div className="d-flex align-items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={
-                                  Object.keys(selectedUsers).length ===
-                                  zoneData.length
-                                }
-                                onChange={handleSelectAll}
-                                title={
-                                  Object.keys(selectedUsers).length ===
-                                  zoneData.length
-                                    ? "Deselect All"
-                                    : "Select All"
-                                }
-                                style={{ cursor: "pointer" }}
-                              />
-                              S.N.
-                          </div>
+                        <div className="d-flex align-items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={
+                              Object.keys(selectedZones).length ===
+                              zoneData.length
+                            }
+                            onChange={handleSelectAll}
+                            title={
+                              Object.keys(selectedZones).length ===
+                                zoneData.length
+                                ? "Deselect All"
+                                : "Select All"
+                            }
+                            style={{ cursor: "pointer" }}
+                          />
+                          {t('sn')}.
+                        </div>
                       </th>
-                      <th className="text-start min-w-100px">Name</th>
-                      <th className="text-start min-w-125px">Region</th>
-                      <th className="text-start min-w-100px">Action</th>
+                      <th className="text-start min-w-100px">{t('name')}</th>
+                      <th className="text-start min-w-125px">{t('region')}</th>
+                      <th className="text-start min-w-100px">{t('actions')}</th>
                     </tr>
                     {/*end::Table row*/}
                   </thead>
                   <tbody className="fw-bold text-gray-600">
-                      {isLoading ? (
-                        <tr>
-                          <td colSpan="8" className="text-center">
-                            <Loader /> {/* Use the loader here */}
-                          </td>
-                        </tr>
-                      ) :
-                    Array.isArray(zoneData) ? (
-                      currentdata.length > 0 ? (
-                        currentdata
-                          .filter((row) => {
-                            const matchSearch =
-                              searchItem.toLowerCase() === ""
-                                ? row
-                                : String(row.name)
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader /> {/* Use the loader here */}
+                        </td>
+                      </tr>
+                    ) :
+                      Array.isArray(zoneData) ? (
+                        currentdata.length > 0 ? (
+                          currentdata
+                            .filter((row) => {
+                              const matchSearch =
+                                searchItem.toLowerCase() === ""
+                                  ? row
+                                  : String(row.name)
                                     .toLowerCase()
                                     .includes(searchItem);
-                            const matchFilter =
-                              selectedFilter === "show all" ||
-                              regionMap[row.region_id]?.toLowerCase() ===
+                              const matchFilter =
+                                selectedFilter === "show all" ||
+                                regionMap[row.region_id]?.toLowerCase() ===
                                 selectedFilter.toLowerCase();
 
-                            return matchSearch && matchFilter;
-                          })
-                          .map((row, index) => {
-                            return (
-                              <tr
-                                key={index}
-                                data-kt-table-widget-4="subtable_template"
-                              >
-                                <td>
-                                   <div className="d-flex align-items-center gap-2">
+                              return matchSearch && matchFilter;
+                            })
+                            .map((row, index) => {
+                              return (
+                                <tr
+                                  key={index}
+                                  data-kt-table-widget-4="subtable_template"
+                                >
+                                  <td>
+                                    <div className="d-flex align-items-center gap-4">
                                       <input
                                         type="checkbox"
-                                        checked={!!selectedUsers[row.id]}
+                                        checked={!!selectedZones[row.id]}
                                         onChange={() => handleSelectedRows(row.id)}
                                       />
-                                        {index + 1}
-                                  </div>
-                                </td>
-                                <td className="text-start">{index + 1}</td>
-                                <td className="text-start">{row.name}</td>
-                                {/* Fixed: Display region name instead of ID */}
-                                <td className="text-start">
-                                  {regionMap[row.region_id] || '-'}
-                                </td>
-                                <td className="text-start">
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
-                                    onClick={() => {
-                                      setIsShowModalOpen(true),
-                                        setSelectedUser(row);
-                                    }}
-                                  >
-                                    {" "}
-                                    <i className="bi bi-eye-fill fs-4"></i>
-                                  </button>
+                                      {index + 1}
+                                    </div>
+                                  </td>
 
-                                  {isShowModalOpen && (
-                                    <div
-                                      className="modal fade show d-block"
-                                      tabIndex="-1"
-                                      role="dialog"
-                                      style={{
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div
-                                        className="modal-dialog modal-dialog-centered"
-                                        role="document"
+                                  <td className="text-start">{row.name}</td>
+                                  {/* Fixed: Display region name instead of ID */}
+                                  <td className="text-start">
+                                    {regionMap[row.region_id] || '-'}
+                                  </td>
+                                  <td className="text-start">
+                                    {permissions?.some(p =>
+                                      p.name.includes('read')) ? (<button
+                                        className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                        onClick={() => {
+                                          setIsShowModalOpen(true),
+                                            setSelectedZone(row);
+                                        }}
                                       >
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              Zone Details
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsShowModalOpen(false)
-                                              }
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace with your actual CloseIcon */}
-                                                <CloseIcon />
-                                              </span>
-                                            </div>
-                                          </div>
+                                        {" "}
+                                        <i className="bi bi-eye-fill"></i>
+                                      </button>) : null}
 
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Zone Name
-                                              </label>
-                                              <div className="form-control form-control-solid">
-                                                {selectedUser?.name || "-"}
-                                              </div>
-                                            </div>
-
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Region
-                                              </label>
-                                              <div className="form-control form-control-solid">
-                                                {/* Fixed: Show region name in view modal */}
-                                                {regionMap[selectedUser?.region_id] || '-'}
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
-                                    onClick={() => {
-                                      setIsEditModalOpen(true),
-                                        setSelectedUser(row);
-                                    }}
-                                  >
-                                    <i className="bi bi-pencil-fill"></i>
-                                  </button>
-                                  {isEditModalOpen && (
-                                    <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      style={{
-                                        display: "block",
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              Edit Zone
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsEditModalOpen(false)
-                                              }
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace this with your actual close icon component */}
-                                                <CloseIcon />
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Zone Name
-                                              </label>
-                                              <input
-                                                type="text"
-                                                className="form-control"
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleChange}
-                                                required
-                                                placeholder="Enter zone name"
-                                              />
-                                            </div>
-
-                                            <div className="mb-3">
-                                              <label className="form-label fw-semibold">
-                                                Region
-                                              </label>
-                                              <select
-                                                className="form-select"
-                                                name="region_id"
-                                                value={formData.region_id}
-                                                onChange={handleChange}
-                                                required
+                                    {isShowModalOpen && (
+                                      <div
+                                        className="modal fade show d-block"
+                                        tabIndex="-1"
+                                        role="dialog"
+                                        style={{
+                                          backgroundColor: "rgba(0,0,0,0.1)",
+                                        }}
+                                      >
+                                        <div
+                                          className="modal-dialog modal-dialog-centered"
+                                          role="document"
+                                        >
+                                          <div className="modal-content">
+                                            {/* Modal Header */}
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">
+                                                {t('zonedetails')}
+                                              </h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() =>
+                                                  setIsShowModalOpen(false)
+                                                }
                                               >
-                                                <option value="">Select</option>
-                                                {region.map((data) => (
-                                                  <option
-                                                    key={data.id}
-                                                    value={data.id}
-                                                  >
-                                                    {data.name}
-                                                  </option>
-                                                ))}
-                                              </select>
+                                                <span className="svg-icon svg-icon-1">
+                                                  {/* Replace with your actual CloseIcon */}
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
                                             </div>
-                                          </div>
 
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                          
-                                            <button
-                                              type="button"
-                                              className="btn btn-primary"
-                                              onClick={() =>
-                                                handleUpdateZone(
-                                                  selectedUser.id
-                                                )
-                                              }
-                                            >
-                                              Save changes
-                                            </button>
+                                            {/* Modal Body */}
+                                            <div className="modal-body">
+                                              <div className="mb-3">
+                                                <label className="form-label fw-semibold">
+                                                  {t('zonename')}
+                                                </label>
+                                                <div className="form-control form-control-solid">
+                                                  {selectedZone?.name || "-"}
+                                                </div>
+                                              </div>
+
+                                              <div className="mb-3">
+                                                <label className="form-label fw-semibold">
+                                                  {t('region')}
+                                                </label>
+                                                <div className="form-control form-control-solid">
+                                                  {/* Fixed: Show region name in view modal */}
+                                                  {regionMap[selectedZone?.region_id] || '-'}
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Modal Footer */}
+                                            <div className="modal-footer">
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
+                                    )}
 
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
-                                    onClick={() => {
-                                      setSelectedUser(row),
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                  >
-                                    <i className="bi bi-trash-fill"></i>
-                                  </button>
-                                  {isDeleteModalOpen && (
-                                    <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      style={{
-                                        display: "block",
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              Confirm Zone Deletion
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsDeleteModalOpen(false)
-                                              }
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                {/* Replace with actual close icon */}
-                                                <CloseIcon />
-                                              </span>
+                                    {permissions?.some(p =>
+                                      p.name.includes('update')) ? (<button
+                                        className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                        onClick={() => {
+                                          setIsEditModalOpen(true),
+                                            setSelectedZone(row),
+                                            setFormData(row)
+
+
+                                        }}
+                                      >
+                                        <i className="bi bi-pencil-fill"></i>
+                                      </button>) : null}
+                                    {isEditModalOpen && (
+                                      <div
+                                        className="modal fade show"
+                                        tabIndex="-1"
+                                        style={{
+                                          display: "block",
+                                          backgroundColor: "rgba(0,0,0,0.1)",
+                                        }}
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            {/* Modal Header */}
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">
+                                                {'editzone'}
+                                              </h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() =>
+                                                  setIsEditModalOpen(false)
+                                                }
+                                              >
+                                                <span className="svg-icon svg-icon-1">
+                                                  {/* Replace this with your actual close icon component */}
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
                                             </div>
-                                          </div>
 
-                                          {/* Modal Body */}
-                                          <div className="modal-body">
-                                            <p className="fs-5 text-gray-800">
-                                              Are you sure you want to
-                                              permanently delete this zone?
-                                              <br />
-                                              This action cannot be undone.
-                                            </p>
-                                          </div>
+                                            {/* Modal Body */}
+                                            <div className="modal-body">
+                                              <div className="mb-3">
+                                                <label className="form-label fw-semibold required">
+                                                  {t('zonename')}
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  className="form-control"
+                                                  name="name"
+                                                  value={formData.name || ''}
+                                                  onChange={handleChange}
+                                                  required
 
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-danger"
-                                              onClick={() =>
-                                                handleDeleteZone(
-                                                  selectedUser.id
-                                                )
-                                              }
-                                            >
-                                              Delete Permanently
-                                            </button>
-                                        
+                                                />
+                                              </div>
+
+                                              <div className="mb-3">
+                                                <label className="form-label fw-semibold required">
+                                                  {t('region')}
+                                                </label>
+                                                <select
+                                                  className="form-select"
+                                                  name="region_id"
+                                                  value={formData.region_id || ''}
+                                                  onChange={handleChange}
+                                                  required
+                                                >
+                                                  <option value="">{t('select')}</option>
+                                                  {region.map((data) => (
+                                                    <option
+                                                      key={data.id}
+                                                      value={data.id}
+                                                    >
+                                                      {data.name}
+                                                    </option>
+                                                  ))}
+                                                </select>
+                                              </div>
+                                            </div>
+
+                                            {/* Modal Footer */}
+                                            <div className="modal-footer">
+
+                                              <button
+                                                type="button"
+                                                className="btn btn-primary"
+                                                onClick={() =>
+                                                  handleUpdateZone(
+                                                    selectedZone.id
+                                                  )
+                                                }
+                                              >
+                                                {t('savechanges')}
+                                              </button>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
+                                    )}
+
+                                    {permissions?.some(p =>
+                                      p.name.includes('delete')) ? (<button
+                                        className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                        onClick={() => {
+                                          setSelectedZone(row),
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                      >
+                                        <i className="bi bi-trash-fill"></i>
+                                      </button>) : null}
+                                    {isDeleteModalOpen && (
+                                      <div
+                                        className="modal fade show"
+                                        tabIndex="-1"
+                                        style={{
+                                          display: "block",
+                                          backgroundColor: "rgba(0,0,0,0.1)",
+                                        }}
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            {/* Modal Header */}
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">
+                                                {t('confirmzonedeletion')}
+                                              </h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() =>
+                                                  setIsDeleteModalOpen(false)
+                                                }
+                                              >
+                                                <span className="svg-icon svg-icon-1">
+                                                  {/* Replace with actual close icon */}
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            {/* Modal Body */}
+                                            <div className="modal-body">
+                                              <p className="fs-5 text-gray-800">
+                                                {t('areyousureyouwanttodeletethezone')}
+                                                <br />
+                                                {t('thisactioncannotbeundone')}.
+                                              </p>
+                                            </div>
+
+                                            {/* Modal Footer */}
+                                            <div className="modal-footer">
+                                              <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                onClick={() =>
+                                                  handleDeleteZone(
+                                                    selectedZone.id
+                                                  )
+                                                }
+                                              >
+                                                {t('deletepermanently')}
+                                              </button>
+
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                        ) : (
+                          <tr>
+                            <td colSpan="8">No data available</td>
+                          </tr>
+                        )
                       ) : (
                         <tr>
-                          <td colSpan="8">No data available</td>
+                          <td colSpan="8">No zones found</td>
                         </tr>
-                      )
-                    ) : (
-                      <tr>
-                        <td colSpan="8">No users found</td>
-                      </tr>
-                    )}
+                      )}
                   </tbody>
                 </table>
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
                   <div>
-                    Showing{" "}
+                    {t('showing')}{" "}
                     {Math.min(
                       (currentPage - 1) * itemsPerPage + 1,
                       filteredData.length
                     )}{" "}
                     to{" "}
                     {Math.min(currentPage * itemsPerPage, filteredData.length)}{" "}
-                    of {filteredData.length} entries
+                    of {filteredData.length} {t('entries')}
                   </div>
                   <div className="d-flex gap-2">
                     <button
@@ -814,7 +888,7 @@ export default function Zone() {
                       <i className="bi bi-chevron-left"></i>
                     </button>
                     <span className="px-3 d-flex align-items-center">
-                      Page {currentPage} of {totalPages}
+                      {t('page')} {currentPage} {t('of')} {totalPages}
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"

@@ -31,7 +31,7 @@
 
 /* Sidebar */
 #kt_app_sidebar{
- background-color: #38b6ff; 
+
  color:white;
 }
 #kt_app_sidebar .menu-title{
@@ -273,11 +273,11 @@ button.btn-primary {
 }
 
 .id{
-  margin: 50px auto;
- background-color: #38b6ff;
+  
+ 
  color: black;
-  width: 580px;
-  height:400px ;
+  width: 700px;
+  height:600px ;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   text-align: center;
   border-radius: 8px;
@@ -313,4 +313,7 @@ button.btn-primary {
 
 .hide{
   display: none;
+}
+.visible{
+  display: block;
 }

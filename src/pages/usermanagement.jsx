@@ -7,8 +7,10 @@ import { toast } from "react-toastify";
 
 import { addUser, deleteUser, updateUser, getUser, deleteBunch } from "../features/userSlice";
 import { fetchRoles } from "../features/roleSlice";
+import { useTranslation } from "react-i18next";
 
 export default function UserManagement() {
+  const { t } = useTranslation();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -28,6 +30,7 @@ export default function UserManagement() {
 
   const dispatch = useDispatch();
   const { users } = useSelector((state => state.user));
+  const { user } = useSelector((state => state.user.user));
 
   const [selectedFilter, setSelectedFilter] = useState("show all");
   const [filteredData, setFilteredData] = useState([]);
@@ -35,6 +38,7 @@ export default function UserManagement() {
   const [isShowModalOpen, setIsShowModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isRoleSelectionOpen, setIsRoleSelectionOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState({
     name: '',
@@ -42,7 +46,8 @@ export default function UserManagement() {
     password: '',
     first_time: '',
     active: '',
-    profile_image: '' || 'No image available'
+    profile_image: '' || 'No image available',
+    role: ''
   });
   const [selectedUsers, setSelectedUsers] = useState({});
   const [startSelection, setStartSelection] = useState(false);
@@ -52,12 +57,19 @@ export default function UserManagement() {
     password: '',
     first_time: '',
     active: '',
-    profile_image: '' || 'No image available'
+    profile_image: '' || 'No image available',
+    role: ''
   })
   const [searchItem, setSearch] = useState('');
   const [confPassword, setConfPassword] = useState('');
   const [userdata, setUserData] = useState([]);
-  const [roles,setRoles]=useState([]);
+  const [roles, setRoles] = useState([]);
+  const [selectedRoles, setSelectedRoles] = useState(null);
+  const [permissions, setPermissions] = useState([]);
+  const role = useSelector((state) => state.user.role);
+  const [currentRole, setCurrentRole] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  console.log(role)
 
 
 
@@ -81,17 +93,63 @@ export default function UserManagement() {
     console.log('userdata type check:', Array.isArray(userdata), userdata);
   }, [userdata]);
 
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
 
-  useEffect(()=>{
-    dispatch(fetchRoles()).then((data)=>{
-      const dataitem=data.payload;
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
       const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
       setRoles(normalizedData);
+      if (role?.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
     }).catch((error) => {
-        console.log('Error fetching data', error);
-      })
+      console.log('Error fetching data', error);
+    })
       .finally(() => setIsLoading(false));
-  },[dispatch]);
+  }, [dispatch, currentRole]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -125,8 +183,9 @@ export default function UserManagement() {
       setFilteredData(userdata);
     } else {
       const filtered = userdata.filter(
-        (data) => data.role?.toLowerCase() === selectedFilter.toLowerCase()
+        (data) => data.roles?.some((role => role.name.includes(selectedFilter)))
       );
+      console.log(filtered)
       setFilteredData(filtered);
     }
   }, [selectedFilter, userdata]);
@@ -150,47 +209,68 @@ export default function UserManagement() {
     return now.toISOString().split('T')[0]
   }
 
-  const validateForm = (formData) => {
+  const USERNAME_REGX = /^[\p{L}\s\-.'’]+$/u;
+  const EMAIL_REGX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,24}$/;
 
+  const [validUsername, setValidUsername] = useState(false);
+  const [validEmail, setValidEmail] = useState(false);
+  const [validPwd, setValidPwd] = useState(false);
+  const [validConfPwd, setValidConfPwd] = useState(false);
 
+  useEffect(() => {
+    const res = USERNAME_REGX.test(formData.name);
+    console.log(res);
+    console.log(formData.name);
+    setValidUsername(res);
+  }, [formData]);
 
-    if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+  useEffect(() => {
+    const res = EMAIL_REGX.test(formData.email);
+    console.log(res);
+    console.log(formData.email);
+    setValidEmail(res);
+  }, [formData]);
 
-      toast.error('Email format is incorrect');
+  useEffect(() => {
+    const res = PWD_REGEX.test(formData.password);
+    console.log(res);
+    console.log(formData.password);
+    setValidPwd(res);
+  }, [formData]);
 
-      return false;
+  useEffect(() => {
+    const res = PWD_REGEX.test(confPassword);
+    console.log(res);
+    console.log(confPassword);
+    const match = formData.password === confPassword
+    setValidConfPwd(match);
+  }, [formData, confPassword]);
 
-    }
-
-    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^])[A-Za-z\d@$!%*?&#^]{8,}$/.test(formData.password)) {
-
-      toast.error('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
-
-      return false;
-
-    }
-
-    else return true;
-
-  }
+  const [usernameFocus, setUsernameFocus] = useState();
+  const [emailFocus, setEmailFocus] = useState();
+  const [passwordFocus, setPasswordFocus] = useState();
+  const [confirmPasswordFocus, setConfirmPasswordFocus] = useState();
 
   const handleSaveUser = () => {
-    if (!formData.name || !formData.email || !formData.profile_image || !formData.password) {
-      toast.error('There are missing fields');
+    if (!validUsername || !validEmail || !validPwd) {
+      toast.error(t('therearemissingfields'));
       return;
     } else {
-      if (formData.password == confPassword) {
-        if (validateForm(formData)) {
+      if (validPwd == validConfPwd) {
 
-          dispatch(addUser({ rawForm: formData, Date: getDate() }));
+        console.log('adding');
+        dispatch(addUser({ rawForm: formData, Date: getDate() }));
 
-          setIsModalOpen(false);
+        setIsModalOpen(false);
 
-        }
+
 
 
       } else {
-        toast.error('Password mismatch');
+        console.log(validPwd);
+        console.log(valid)
+        toast.error(t('passwordmismatch'));
         return;
       }
     }
@@ -198,8 +278,15 @@ export default function UserManagement() {
   }
 
   const handleUpdateUser = (Id) => {
-    dispatch(updateUser({ Id: Id, rawForm: formData }))
-    setIsEditModalOpen(false);
+    if (!validUsername || !validEmail || !validPwd) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
+    else {
+      dispatch(updateUser({ Id: Id, rawForm: formData }))
+      setIsEditModalOpen(false);
+    }
+
   }
 
   const handleDeleteUser = (id) => {
@@ -279,8 +366,28 @@ export default function UserManagement() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   }
+  console.log(formData)
+  const handleRoleChange = (roleId) => {
+    setFormData(prev => {
+      const newRoles = [...prev?.role];
+      const index = newRoles.indexOf(roleId);
 
-   const CloseIcon = () => (
+      if (index > -1) {
+        newRoles.splice(index, 1);
+      } else {
+        newRoles.push(roleId);
+      }
+
+      return { ...prev, role: newRoles };
+    });
+
+
+  };
+  console.log(formData)
+  console.log(selectedRoles)
+
+
+  const CloseIcon = () => (
     <svg
       width="24"
       height="24"
@@ -311,13 +418,13 @@ export default function UserManagement() {
   );
 
   const Loader = () => (
-  <div className="d-flex justify-content-center py-10">
-    <div className="spinner-border text-primary" role="status">
-      <span className="visually-hidden">Loading...</span>
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
     </div>
-  </div>
-);
-
+  );
+  console.log(selectedUser);
 
   return (
     <>
@@ -334,7 +441,7 @@ export default function UserManagement() {
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              User Management
+              {t('usermanagement')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
@@ -342,42 +449,44 @@ export default function UserManagement() {
                   href="/"
                   className="text-muted text-hover-primary"
                 >
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">User Management</li>
+              <li className="breadcrumb-item text-muted">{t('usermanagement')}</li>
             </ul>
           </div>
 
           {/* Buttons */}
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <a
-              href="#"
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsModalOpen(true);
-              }}
-            >
-              Add User
-            </a>
+            {permissions.some(p =>
+              p.name.includes('create User')) ? (<a
+                href="#"
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
+              >
+                {t('adduser')}
+              </a>) : null}
 
-            <a
-              href="#"
-              className={Object.keys(selectedUsers).length > 0
+            {permissions.some(p =>
+              p.name.includes('delete User')) ? (<a
+                href="#"
+                className={Object.keys(selectedUsers).length > 0
 
-                ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
 
-                : "hide"
+                  : "hide"
 
-              }
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </a>
+                }
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </a>) : null}
           </div>
 
           {isModalOpen && (
@@ -390,67 +499,153 @@ export default function UserManagement() {
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">
-                    <h5 className="modal-title">Add User</h5>
-
+                    <h5 className="modal-title">{t('adduser')}</h5>
+                    <span className="svg-icon svg-icon-1" onClick={() => setIsModalOpen(false)}>
+                      <CloseIcon />
+                    </span>
                   </div>
 
                   <fieldset>
-                    <legend className="text-start">User Details</legend>
+                    <legend className="text-start">{t('userdetails')}</legend>
                     <form className="p-5 bg-white rounded shadow-sm text-start">
                       <div className="row g-4">
                         <div className="col-md-6">
                           <input type="file" onChange={imageUploader}></input>
-                          <label className="form-label fw-semibold required">Username</label>
+                          <label className="form-label fw-semibold required">{t('username')}</label>
                           <input type="text"
                             className="form-control"
                             name="name"
                             onChange={(e) => handleChange(e)}
                             required
-                            placeholder="Name"></input>
+                            onFocus={() => setUsernameFocus(true)}
+                            onBlur={() => setUsernameFocus(false)}
+                            placeholder={t('name')}></input>
                         </div>
+                        <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={usernameFocus && !validUsername ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                          Please enter a correct username</p>
                         <br />
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold required">Email</label>
+                          <label className="form-label fw-semibold required">{t('email')}</label>
                           <input type="email"
                             className="form-control"
                             name="email"
                             onChange={(e) => handleChange(e)}
                             required
-                            placeholder="Email"></input>
+                            onFocus={() => setEmailFocus(true)}
+                            onBlur={() => setEmailFocus(false)}
+                            placeholder={t('email')}></input>
                         </div>
+                        <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 200px" }} className={emailFocus && !validEmail ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                          Please enter a correct email</p>
                         <br />
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold required">Role</label>
-                          <select className="form-select" name="role" value={formData.role} onChange={handleChange}>
-                            <option value="">Select</option>
-                            {roles.map((data) => (
-                          <option key={data.id} value={data.id}>
-                            {data.name}
-                          </option>
-                        ))}
-                          </select>
+                          <label className="form-label fw-semibold required">{t('role')}</label>
+
+                          {/* Toggle button */}
+                          <div className="mb-3">
+                            {/* Role selection toggle button */}
+                            <div
+                              className="btn btn-primary w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
+                              onClick={() => setIsRoleSelectionOpen(!isRoleSelectionOpen)}
+                              style={{
+                                minHeight: "48px",
+                                borderRadius: "0.5rem",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {formData?.role?.length === 0 ? (
+                                <span className="text-muted">{t('selectroles')}</span>
+                              ) : (
+                                roles
+                                  .filter((role) => formData.role?.includes(role.id))
+                                  .map((role) => (
+                                    <span
+                                      key={role.id}
+                                      className="badge d-flex align-items-center bg-primary text-white px-2 py-1 me-1"
+                                      style={{
+                                        borderRadius: "1rem",
+                                        fontSize: "0.85rem",
+                                      }}
+                                    >
+                                      {role.name}
+                                      <button
+                                        type="button"
+                                        className="btn-close btn-close-white btn-sm ms-2"
+                                        aria-label="Remove"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRoleChange(role.id);
+                                        }}
+                                        style={{ fontSize: "0.65rem", marginLeft: "0.5rem" }}
+                                      />
+                                    </span>
+                                  ))
+                              )}
+                            </div>
+
+                            {/* Role checkbox list */}
+                            {isRoleSelectionOpen && (
+                              <div
+                                className="border rounded mt-2 p-3 bg-light shadow-sm"
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                  borderRadius: "0.5rem",
+                                }}
+                              >
+                                {roles.map((role) => (
+                                  <div className="form-check mb-2" key={role.id}>
+                                    <input
+                                      className="form-check-input"
+                                      type="checkbox"
+                                      id={`role-${role.id}`}
+                                      checked={formData.role?.includes(role.id)}
+                                      onChange={() => handleRoleChange(role.id)}
+                                    />
+                                    <label className="form-check-label" htmlFor={`role-${role.id}`}>
+                                      {role.name}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+
+
                         </div>
                         <br />
 
                         <div className="col-md-6" >
-                          <label className="form-label fw-semibold required">Password</label>
+                          <label className="form-label fw-semibold required">{t('password')}</label>
                           <input type="password"
                             className="form-control"
                             name="password"
                             onChange={(e) => handleChange(e)}
+                            onFocus={() => setPasswordFocus(true)}
+                            onBlur={() => setPasswordFocus(false)}
                             required
-                            placeholder="Password"></input>
+                            placeholder={t('password')}></input>
                         </div>
+                        <p style={{ backgroundColor: "lightgreen", width: "80%", borderRadius: "10px", margin: "2px 110px" }} className={passwordFocus && !validPwd ? "visible" : "hide"}>
+                          <i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>8 to 24 characters.<br />
+                          Must include uppercase and lowercase letters, a number and a special character.<br /></p>
                         <br />
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold required">Confirm Password</label>
+                          <label className="form-label fw-semibold required">{t('confirmpassword')}</label>
                           <input type="password"
                             name="confPassword"
                             className="form-control"
                             onChange={(e) => setConfPassword(e.target.value)}
+                            onFocus={(e) => setConfirmPasswordFocus(true)}
+                            onBlur={(e) => setConfirmPasswordFocus(false)}
                             required
-                            placeholder="Confirm Password"></input>
+                            placeholder={t('confirmpassword')}></input>
                         </div>
+                        <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={confirmPasswordFocus && !validConfPwd ? "visible" : "hide"}>
+                          <i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                          Passwords must match
+                        </p>
                       </div>
 
                     </form>
@@ -458,15 +653,9 @@ export default function UserManagement() {
                   </fieldset>
 
                   <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-light"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      Close
-                    </button>
+
                     <button type="button" className="btn btn-primary" onClick={handleSaveUser}>
-                      Save changes
+                      {t('savechanges')}
                     </button>
                   </div>
                 </div>
@@ -486,7 +675,7 @@ export default function UserManagement() {
               <div className="card-header pt-7">
                 {/*begin::Title*/}
                 <h3 className="card-title align-items-start flex-column">
-                  <span className="card-label fw-bold text-gray-800">Users table</span>
+                  <span className="card-label fw-bold text-gray-800">{t('userstable')}</span>
 
                 </h3>
                 {/*end::Title*/}
@@ -497,7 +686,7 @@ export default function UserManagement() {
                     {/*begin::Destination*/}
                     <div className="d-flex align-items-center fw-bold">
                       {/*begin::Label*/}
-                      <div className="text-gray-400 fs-7 me-2">Role</div>
+                      <div className="text-gray-400 fs-7 me-2">{t('role')}</div>
                       {/*end::Label*/}
                       {/*begin::Select*/}
                       <select
@@ -505,10 +694,14 @@ export default function UserManagement() {
                         value={selectedFilter}
                         onChange={(e) => setSelectedFilter(e.target.value)}
                       >
-                        <option value="show all">Show All</option>
-                        <option value="employee">Employee</option>
-                        <option value="human resources">HR</option>
-                        <option value="it assistant">IT</option>
+                        <option value="show all">{t('showall')}</option>
+                        {roles.map((data) => {
+                          return (
+                            <option key={data.id} value={data.name}>
+                              {data.name}
+                            </option>
+                          );
+                        })}
                       </select>
 
 
@@ -526,7 +719,7 @@ export default function UserManagement() {
                         </svg>
                       </span>
                       {/*end::Svg Icon*/}
-                      <input type="text" data-kt-table-widget-4="search" className="form-control w-150px fs-7 ps-12" placeholder="Search" onChange={(e) => setSearch(e.target.value)} />
+                      <input type="text" data-kt-table-widget-4="search" className="form-control w-150px fs-7 ps-12" placeholder={t('search')} onChange={(e) => setSearch(e.target.value)} />
                     </div>
                     {/*end::Search*/}
                   </div>
@@ -544,21 +737,21 @@ export default function UserManagement() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <div className="d-flex align-items-center gap-2">
+                        <div className="d-flex align-items-center gap-4">
                           <input
                             type="checkbox"
                             checked={Object.keys(selectedUsers).length === userdata.length}
                             onChange={handleSelectAll}
                             title={Object.keys(selectedUsers).length === userdata.length ? 'Deselect All' : 'Select All'}
                             style={{ cursor: 'pointer' }}
-                          />S.N.
-                       </div>
+                          />{t('sn')}.
+                        </div>
                       </th>
-                      
-                      <th className="text-start min-w-100px">Name</th>
-                      <th className="text-start min-w-125px">Email</th>
-                      <th className="text-start min-w-100px">Role</th>
-                      <th className="text-start min-w-100px">Action</th>
+
+                      <th className="text-start min-w-100px">{t('name')}</th>
+                      <th className="text-start min-w-125px">{t('email')}</th>
+                      <th className="text-start min-w-100px">{t('role')}</th>
+                      <th className="text-start min-w-100px">{t('actions')}</th>
 
                     </tr>
                     {/*end::Table row*/}
@@ -566,251 +759,358 @@ export default function UserManagement() {
                   {/*end::Table head*/}
                   {/*begin::Table body*/}
                   <tbody className="fw-bold text-gray-600">
-                      {isLoading ? (
-                        <tr>
-                          <td colSpan="8" className="text-center">
-                            <Loader /> {/* Use the loader here */}
-                          </td>
-                        </tr>
-                      ) :
-                    Array.isArray(userdata) ? (
-                      currentdata.length > 0 ? (
-                        currentdata.filter((row) => {
-                          const matchSearch = searchItem.toLowerCase() === '' ? row : String(row.name).toLowerCase().includes(searchItem);
-                          const matchFilter =
-                            selectedFilter === 'show all' ||
-                            row.role?.toLowerCase() === selectedFilter.toLowerCase();
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="text-center">
+                          <Loader /> {/* Use the loader here */}
+                        </td>
+                      </tr>
+                    ) :
+                      Array.isArray(userdata) ? (
+                        currentdata.length > 0 ? (
+                          currentdata.filter((row) => {
+                            const matchSearch = searchItem.toLowerCase() === '' ? row : String(row.name).toLowerCase().includes(searchItem);
+                            const filterLower = selectedFilter.toLowerCase();
+                            const matchFilter =
+                              filterLower === 'show all' ||
+                              (Array.isArray(row.roles) && row.roles.some(role => {
+                                const roleNameLower = role.name.toLowerCase();
+                                console.log("Checking role:", roleNameLower);
+                                return roleNameLower.includes(filterLower);
+                              }));
+                            //  console.log(matchFilter)
 
-                          return matchSearch && matchFilter
-                        })
-                          .map((row, index) => {
+                            return matchSearch && matchFilter
+                          })
+                            .map((row, index) => {
 
-                            return (
-                              <tr key={index} data-kt-table-widget-4="subtable_template">
-                                <td >
-                                  <div className="d-flex align-items-center gap-2">
-                                      <input type="checkbox" 
-                                      checked={!!selectedUsers[row.id]} 
-                                      onChange={() => handleSelectedRows(row.id)} />
+                              return (
+                                <tr key={index} data-kt-table-widget-4="subtable_template">
+                                  <td >
+                                    <div className="d-flex align-items-center gap-4">
+                                      <input type="checkbox"
+                                        checked={!!selectedUsers[row.id]}
+                                        onChange={() => handleSelectedRows(row.id)} />
                                       {index + 1}
-                                  </div>
-                                </td>
-                      
-                                
-                                <td className="text-start">
-                                  {row.name}
-                                </td>
-                                <td className="text-start">
-                                  {row.email}
-                                </td>
-                                <td className="text-start">
-                                  {row?.roles[0]?.name}
-                                </td>
-                                <td className="text-start">
-                                  <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => { setIsShowModalOpen(true), setSelectedUser(row) }}> <i className="bi bi-eye-fill fs-4"></i></button>
-
-                                  {isShowModalOpen && (
-
-                                    <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} >
-                                      <div className="modal-dialog modal-dialog-centered" role="document">
-                                        <div className="modal-content">
-                                          <div className="modal-header">
-                                          <h5 className="modal-title">User Details</h5>
-                                          <div
-                  className="btn btn-icon btn-sm btn-active-icon-primary"
-                  onClick={() => setIsShowModalOpen(false)}
-                >
-                  <span className="svg-icon svg-icon-1">
-                    <CloseIcon />
-                  </span>
-                </div>
-                                        </div>
-<div className="modal-body">
-                                          
-                                            
-                                            <div className="mb-3">
-                                              <div className="form-label fw-semibold">Name</div>
-                                              <div className="form-control form-control-solid">{selectedUser.name}</div>
-                                            </div>
-                                            <br />
-                                            <div className="mb-3">
-                                              <div className="form-label fw-semibold">Email</div>
-                                              <div className="form-control form-control-solid">{selectedUser.email}</div>
-                                            </div>
-                                            <br />
-                                            <div className="mb-3">
-                                              <div className="form-label fw-semibold">Role</div>
-                                              <div className="form-control form-control-solid">{selectedUser.role}</div>
-                                            </div>
-
-                                            <br />
-
-                                         
-                                          
-                                        </div>
-                                        </div>
-                                        
-                                        
-                                      </div>
                                     </div>
+                                  </td>
 
 
+                                  <td className="text-start">
+                                    {row.name}
+                                  </td>
+                                  <td className="text-start">
+                                    {row.email}
+                                  </td>
+                                  <td className="text-start">
+                                    {row.roles.map(data => data.name).join(",") || row?.roles[0]?.name}
+                                  </td>
+                                  <td className="text-start">
 
-                                  )}
+                                    {permissions.some(p =>
+                                      p.name.includes('read User')) ? (<button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                        onClick={() => { setIsShowModalOpen(true), setSelectedUser(row) }}>
+                                        <i className="bi bi-eye-fill"></i></button>) : null}
 
-                                  <button className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" onClick={() => { setIsEditModalOpen(true), setSelectedUser(row) }}><i className="bi bi-pencil-fill"></i></button>
-                                  {isEditModalOpen && (
-                                    <div
-                                      className="modal fade show d-block"
-                                      tabIndex="-1"
-                                      id="kt_modal_scrollable_1"
-                                      style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}
 
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content">
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">Edit User</h5>
+                                    {isShowModalOpen && (
 
-                                          </div>
+                                      <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} >
+                                        <div className="modal-dialog modal-dialog-centered" role="document">
+                                          <div className="modal-content">
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">User Details</h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() => setIsShowModalOpen(false)}
+                                              >
+                                                <span className="svg-icon svg-icon-1">
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <div className="modal-body">
 
-                                          <fieldset>
-                                            <legend className="text-start">Edit Details</legend>
-                                            <form className="p-5 bg-white rounded shadow-sm text-start">
-                                              <div className="row g-4">
-                                                <div className="col-md-6">
-                                                  <input type="file" onChange={imageUploader}></input>
-                                                  <label className="fw-semibold">Username</label>
-                                                  <input type="text"
-                                                    className="form-control"
-                                                    name="name"
-                                                    onChange={(e) => handleChange(e)}
-                                                    required
-                                                    placeholder="Name"></input>
-                                                </div>
-                                                <br />
-                                                <div className="col-md-6">
-                                                  <label className="fw-semibold">Email</label>
-                                                  <input type="email"
-                                                    className="form-control"
-                                                    name="email"
-                                                    onChange={(e) => handleChange(e)}
-                                                    required
-                                                  ></input>
-                                                </div>
-                                                <br />
-                                                <div className="col-md-6">
-                                                  <label className="fw-semibold">Role</label>
-                                                  <select className="form-select" name="role" value={formData?.role || ""} onChange={handleChange}>
-                                                    <option value="">Select</option>
-                                                    {roles.map((data) => (
-                          <option key={data.id} value={data.id}>
-                            {data.name}
-                          </option>
-                        ))}
-                                                  </select>
-                                                </div>
-                                                <br />
 
-                                                <div className="col-md-6" >
-                                                  <label className="fw-semibold">Password</label>
-                                                  <input type="password"
-                                                    className="form-control"
-                                                    name="password"
-                                                    onChange={(e) => handleChange(e)}
-                                                    required
-                                                  ></input>
-                                                </div>
-                                                <br />
-                                                <div className="col-md-6">
-                                                  <label className="fw-semibold">Confirm Password</label>
-                                                  <input type="password"
-                                                    name="confPassword"
-                                                    className="form-control"
-                                                    onChange={(e) => setConfPassword(e.target.value)}
-                                                    required
-                                                    placeholder="Confirm Password"></input>
-                                                </div>
+                                              <div className="mb-3">
+                                                <div className="form-label fw-semibold">{t('name')}</div>
+                                                <div className="form-control form-control-solid">{selectedUser.name}</div>
+                                              </div>
+                                              <br />
+                                              <div className="mb-3">
+                                                <div className="form-label fw-semibold">{t('email')}</div>
+                                                <div className="form-control form-control-solid">{selectedUser.email}</div>
+                                              </div>
+                                              <br />
+                                              <div className="mb-3">
+                                                <div className="form-label fw-semibold">{t('role')}</div>
+                                                <div className="form-control form-control-solid">{selectedUser.role}</div>
                                               </div>
 
+                                              <br />
 
 
-                                            </form>
 
-                                          </fieldset>
+                                            </div>
+                                          </div>
 
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => setIsEditModalOpen(false)}
-                                            >
-                                              Close
-                                            </button>
-                                            <button type="button" className="btn btn-primary" onClick={() => handleUpdateUser(selectedUser.id)}>
-                                              Save changes
-                                            </button>
+
+                                        </div>
+                                      </div>
+
+
+
+                                    )}
+
+                                    {permissions.some(p =>
+                                      p.name.includes('update User')) ?
+                                      (<button className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" onClick={() => {
+                                        setFormData(row);
+                                        setIsEditModalOpen(true),
+                                          setSelectedUser(row)
+                                      }}><i className="bi bi-pencil-fill"></i></button>) : null}
+
+                                    {isEditModalOpen && (
+                                      <div
+                                        className="modal fade show d-block"
+                                        tabIndex="-1"
+                                        id="kt_modal_scrollable_1"
+                                        style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}
+
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">{t('edituser')}</h5>
+                                              <span className="svg-icon svg-icon-1"
+                                                onClick={() => { setIsEditModalOpen(false) }}>
+                                                <CloseIcon />
+                                              </span>
+                                            </div>
+
+                                            <fieldset>
+                                              <legend className="text-start">{t('editdetails')}</legend>
+                                              <form className="p-5 bg-white rounded shadow-sm text-start">
+                                                <div className="row g-4">
+                                                  <div className="col-md-6">
+                                                    <input type="file" onChange={imageUploader}></input>
+                                                    <label className="fw-semibold form-label required">{t('username')}</label>
+                                                    <input type="text"
+                                                      className="form-control"
+                                                      name="name"
+                                                      onChange={(e) => handleChange(e)}
+                                                      value={formData?.name || ''}
+                                                      required
+                                                      onFocus={() => setUsernameFocus(true)}
+                                                      onBlur={() => setUsernameFocus(false)}
+                                                    ></input>
+                                                  </div>
+                                                  <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={usernameFocus && !validUsername ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                                                    Please enter a correct username</p>
+                                                  <br />
+                                                  <div className="col-md-6">
+                                                    <label className="fw-semibold form-label required">{t('email')}</label>
+                                                    <input type="email"
+                                                      className="form-control"
+                                                      name="email"
+                                                      value={formData?.email || ''}
+                                                      onChange={(e) => handleChange(e)}
+                                                      onFocus={() => setEmailFocus(true)}
+                                                      onBlur={() => setEmailFocus(false)}
+                                                      required
+                                                    ></input>
+                                                  </div>
+                                                  <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 200px" }} className={emailFocus && !validEmail ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                                                    Please enter a correct email</p>
+                                                  <br />
+                                                  <div className="col-md-6">
+                                                    <label className="form-label fw-semibold required">{t('role')}</label>
+
+                                                    {/* Toggle button */}
+                                                    <div className="mb-3">
+                                                      {/* Role selection toggle button */}
+                                                      <div
+                                                        className="btn btn-outline-secondary w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
+                                                        onClick={() => setIsRoleSelectionOpen(!isRoleSelectionOpen)}
+                                                        value={formData.role || ''}
+                                                        style={{
+                                                          minHeight: "48px",
+                                                          borderRadius: "0.5rem",
+                                                          cursor: "pointer",
+                                                        }}
+                                                      >
+                                                        {formData?.role?.length === 0 ? (
+                                                          <span className="text-muted">{t('selectroles')}</span>
+                                                        ) : (
+                                                          roles
+                                                            .filter((role) => formData?.role?.includes(role.id))
+                                                            .map((role) => (
+                                                              <span
+                                                                key={role.id}
+                                                                className="badge d-flex align-items-center bg-primary text-white px-2 py-1 me-1"
+                                                                style={{
+                                                                  borderRadius: "1rem",
+                                                                  fontSize: "0.85rem",
+                                                                }}
+                                                              >
+                                                                {role.name}
+                                                                <button
+                                                                  type="button"
+                                                                  className="btn-close btn-close-white btn-sm ms-2"
+                                                                  aria-label="Remove"
+                                                                  onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRoleChange(role.id);
+                                                                  }}
+                                                                  style={{ fontSize: "0.65rem", marginLeft: "0.5rem" }}
+                                                                />
+                                                              </span>
+                                                            ))
+                                                        )}
+                                                      </div>
+
+                                                      {/* Role checkbox list */}
+                                                      {isRoleSelectionOpen && (
+                                                        <div
+                                                          className="border rounded mt-2 p-3 bg-light shadow-sm"
+                                                          style={{
+                                                            maxHeight: "200px",
+                                                            overflowY: "auto",
+                                                            borderRadius: "0.5rem",
+                                                          }}
+                                                        >
+                                                          {roles.map((role) => (
+                                                            <div className="form-check mb-2" key={role.id}>
+                                                              <input
+                                                                className="form-check-input"
+                                                                type="checkbox"
+                                                                id={`role-${role.id}`}
+                                                                checked={formData?.role?.includes(role.id)}
+                                                                onChange={() => handleRoleChange(role.id)}
+                                                              />
+                                                              <label className="form-check-label" htmlFor={`role-${role.id}`}>
+                                                                {role.name}
+                                                              </label>
+                                                            </div>
+                                                          ))}
+                                                        </div>
+                                                      )}
+                                                    </div>
+
+
+
+                                                  </div>
+                                                  <br />
+
+                                                  <div className="col-md-6" >
+                                                    <label className="fw-semibold form-label required">{t('password')}</label>
+                                                    <input type="password"
+                                                      className="form-control"
+                                                      name="password"
+                                                      value={formData?.password || ''}
+                                                      onChange={(e) => handleChange(e)}
+                                                      required
+                                                    ></input>
+                                                  </div>
+                                                  <br />
+                                                  <div className="col-md-6">
+                                                    <label className="fw-semibold form-label required">{t('confirmpassword')}</label>
+                                                    <input type="password"
+                                                      name="confPassword"
+                                                      className="form-control"
+                                                      onChange={(e) => setConfPassword(e.target.value)}
+                                                      value={formData?.password || ''}
+                                                      required
+                                                      placeholder={t('confirmpassword')}></input>
+                                                  </div>
+                                                </div>
+
+
+
+                                              </form>
+
+                                            </fieldset>
+
+                                            <div className="modal-footer">
+
+                                              <button type="button" className="btn btn-primary" onClick={() => handleUpdateUser(selectedUser.id)}>
+                                                {t('savechanges')}
+                                              </button>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
-                                  <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm" onClick={() => { setSelectedUser(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
-                                  {isDeleteModalOpen && (
-                                    <div
-                                      className="modal fade show d-block"
-                                      tabIndex="-1"
-                                      id="kt_modal_scrollable_1"
-                                      style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}
-
-                                    >
-                                      <div className="modal-dialog ">
-                                        <div className="modal-content " style={{ textAlign: 'center' }}>
-                                          <div className="modal-header">
+                                    )}
+                                    {permissions.some(p =>
+                                      p.name.includes('delete User')) ? (
+                                      <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                        onClick={() => { setSelectedUser(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>) : null}
 
 
-                                          </div>
 
-                                          <fieldset>
-                                            <legend>User Details</legend>
-                                            <p>Delete User?</p>
+                                    {isDeleteModalOpen && (
+                                      <div
+                                        className="modal fade show"
+                                        tabIndex="-1"
+                                        style={{
+                                          display: "block",
+                                          backgroundColor: "rgba(0,0,0,0.1)",
+                                        }}
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            {/* Modal Header */}
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">
+                                                {t('confirmuserdeletion')}
+                                              </h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() =>
+                                                  setIsDeleteModalOpen(false)
+                                                }
+                                              >
+                                                <span className="svg-icon svg-icon-1">
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
+                                            </div>
 
-                                          </fieldset>
+                                            {/* Modal Body */}
+                                            <div className="modal-body text-center">
+                                              <p className="fs-5 text-gray-800">
+                                                {t('areyousureyouwanttopermanentlydeletethisuser')}
+                                                <br />
+                                                {t('thisactioncannotbeundone')}
+                                              </p>
+                                            </div>
 
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => handleDeleteUser(selectedUser.id)}
-                                            >
-                                              Delete
-                                            </button>
-
-                                            <button
-                                              type="button"
-                                              className="btn btn-light"
-                                              onClick={() => setIsDeleteModalOpen(false)}
-                                            >
-                                              Close
-                                            </button>
-
+                                            {/* Modal Footer */}
+                                            <div className="modal-footer">
+                                              <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                onClick={() => handleDeleteUser(selectedUser.id)}
+                                              >
+                                                {t('deletepermanently')}
+                                              </button>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                        ) : (
+                          <tr className="text-center"><td colSpan="8">{t('loading')}</td></tr>
+                        )
                       ) : (
-                        <tr className="text-center"><td colSpan="8">Loading...</td></tr>
-                      )
-                    ) : (
-                      <tr>
-                        <td colSpan="8">No users found</td>
-                      </tr>
-                    )}
+                        <tr>
+                          <td colSpan="8">{t('nousersfound')}</td>
+                        </tr>
+                      )}
 
 
 
@@ -821,9 +1121,9 @@ export default function UserManagement() {
                 </table>
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
                   <div>
-                    Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
+                    {t('showing')} {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
                     {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
-                    {filteredData.length} entries
+                    {filteredData.length} {t('entries')}
                   </div>
                   <div className="d-flex gap-2">
                     <button
@@ -834,7 +1134,7 @@ export default function UserManagement() {
                       <i className="bi bi-chevron-left"></i>
                     </button>
                     <span className="px-3 d-flex align-items-center">
-                      Page {currentPage} of {totalPages}
+                      {t('page')} {currentPage} {t('of')} {totalPages}
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"

@@ -2,12 +2,22 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getOrganizationInfo } from "../features/organizationSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { fetchRoles } from "../features/roleSlice";
+import { useTranslation } from "react-i18next";
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   const [logo, setLogo] = useState();
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [permissions, setPermissions] = useState([]);
   const dispatch = useDispatch();
   const { organizationInfo } = useSelector((state) => state.organization);
+  const role = useSelector((state) => state.user.role);
+  const user = useSelector((state) => state.user.user);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState([]);
+
 
   // Initialize sidebar toggle functionality
   useEffect(() => {
@@ -42,9 +52,92 @@ export default function Sidebar() {
     dispatch(getOrganizationInfo()).then((data) => {
       const backendBaseUrl = 'http://localhost:8000'; // or your actual domain
 
-setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
+      setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
     });
   }, [dispatch, organizationInfo]);
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log(currentUser);
+    console.log(currentRole)
+  }, [currentUser]);
+
+
+  useEffect(() => {
+    async function fetchData() {
+      console.log(role);
+      let token = JSON.parse(localStorage.getItem('token'));
+      try {
+        const response = await axios.get('http://localhost:8000/api/roles', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const dataitem = response.data
+        console.log(dataitem);
+
+        console.log(role)
+        if (role.length !== 0) {
+          const rolesExist = dataitem.filter(data => role.includes(data.name)).map(data => ({
+            id: data.id,
+            name: data.name,
+            permissions: data.permissions
+          }))
+          console.log(rolesExist);
+          const allPermissions = rolesExist.flatMap(role => role.permissions);
+          setPermissions(allPermissions);
+        }
+        else {
+          console.log(currentRole)
+          const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+            id: data.id,
+            name: data.name,
+            permissions: data.permissions
+          }))
+          console.log(rolesExist);
+          const allPermissions = rolesExist.flatMap(role => role.permissions);
+          setPermissions(allPermissions);
+        }
+
+
+
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+      }
+    }
+    fetchData();
+  }, [currentRole]);
+
+  console.log(user);
+
+
+  console.log(permissions.map(p => p.name));
+
+
+
+
 
   return (
     <div
@@ -65,8 +158,8 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
       >
         <Link to="/">
           {logo ? (
-            <img 
-              src={logo} 
+            <img
+              src={logo}
               className={`h-25px app-sidebar-logo-default ${isMinimized ? 'minimized-logo' : ''}`}
               alt="Organization Logo"
             />
@@ -108,7 +201,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
           </span>
         </div>
       </div>
-      
+
       <div className={`app-sidebar-menu overflow-hidden flex-column-fluid ${isMinimized ? 'minimized' : ''}`}>
         <div
           id="kt_app_sidebar_menu_wrapper"
@@ -180,20 +273,22 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                   </span>
                 </span>
                 <Link to="/dashboard" className="menu-title-link">
-                  <span className="menu-title">Dashboard</span>
+                  <span className="menu-title">{t('dashboard')}</span>
                 </Link>
               </span>
             </div>
-            
+
             <div className="menu-item pt-5">
               <div className="menu-content">
                 <span className="menu-heading fw-bold text-uppercase fs-7">
-                  Pages
+                  {t('pages')}
                 </span>
               </div>
             </div>
-            
-            <div className="menu-item menu-accordion" data-kt-menu-trigger="click">
+
+            {permissions.some(p =>
+              p.name.includes('list User')
+            ) ? (<div className="menu-item menu-accordion" data-kt-menu-trigger="click">
               <span className="menu-link">
                 <span className="menu-icon">
                   <span className="svg-icon svg-icon-2">
@@ -216,32 +311,34 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                     </svg>
                   </span>
                 </span>
-                <span className="menu-title">User management</span>
+                <span className="menu-title">{t('usermanagement')}</span>
                 <span className="menu-arrow"></span>
               </span>
 
               <div className="menu-sub menu-sub-accordion">
                 <div className="menu-item">
                   <Link to="/usermanagement" className="menu-link">
-                    <span className="menu-title">Users</span>
+                    <span className="menu-title">{t('users')}</span>
                   </Link>
                 </div>
 
                 <div className="menu-item">
                   <Link to="/roles" className="menu-link">
-                    <span className="menu-title">Roles</span>
+                    <span className="menu-title">{t('roles')}</span>
                   </Link>
                 </div>
 
                 <div className="menu-item">
                   <Link to="/permissions" className="menu-link">
-                    <span className="menu-title">Permissions</span>
+                    <span className="menu-title">{t('permissions')}</span>
                   </Link>
                 </div>
               </div>
-            </div>
+            </div>) : null}
 
-            <div className="menu-item">
+            {permissions.some(p =>
+              p.name.includes('list Employee')
+            ) ? (<div className="menu-item">
               <Link to="/employeemanagement" className="menu-link">
                 <span className="menu-icon">
                   <span className="svg-icon svg-icon-2">
@@ -264,9 +361,9 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                     </svg>
                   </span>
                 </span>
-                <span className="menu-title">Employee management</span>
+                <span className="menu-title">{t('employeemanagement')}</span>
               </Link>
-            </div>
+            </div>) : null}
 
             <div
               data-kt-menu-trigger="click"
@@ -294,58 +391,69 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                     </svg>
                   </span>
                 </span>
-                <span className="menu-title">Dynamic Settings</span>
+                <span className="menu-title">{t('dynamicsettings')}</span>
                 <span className="menu-arrow"></span>
               </span>
 
               <div className="menu-sub menu-sub-accordion">
-                <div className="menu-item">
+                {permissions.some(p =>
+                  p.name.includes('list IdentityCardTemplate') || p.name.includes('IdentityCardDetail') || p.name.includes('IdentityCardTemplateDetail')
+                ) ? (<div className="menu-item">
                   <Link className="menu-link" to="/iddetails">
-                    <span className="menu-title">Template Details</span>
+                    <span className="menu-title">{t('templatedetails')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
-                  <Link className="menu-link" to="/dynamicdetails">
-                    <span className="menu-title">
-                      Organization Information
-                    </span>
-                  </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list Organization')) ?
+                  (<div className="menu-item">
+                    <Link className="menu-link" to="/dynamicdetails">
+                      <span className="menu-title">
+                        {t('organizationinformation')}
+                      </span>
+                    </Link>
+                  </div>) : null}
+
+                {permissions.some(p => p.name.includes('list OrganizationUnit')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/organization-unit">
-                    <span className="menu-title"> Organization Units</span>
+                    <span className="menu-title"> {t('organizationunits')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list JobTitleCategory')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/job-title-category">
-                    <span className="menu-title"> Job Title Categories</span>
+                    <span className="menu-title"> {t('jobtitlecategories')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list JobPosition')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/job-position">
-                    <span className="menu-title"> Job Positions</span>
+                    <span className="menu-title"> {t('jobpositions')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list MaritalStatus')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/maritalstatusmanagement">
-                    <span className="menu-title"> Marital Statuses</span>
+                    <span className="menu-title"> {t('maritalstatuses')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list Region')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/regionmanagement">
-                    <span className="menu-title">Regions</span>
+                    <span className="menu-title">{t('regions')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list Zone')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/zonemanagement">
-                    <span className="menu-title">Zones</span>
+                    <span className="menu-title">{t('zones')}</span>
                   </Link>
-                </div>
-                <div className="menu-item">
+                </div>) : null}
+
+                {permissions.some(p => p.name.includes('list Woreda')) ? (<div className="menu-item">
                   <Link className="menu-link" to="/woredamanagement">
-                    <span className="menu-title">Woredas</span>
+                    <span className="menu-title">{t('woredas')}</span>
                   </Link>
-                </div>
+                </div>) : null}
               </div>
             </div>
           </div>

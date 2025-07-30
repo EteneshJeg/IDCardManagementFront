@@ -1,5 +1,6 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import i18next from "i18next";
 
 export const createZone=createAsyncThunk(
     'zone/create',
@@ -14,49 +15,16 @@ export const createZone=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success('Zone saved successfully');
+                toast.success(i18next.t('zonesavedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error);
                 console.log(error.response);
-                toast.error("Failed to save zone");
+                toast.error(i18next.t('failedtosavezone'));
                 return;
             })
-            /*let zoneId;
-            let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
-            console.log(storedZones);
-            
-            if (!Array.isArray(storedZones)) {
-                storedZones = [storedZones];
-            }
-            if (storedZones.length === 0) {
-                let lastZoneId=0;
-                zoneId=lastZoneId+1;
-            } else {
-                const lastZone = storedZones.pop();
-                if (lastZone && lastZone.id) {
-                    let lastZoneId = lastZone.id;
-                     lastZoneId=parseInt(lastZoneId,10);
-                      zoneId=lastZoneId+1;
-                      
-                } else {
-                    let lastZoneId=0;
-                    zoneId=lastZoneId+1;
-                }
-                storedZones.push(lastZone);
-            }
-            let newZone={
-                id:zoneId,
-                name:FormData.name,
-                region:FormData.region
-            }
-            storedZones.push(newZone);
-            localStorage.setItem('zone',JSON.stringify(storedZones));
-            toast.success('Zone saved successfully');
-            return newZone;*/
-
         }catch(error){
-            toast.error('Failed to save zone');
+            toast.error(i18next.t('failedtosavezone'));
             return rejectWithValue(error.message);
         }
     }
@@ -78,25 +46,9 @@ export const getZone=createAsyncThunk(
             let returneddata=Array.isArray(data)?data:[data];
             console.log(returneddata)
             return returneddata;
-            /*let token=JSON.parse(localStorage.getItem('token'));
-            console.log(localStorage.getItem('token')); 
-            let response=await axios.get('http://localhost:8000/api/zones',{
-                headers:{
-                    Authorization:`Bearer ${token}`
-                }
-            });
-            let dataitem=response.data;
-            console.log(dataitem);*/
-
-            let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
-            console.log(storedZones);
             
-            if (!Array.isArray(storedZones)) {
-                storedZones = [storedZones];
-            }
-            if(storedZones){
-                return storedZones;
-            }
+
+            
         }catch(error){
             return rejectWithValue(error.message)
         }
@@ -114,38 +66,16 @@ export const updateZone=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success("Zone updated");
+                toast.success(i18next.t('zoneupdatedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error.response);
-                toast.error("Failed to update zone");
+                toast.error(i18next.t('failedtoupdatezone'));
                 return;
             })
-            /*let storedZones = JSON.parse(localStorage.getItem('zone')) || [];
-            console.log(storedZones);
             
-            if (!Array.isArray(storedZones)) {
-                storedZones = [storedZones];
-            }
-            const zoneIndex = storedZones.findIndex(storedZone => {
-               
-                return String(storedZone.id).trim() === String(Id).trim();  
-            });
-            if(zoneIndex==-1){
-                return rejectWithValue('Zone not found');
-            }
-
-            let updatedZone={
-                ...storedZones[zoneIndex],
-                name:FormData.name,
-                region:FormData.region
-            }
-            storedZones[zoneIndex]=updatedZone;
-            localStorage.setItem('zone',JSON.stringify(storedZones));
-            toast.success('Zone successfully updated');
-            return updatedZone;*/
         }catch(error){
-            toast.error('Failed to update zone');
+            toast.error(i18next.t('failedtoupdatezone'));
         }
     }
 )
@@ -161,7 +91,7 @@ export const deleteZone=createAsyncThunk(
                 }
             })
             .then(response=>{
-                toast.success('Delete Successful');
+                toast.success(i18next.t('zonedeletedsuccessfully'));
                 console.log(response);
             })
             .catch(error=>{
@@ -186,7 +116,7 @@ export const deleteZone=createAsyncThunk(
         return storedZones;*/
               
         }catch(error){
-            toast.error('Failed to delete zone');
+            toast.error(i18next.t('failedtodeletezone'));
             console.log(error.message);
         }
     }
@@ -215,10 +145,10 @@ export const deleteBunch=createAsyncThunk(
             }
 
             localStorage.setItem('zone',JSON.stringify(storedZones));
-            toast.success('Delete successful');
+            toast.success(i18next.t('zonedeletedsuccessfully'));
             return storedZones
         }catch(error){
-            toast.success('Failed to delete');
+            toast.success(i18next.t('failedtodeletezone'));
             return rejectWithValue(error.message);
         }
     }

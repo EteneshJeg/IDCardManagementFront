@@ -1,34 +1,33 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 
-import { 
-  fetchRoles, 
+import {
+  fetchRoles,
   addRole,
-  updateRole, 
+  updateRole,
   deleteRole,
   selectAllRoles,
   selectRolesStatus,
   selectRolesError,
 } from "../features/roleSlice";
-import { 
+import {
   fetchPermissions,
   selectAllPermissions
 } from "../features/permissionSlice";
 import { toast } from "react-toastify";
 
 export default function RoleManagement() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
-  
+
   // Redux state
   const roles = useSelector(selectAllRoles);
   const allPermissions = useSelector(selectAllPermissions);
   const status = useSelector(selectRolesStatus);
   const error = useSelector(selectRolesError);
   const permissionStatus = useSelector(state => state.permissions.status);
-  
+
   // Local state
   const [searchItem, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +35,7 @@ export default function RoleManagement() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); // Added view modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     permissions: []
@@ -59,9 +58,9 @@ export default function RoleManagement() {
   // Create safe arrays
   const roleList = Array.isArray(roles) ? roles : [];
   const permissionList = Array.isArray(allPermissions) ? allPermissions : [];
-  
+
   // Filter data based on search
-  const filteredData = roleList.filter(role => 
+  const filteredData = roleList.filter(role =>
     role.name?.toLowerCase().includes(searchItem.toLowerCase())
   );
 
@@ -75,59 +74,59 @@ export default function RoleManagement() {
   );
 
   // Filter permissions based on search
-  const filteredPermissions = permissionList.filter(permission => 
+  const filteredPermissions = permissionList.filter(permission =>
     permission.name?.toLowerCase().includes(permissionSearch.toLowerCase())
   );
 
   // Handlers
   const handleSaveRole = async () => {
     if (!formData.name) {
-      toast.error("Role name is required");
+      toast.error(t('rolenameisrequired'));
       return;
     }
-    
+
     if (formData.permissions.length === 0) {
-      toast.error("Please select at least one permission");
+      toast.error(t('pleaseselectatleastonepermission'));
       return;
     }
-    
+
     try {
       await dispatch(addRole(formData)).unwrap();
-      toast.success("Role created successfully!");
+      toast.success(t('rolecreatedsuccessfully'));
       setIsModalOpen(false);
       setFormData({ name: '', permissions: [] });
       setPermissionSearch('');
     } catch (error) {
-      toast.error("Failed to create role");
+      toast.error(t('failedtocreaterole'));
     }
   };
 
   const handleUpdateRole = async () => {
     if (!selectedRole?.id) return;
-    
+
     try {
       await dispatch(updateRole({
         id: selectedRole.id,
         formData
       })).unwrap();
-      toast.success("Role updated successfully!");
+      toast.success(t('roleupdatedsuccessfully'));
       setIsEditModalOpen(false);
       setFormData({ name: '', permissions: [] });
       setPermissionSearch('');
     } catch (error) {
-      toast.error("Failed to update role");
+      toast.error(t('failedtoupdaterole'));
     }
   };
 
   const handleDeleteRole = async () => {
     if (!selectedRole?.id) return;
-    
+
     try {
       await dispatch(deleteRole(selectedRole.id)).unwrap();
-      toast.success("Role deleted successfully!");
+      toast.success(t('roledeletedsuccessfully'));
       setIsDeleteModalOpen(false);
     } catch (error) {
-      toast.error("Failed to delete role");
+      toast.error(t('failedtodeleterole'));
     }
   };
 
@@ -139,13 +138,13 @@ export default function RoleManagement() {
     setFormData(prev => {
       const newPermissions = [...prev.permissions];
       const index = newPermissions.indexOf(permissionId);
-      
+
       if (index > -1) {
         newPermissions.splice(index, 1);
       } else {
         newPermissions.push(permissionId);
       }
-      
+
       return { ...prev, permissions: newPermissions };
     });
   };
@@ -162,7 +161,7 @@ export default function RoleManagement() {
   // Get permission names for display - FIXED to handle non-array permissions
   const getPermissionNames = (permissionIds) => {
     if (!Array.isArray(permissionIds) || permissionIds.length === 0) return "No permissions";
-    
+
     return allPermissions
       .filter(permission => permissionIds.includes(permission.id))
       .map(p => p.name)
@@ -203,17 +202,17 @@ export default function RoleManagement() {
       <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
         <div className="app-container container-xxl d-flex flex-stack">
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
-            <h1 className="page-heading text-dark fw-bold fs-3 my-0">Role Management</h1>
+            <h1 className="page-heading text-dark fw-bold fs-3 my-0">{t('rolemanagement')}</h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
-                <a href="/" className="text-muted text-hover-primary">Home</a>
+                <a href="/" className="text-muted text-hover-primary">{t('home')}</a>
               </li>
               <li className="breadcrumb-item"><span className="bullet bg-gray-400 w-5px h-2px"></span></li>
-              <li className="breadcrumb-item text-muted">Roles</li>
+              <li className="breadcrumb-item text-muted">{t('roles')}</li>
             </ul>
           </div>
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <button 
+            <button
               className="btn btn-sm fw-bold btn-primary"
               onClick={() => {
                 setFormData({ name: '', permissions: [] });
@@ -221,7 +220,7 @@ export default function RoleManagement() {
                 setIsModalOpen(true);
               }}
             >
-              Add Role
+              {t('addrole')}
             </button>
           </div>
         </div>
@@ -233,7 +232,7 @@ export default function RoleManagement() {
           <div className="card card-flush h-xl-100">
             <div className="card-header pt-7">
               <h3 className="card-title align-items-start flex-column">
-                <span className="card-label fw-bold text-gray-800">Roles List</span>
+                <span className="card-label fw-bold text-gray-800">{t('roleslist')}</span>
               </h3>
               <div className="card-toolbar">
                 <div className="d-flex flex-stack flex-wrap gap-4">
@@ -247,7 +246,7 @@ export default function RoleManagement() {
                     <input
                       type="text"
                       className="form-control w-150px fs-7 ps-12"
-                      placeholder="Search roles..."
+                      placeholder={t('searchroles')}
                       value={searchItem}
                       onChange={(e) => setSearch(e.target.value)}
                     />
@@ -260,11 +259,11 @@ export default function RoleManagement() {
               <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                 <thead>
                   <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
-                    <th className="min-w-50px">S.N.</th>
-                    <th>Role Name</th>
+                    <th className="min-w-50px">{t('sn')}.</th>
+                    <th>{t('rolename')}</th>
                     {/* <th>Permissions</th> */}
-                    <th>Created At</th>
-                    <th>Actions</th>
+                    <th>{t('createdat')}</th>
+                    <th>{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="fw-bold text-gray-600">
@@ -296,7 +295,7 @@ export default function RoleManagement() {
                         <td>
                           {/* Added View Button */}
                           <button
-                            className="btn btn-icon btn-bg-light btn-color-info btn-sm me-2"
+                            className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
                             onClick={() => {
                               setSelectedRole(role);
                               setIsViewModalOpen(true);
@@ -333,8 +332,8 @@ export default function RoleManagement() {
                   ) : (
                     <tr>
                       <td colSpan="5" className="text-center py-10">
-                        {roleList.length === 0 
-                          ? "No roles found" 
+                        {roleList.length === 0
+                          ? "No roles found"
                           : "No matching roles"}
                       </td>
                     </tr>
@@ -344,9 +343,9 @@ export default function RoleManagement() {
 
               <div className="pagination d-flex justify-content-between align-items-center mt-5">
                 <div>
-                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
+                  {t('showing')} {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
                   {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
-                  {filteredData.length} entries
+                  {filteredData.length} {t('entries')}
                 </div>
                 <div className="d-flex gap-2">
                   <button
@@ -357,7 +356,7 @@ export default function RoleManagement() {
                     <i className="bi bi-chevron-left"></i>
                   </button>
                   <span className="px-3 d-flex align-items-center">
-                    Page {currentPage} of {totalPages}
+                    {t('page')} {currentPage} {t('of')} {totalPages}
                   </span>
                   <button
                     className="btn btn-sm btn-icon btn-light-primary"
@@ -379,7 +378,7 @@ export default function RoleManagement() {
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add New Role</h5>
+                <h5 className="modal-title">{t('addnewrole')}</h5>
                 <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => {
                   setIsModalOpen(false);
                   setPermissionSearch('');
@@ -389,7 +388,7 @@ export default function RoleManagement() {
               </div>
               <div className="modal-body">
                 <div className="mb-5">
-                  <label className="form-label required">Role Name</label>
+                  <label className="form-label required">{t('rolename')}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -397,41 +396,41 @@ export default function RoleManagement() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    placeholder="Enter role name"
+                    placeholder={t('enterrolename')}
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <label className="form-label required">Permissions</label>
-                    <button 
-                      type="button" 
+                    <label className="form-label required">{t('permissions')}</label>
+                    <button
+                      type="button"
                       className="btn btn-sm btn-link"
                       onClick={handleSelectAllPermissions}
                     >
-                      {formData.permissions.length === filteredPermissions.length 
-                        ? "Deselect All" 
+                      {formData.permissions.length === filteredPermissions.length
+                        ? "Deselect All"
                         : "Select All"}
                     </button>
                   </div>
-                  
+
                   {/* Enhanced Multi-Select UI */}
                   <div className="position-relative">
-                    <div 
+                    <div
                       className="form-control d-flex align-items-center flex-wrap gap-1 py-2"
                       style={{ minHeight: "42px", cursor: "pointer" }}
                       onClick={() => setIsPermissionDropdownOpen(!isPermissionDropdownOpen)}
                     >
                       {formData.permissions.length === 0 ? (
-                        <span className="text-muted">Select permissions...</span>
+                        <span className="text-muted">{t('selectpermissions')}</span>
                       ) : (
                         permissionList
                           .filter(p => formData.permissions.includes(p.id))
                           .map(p => (
-                            <span key={p.id} className="badge badge-light-primary d-inline-flex align-items-center">
+                            <span key={p.id} className="badge badge-primary d-inline-flex align-items-center">
                               {p.name}
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 className="btn btn-icon btn-sm btn-active-color-primary ms-2"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -447,10 +446,10 @@ export default function RoleManagement() {
                         <i className={`bi bi-chevron-${isPermissionDropdownOpen ? 'up' : 'down'}`}></i>
                       </div>
                     </div>
-                    
+
                     {isPermissionDropdownOpen && (
                       <div className="border rounded mt-1 p-2 position-absolute w-100 bg-white z-index-1 shadow"
-                           style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        style={{ maxHeight: "300px", overflowY: "auto" }}>
                         <div className="sticky-top bg-white pt-2 pb-2">
                           <input
                             type="text"
@@ -461,11 +460,11 @@ export default function RoleManagement() {
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
-                        
+
                         <div className="list-group">
                           {filteredPermissions.length > 0 ? (
                             filteredPermissions.map(permission => (
-                              <div 
+                              <div
                                 key={permission.id}
                                 className="list-group-item list-group-item-action d-flex align-items-center"
                                 onClick={(e) => {
@@ -478,7 +477,7 @@ export default function RoleManagement() {
                                     className="form-check-input"
                                     type="checkbox"
                                     checked={formData.permissions.includes(permission.id)}
-                                    onChange={() => {}}
+                                    onChange={() => { }}
                                     id={`perm-${permission.id}`}
                                   />
                                   <label className="form-check-label w-100" htmlFor={`perm-${permission.id}`}>
@@ -489,7 +488,7 @@ export default function RoleManagement() {
                             ))
                           ) : (
                             <div className="text-center p-3 text-muted">
-                              No permissions found
+                              {t('nopermissionsfound')}
                             </div>
                           )}
                         </div>
@@ -504,7 +503,7 @@ export default function RoleManagement() {
                   className="btn btn-primary"
                   onClick={handleSaveRole}
                 >
-                  Save Role
+                  {t('saverole')}
                 </button>
               </div>
             </div>
@@ -518,7 +517,7 @@ export default function RoleManagement() {
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Edit Role: {selectedRole.name}</h5>
+                <h5 className="modal-title">{t('editrole')}: {selectedRole.name}</h5>
                 <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => {
                   setIsEditModalOpen(false);
                   setPermissionSearch('');
@@ -528,7 +527,7 @@ export default function RoleManagement() {
               </div>
               <div className="modal-body">
                 <div className="mb-5">
-                  <label className="form-label required">Role Name</label>
+                  <label className="form-label required">{t('rolename')}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -538,38 +537,38 @@ export default function RoleManagement() {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <label className="form-label required">Permissions</label>
-                    <button 
-                      type="button" 
+                    <label className="form-label required">{t('permissions')}</label>
+                    <button
+                      type="button"
                       className="btn btn-sm btn-link"
                       onClick={handleSelectAllPermissions}
                     >
-                      {formData.permissions.length === filteredPermissions.length 
-                        ? "Deselect All" 
+                      {formData.permissions.length === filteredPermissions.length
+                        ? "Deselect All"
                         : "Select All"}
                     </button>
                   </div>
-                  
+
                   {/* Enhanced Multi-Select UI */}
                   <div className="position-relative">
-                    <div 
+                    <div
                       className="form-control d-flex align-items-center flex-wrap gap-1 py-2"
                       style={{ minHeight: "42px", cursor: "pointer" }}
                       onClick={() => setIsPermissionDropdownOpen(!isPermissionDropdownOpen)}
                     >
                       {formData.permissions.length === 0 ? (
-                        <span className="text-muted">Select permissions...</span>
+                        <span className="text-muted">{t('selectpermissions')}</span>
                       ) : (
                         permissionList
                           .filter(p => formData.permissions.includes(p.id))
                           .map(p => (
                             <span key={p.id} className="badge badge-light-primary d-inline-flex align-items-center">
                               {p.name}
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 className="btn btn-icon btn-sm btn-active-color-primary ms-2"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -585,10 +584,10 @@ export default function RoleManagement() {
                         <i className={`bi bi-chevron-${isPermissionDropdownOpen ? 'up' : 'down'}`}></i>
                       </div>
                     </div>
-                    
+
                     {isPermissionDropdownOpen && (
                       <div className="border rounded mt-1 p-2 position-absolute w-100 bg-white z-index-1 shadow"
-                           style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        style={{ maxHeight: "300px", overflowY: "auto" }}>
                         <div className="sticky-top bg-white pt-2 pb-2">
                           <input
                             type="text"
@@ -599,11 +598,11 @@ export default function RoleManagement() {
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
-                        
+
                         <div className="list-group">
                           {filteredPermissions.length > 0 ? (
                             filteredPermissions.map(permission => (
-                              <div 
+                              <div
                                 key={permission.id}
                                 className="list-group-item list-group-item-action d-flex align-items-center"
                                 onClick={(e) => {
@@ -616,7 +615,7 @@ export default function RoleManagement() {
                                     className="form-check-input"
                                     type="checkbox"
                                     checked={formData.permissions.includes(permission.id)}
-                                    onChange={() => {}}
+                                    onChange={() => { }}
                                     id={`edit-perm-${permission.id}`}
                                   />
                                   <label className="form-check-label w-100" htmlFor={`edit-perm-${permission.id}`}>
@@ -627,7 +626,7 @@ export default function RoleManagement() {
                             ))
                           ) : (
                             <div className="text-center p-3 text-muted">
-                              No permissions found
+                              {t('nopermissionsfound')}
                             </div>
                           )}
                         </div>
@@ -642,7 +641,7 @@ export default function RoleManagement() {
                   className="btn btn-primary"
                   onClick={handleUpdateRole}
                 >
-                  Update Role
+                  {t('updaterole')}
                 </button>
               </div>
             </div>
@@ -656,17 +655,17 @@ export default function RoleManagement() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">View Role: {selectedRole.name}</h5>
+                <h5 className="modal-title">{t('viewrole')}: {selectedRole.name}</h5>
                 <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsViewModalOpen(false)}>
                   <span className="svg-icon svg-icon-1"><CloseIcon /></span>
                 </div>
               </div>
               <div className="modal-body">
                 <div className="mb-5">
-                  <label className="form-label fw-bold">Role Name</label>
+                  <label className="form-label fw-bold">{t('rolename')}</label>
                   <p className="form-control-static">{selectedRole.name}</p>
                 </div>
-                
+
                 {/* <div className="mb-3">
                   <label className="form-label fw-bold">Permissions</label>
                   <div className="d-flex flex-wrap gap-2">
@@ -683,9 +682,9 @@ export default function RoleManagement() {
                     )}
                   </div>
                 </div> */}
-                
+
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Created At</label>
+                  <label className="form-label fw-bold">{t('createdat')}</label>
                   <p>{new Date(selectedRole.created_at).toLocaleString()}</p>
                 </div>
               </div>
@@ -700,14 +699,14 @@ export default function RoleManagement() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Role Deletion</h5>
+                <h5 className="modal-title">{t('confirmroledeletion')}</h5>
                 <div className="btn btn-icon btn-sm btn-active-icon-primary" onClick={() => setIsDeleteModalOpen(false)}>
                   <span className="svg-icon svg-icon-1"><CloseIcon /></span>
                 </div>
               </div>
               <div className="modal-body">
-                <p>Are you sure you want to delete the role <strong>{selectedRole.name}</strong>?</p>
-                <p className="text-danger">This action cannot be undone and will affect all users assigned to this role.</p>
+                <p>{t('areyousureyouwanttodeletetherole')}<strong>{selectedRole.name}</strong>?</p>
+                <p className="text-danger">{t('thisactioncannotbeundone')}.</p>
               </div>
               <div className="modal-footer">
                 <button
@@ -715,7 +714,7 @@ export default function RoleManagement() {
                   className="btn btn-danger"
                   onClick={handleDeleteRole}
                 >
-                  Delete Role
+                  {t('deleterole')}
                 </button>
               </div>
             </div>

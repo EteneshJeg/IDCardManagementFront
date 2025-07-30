@@ -1,6 +1,7 @@
 
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import i18next from "i18next";
 
 const formatDate = (input) => {
   if (!input) return null;
@@ -52,14 +53,14 @@ const prepareFormData = (formData) => {
     sex: formData.sex || "",
     date_of_birth: cleanDateInput(formData.date_of_birth)||null,
     joined_date: cleanDateInput(formData.joined_date)||null,
-    email: formData.email || "",
+    user_id: formData.user_id || "",
     photo: formData.photo || "",
     phone_number: formData.phone_number || "",
     organization_unit_id: formData.organization_unit_id || "",
     job_position_id: formData.job_position_id || "",
     job_title_category_id: formData.job_title_category_id || "",
     salary_id: formData.salary_id || "",
-    martial_status_id: formData.martial_status_id || "",
+    martial_status_id: formData.marital_status_id || "",
     nation: formData.nation || "",
     employment_id: formData.employment_id || "",
     job_position_start_date: cleanDateInput(formData.job_position_start_date)||null,
@@ -90,81 +91,16 @@ const prepareFormData = (formData) => {
                 
             })
             .then(response=>{
-                toast.success('save successful');
+                toast.success(i18next.t('employeesavedsuccessfully'));
                 console.log("Success",response);
             })
             .catch(error=>{
-                toast.error('Employee is not saved');
+                toast.error(i18next.t('failedtosaveemployee'));
                 console.log("Error",error.response);
             })
 
 
-            /*let profileId;
-            let storedProfiles=JSON.parse(localStorage.getItem('profile'))||[];
-            if(!Array.isArray(storedProfiles)){
-                storedProfiles=[]
-            }
-            console.log(storedProfiles);
-            if (storedProfiles.length === 0) {
-                let lastProfileId=0;
-                profileId=lastProfileId+1;
-            } else {
-                const lastProfile = storedProfiles.pop();
-                if (lastProfile && lastProfile.id) {
-                    let lastProfileId = lastProfile.id;
-                     lastProfileId=parseInt(lastProfileId,10);
-                      profileId=lastProfileId+1;
-                      
-                } else {
-                    let lastProfileId=0;
-                    profileId=lastProfileId+1;
-                }
-                storedProfiles.push(lastProfile);
-            }
-            const newProfile={
-                id:profileId,
-                en_name:FormData?.en_name,
-                title:FormData?.title,
-                sex:FormData?.sex,
-                date_of_birth:FormData?.date_of_birth,
-                joined_date:FormData?.joined_date,
-                email:FormData?.email,
-                photo:FormData?.photo,
-                phone_number:FormData?.phone_number,
-                organization_unit:FormData?.organization_unit,
-                job_position:FormData?.job_position,
-                job_title_category:FormData?.job_title_category,
-                salary_amount:FormData?.salary_amount,
-                marital_status:FormData?.marital_status,
-                nation:FormData?.nation,
-                employment_id:FormData?.employment_id,
-                job_position_start_date:FormData?.job_position_start_date,
-                job_position_end_date:FormData?.job_position_end_date,
-                address:FormData?.address,
-                house_number:FormData?.house_number,
-                region:FormData?.region,
-                zone:FormData?.zone,
-                woreda:FormData?.woreda,
-                status:FormData?.status,
-                id_issue_date:FormData?.id_issue_date,
-                id_expire_date:FormData?.id_expire_date,
-                id_status:FormData?.id_status
-                
-            }
-            let checkId=storedProfiles.some(storedProfile=>{
-                return String(storedProfile.employment_id).toLowerCase().trim()===String(newProfile.employment_id).toLowerCase().trim()
-            })
-            if(checkId){
-                toast.error('profile is already registered');
-                return rejectWithValue('profile is already registered');
-            }
-            if(!newProfile){
-                toast.error('Employee is not saved');
-                return rejectWithValue('user is not saved');
-            }
-            storedProfiles.push(newProfile);
-            localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            toast.success('save successful');*/
+            
         }catch(error){
             console.log(error);
             return rejectWithValue(error);
@@ -197,19 +133,10 @@ export const getProfile=createAsyncThunk(
                 }
             }
             else{
-                console.log('Employees not found');
-                toast.error('Employees not found');
+                
+                toast.error(t('employeesnotfound'));
             }
-            /*let storedProfiles=JSON.parse(localStorage.getItem('profile'))||[];
-        if(!Array.isArray(storedProfiles)){
-            storedProfiles=[];
-        }
-        if(storedProfiles){
-            return storedProfiles;
-        }
-        else{
-            return rejectWithValue('Failed to fetch profile');
-        }*/}catch(error){
+           }catch(error){
             return rejectWithValue( error.response?.data?.message || 'Failed to fetch profile');
         }
     }
@@ -248,8 +175,8 @@ console.log("sex",rawForm.sex);
     title: rawForm.title || "",
     sex: rawForm.sex || "",
     date_of_birth: cleanDateInput(rawForm.date_of_birth)||null,
+    user_id: rawForm.user_id || "",
     joined_date: cleanDateInput(rawForm.joined_date)||null,
-    email: rawForm.email || "",
     photo: rawForm.photo || "",
     phone_number: rawForm.phone_number || "",
     organization_unit_id: rawForm.organization_unit_id || "",
@@ -302,7 +229,7 @@ for (const key in form) {
             console.log(response);
             console.log(response.data);
             if(data){
-                toast.success('Update successful');
+                toast.success(i18next.t('employeeupdatedsuccessfully'));
                 if(Array.isArray(data)){
                     return data;
                 }
@@ -311,58 +238,9 @@ for (const key in form) {
                 }
             }
             else{
-                 toast.error('Update Failed');
+                 toast.error(i18next.t('failedtoupdateemployee'));
             }
-            /*let storedProfiles=JSON.parse(localStorage.getItem('profile'))||[];
-            if(!Array.isArray(storedProfiles)){
-                storedProfiles=[];
-            }
-            console.log(Id);
-            const userIndex=storedProfiles.findIndex(storedProfile=>{
-                return String(storedProfile.id).toLowerCase().trim()===String(Id).toLowerCase().trim()
-            })
-            if(userIndex==-1){
-                toast.error('Match not found');
-                return;
-            }
-            const updatedProfile={
-               ...storedProfiles[userIndex],
-                en_name:FormData?.en_name || storedProfiles[userIndex].en_name,
-                title:FormData?.title || storedProfiles[userIndex].title,
-                sex:FormData?.sex || storedProfiles[userIndex].sex,
-                date_of_birth:FormData?.date_of_birth || storedProfiles[userIndex].date_of_birth,
-                joined_date:FormData?.joined_date || storedProfiles[userIndex].joined_date,
-                photo:FormData?.photo || storedProfiles[userIndex].photo,
-                phone_number:FormData?.phone_number || storedProfiles[userIndex].phone_number,
-                organization_unit:FormData?.organization_unit || storedProfiles[userIndex].organization_unit,
-                job_position:FormData?.job_position || storedProfiles[userIndex].job_position,
-                job_title_category:FormData?.job_title_category || storedProfiles[userIndex].job_title_category,
-                salary_amount:FormData?.salary_amount || storedProfiles[userIndex].salary_amount,
-                marital_status:FormData?.marital_status || storedProfiles[userIndex].marital_status,
-                nation:FormData?.nation || storedProfiles[userIndex].nation,
-                employment_id:FormData?.employment_id || storedProfiles[userIndex].employment_id,
-                job_position_start_date:FormData?.job_position_start_date || storedProfiles[userIndex].job_position_start_date,
-                job_position_end_date:FormData?.job_position_end_date || storedProfiles[userIndex].job_position_end_date,
-                address:FormData?.address || storedProfiles[userIndex].address,
-                house_number:FormData?.house_number || storedProfiles[userIndex].house_number,
-                region:FormData?.region || storedProfiles[userIndex].region,
-                zone:FormData?.zone || storedProfiles[userIndex].zone,
-                woreda:FormData?.woreda || storedProfiles[userIndex].woreda,
-                status:FormData?.status || storedProfiles[userIndex].status,
-                id_issue_date:FormData?.id_issue_date || storedProfiles[userIndex].id_issue_date,
-                id_expire_date:FormData?.id_expire_date || storedProfiles[userIndex].id_expire_date,
-                id_status:FormData?.id_status || storedProfiles[userIndex].status
-                
-            }
-            if(!updatedProfile){
-                toast.error('Fields are empty');
-                return rejectWithValue('empty field');
-            }
-           
-            storedProfiles[userIndex]=updatedProfile;
-            localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            toast.success('Update successful');
-            return updatedProfile;*/
+            
         }catch(error){
             return rejectWithValue(error.message);
         }
@@ -380,27 +258,14 @@ export const deleteProfile=createAsyncThunk(
                 }
             })
             .then(response=>{
-                toast.success('Delete Successful');
+                toast.success(i18next.t('employeedeletedsuccessfully'));
                 console.log(response);
             })
             .catch(error=>{
+              toast.error(i18next.t('failedtodeleteemployee'))
                 console.log(error);
             })
-            /*let storedProfiles=JSON.parse(localStorage.getItem('profile'))||[];
-            if(!Array.isArray(storedProfiles)){
-                storedProfiles=[];
-            }
-            console.log(Id);
             
-            storedProfiles=storedProfiles.filter(storedProfile=>{
-               return String(storedProfile.id).toLowerCase().trim()!==String(Id).toLowerCase().trim()
-            })
-            if(!storedProfiles){
-                console.log('delete unsuccessful');
-            }
-            localStorage.setItem('profile',JSON.stringify(storedProfiles));
-            toast.success('Delete Successful');
-            return storedProfiles;*/
         }catch(error){
                 return rejectWithValue(error);
         }
@@ -411,28 +276,27 @@ export const deleteProfileBunch = createAsyncThunk(
     'profile/deletebunch',
     async (selectedUsers, { rejectWithValue }) => {
       try {
-        let storedUsers = JSON.parse(localStorage.getItem('profile')) || [];
-        console.log(selectedUsers);
+        console.log(selectedUsers)
+        let token=JSON.parse(localStorage.getItem('token'));
+            const idList=Object.keys(selectedUsers);
+            const ids = idList.map(id => Number(id));
+            console.log(ids);
+            await axios.post(`http://localhost:8000/api/employees/delete-bunch`,{
+                "ids":ids
+            },{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success(i18next.t('employeesdeletedsuccessfully'));
+                console.log(response);
+            })
+            .catch(error=>{
+              toast.error(i18next.t('failedtodeleteemployees'))
+                console.log(error);
+            })
         
-        
-       
-        const userIdsToRemove = Object.keys(selectedUsers)
-          .filter((key) => selectedUsers[key]); 
-
-          console.log(userIdsToRemove)
-
-          storedUsers = storedUsers.filter((user) => {
-            const employmentId = String(user.id); 
-            const isSelected = userIdsToRemove.includes(employmentId); 
-            console.log(`Checking user: ${employmentId}, selected: ${isSelected}`); 
-            return !isSelected; 
-          });
-  
-        
-        localStorage.setItem('profile', JSON.stringify(storedUsers));
-  
-        toast.success('Delete successful');
-        return storedUsers;
       } catch (error) {
         return rejectWithValue(error.message);
       }
@@ -443,47 +307,25 @@ export const deleteProfileBunch = createAsyncThunk(
     'userprofile/get',
     async ({ Id }, { rejectWithValue }) => {
       try {
-        let token=JSON.parse(localStorage.getItem('token'));
-        await axios.get(`http://localhost:8000/api/employees/${Id}`,{
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
-        }).then(response=>{
-            console.log(response.data);
-            return response.data;
-        }).catch(error=>{
-            console.log(error.data);
-        })
-
-        /*let storedProfiles = JSON.parse(localStorage.getItem('profile')) || [];
-  
-        if (!Array.isArray(storedProfiles)) {
-          storedProfiles = [storedProfiles];
-        }
-        console.log(JSON.parse(localStorage.getItem('profile')));
-
-        const matchedProfile = storedProfiles.find(profile =>{
-            console.log(profile.email)
-            console.log(Email)
-            return(
-                String(profile.email).toLowerCase().trim() === String(Email).toLowerCase().trim()
-            )
-        }
-          
-        );
         
-  
-        if (!matchedProfile) {
-          
-          return rejectWithValue('No profile matched the email.');
-        }
-        console.log(matchedProfile)
-        return matchedProfile;*/ 
+        let token=JSON.parse(localStorage.getItem('token'));
+        let response=await axios.get(`http://localhost:8000/api/employees/${Id}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            });
+            let dataitem=response.data.data;
+            console.log(dataitem)
+           return dataitem;
+
+       
       } catch (error) {
         return rejectWithValue(error.message || 'Failed to fetch profile');
       }
     }
   );
+
+  
   
 
   
@@ -498,7 +340,6 @@ const profileSlice=createSlice({
     sex:"",
     date_of_birth: "",
     joined_date: "",
-    email: "",
     photo: "",
     phone_number: "",
     organization_unit_id: "",

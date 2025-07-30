@@ -1,6 +1,3 @@
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,6 +10,8 @@ import {
   deleteBunch,
 } from "../features/woredaSlice";
 import { getZone } from "../features/zoneSlice";
+import { fetchRoles } from "../features/roleSlice";
+import { useTranslation } from "react-i18next";
 
 // SVG Close Icon
 const CloseIcon = () => (
@@ -53,6 +52,7 @@ const Loader = () => (
 );
 
 export default function Woreda() {
+  const { t } = useTranslation();
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "/assets/js/scripts.bundle.js";
@@ -70,6 +70,8 @@ export default function Woreda() {
   }, []);
   const dispatch = useDispatch();
   const { woreda } = useSelector((state) => state.woreda);
+  const { user } = useSelector((state) => state.user.user);
+  const { role } = useSelector((state) => state.user.role);
   const [startSelection, setStartSelection] = useState(false);
   const [woredaData, setWoredaData] = useState([]);
   const [zone, setZone] = useState([]);
@@ -78,6 +80,9 @@ export default function Woreda() {
   const [filteredData, setFilteredData] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [permissions, setPermissions] = useState();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -123,6 +128,65 @@ export default function Woreda() {
       setCurrentPage(currentPage - 1);
     }
   };
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -217,7 +281,7 @@ export default function Woreda() {
 
   const handleSaveWoreda = () => {
     if (!formData.name || !formData.zone_id) {
-      toast.error("There are missing fields");
+      toast.error(t('therearemissingfields'));
       return;
     } else {
       dispatch(createWoreda({ FormData: formData }));
@@ -226,6 +290,10 @@ export default function Woreda() {
   };
 
   const handleUpdateWoreda = (Id) => {
+    if (!formData.name || !formData.zone_id) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
     dispatch(updateWoreda({ Id: Id, FormData: formData }));
     setIsEditModalOpen(false);
   };
@@ -249,45 +317,47 @@ export default function Woreda() {
           {/* Title and Breadcrumbs */}
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Woreda Management
+              {t('woredamanagement')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
                 <a href="/" className="text-muted text-hover-primary">
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">Woreda Management</li>
+              <li className="breadcrumb-item text-muted">{t('woredamanagement')}</li>
             </ul>
           </div>
 
           {/* Buttons */}
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <a
-              href="#"
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsModalOpen(true);
-              }}
-            >
-              Add Zone
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('create')) ? (<a
+                href="#"
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
+              >
+                {t('addworeda')}
+              </a>) : null}
 
-            <a
-              href="#"
-              className={
-                Object.keys(selectedUsers).length > 0
-                  ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
-                  : "hide"
-              }
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </a>
+            {permissions?.some(p =>
+              p.name.includes('delete')) ? (<a
+                href="#"
+                className={
+                  Object.keys(selectedUsers).length > 0
+                    ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
+                    : "hide"
+                }
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </a>) : null}
           </div>
           {isModalOpen && (
             <div
@@ -299,7 +369,7 @@ export default function Woreda() {
                 <div className="modal-content">
                   {/* Modal Header */}
                   <div className="modal-header">
-                    <h5 className="modal-title">Add Woreda</h5>
+                    <h5 className="modal-title">{t('addworeda')}</h5>
                     <div
                       className="btn btn-icon btn-sm btn-active-icon-primary"
                       onClick={() => setIsModalOpen(false)}
@@ -315,7 +385,7 @@ export default function Woreda() {
                   <div className="modal-body">
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Woreda Name
+                        {t('woredaname')}
                       </label>
                       <input
                         type="text"
@@ -323,13 +393,13 @@ export default function Woreda() {
                         name="name"
                         onChange={handleChange}
                         required
-                        placeholder="Enter woreda name"
+                        placeholder={t('enterworedaname')}
                       />
                     </div>
 
                     <div className="mb-3">
                       <label className="form-label fw-semibold required">
-                        Zone
+                        {t('zone')}
                       </label>
                       <select
                         className="form-select"
@@ -337,7 +407,7 @@ export default function Woreda() {
                         onChange={handleChange}
                         required
                       >
-                        <option value="">Select</option>
+                        <option value="">{t('select')}</option>
                         {zone.map((data) => (
                           <option key={data.id} value={data.id}>
                             {data.name}
@@ -354,7 +424,7 @@ export default function Woreda() {
                       className="btn btn-primary"
                       onClick={handleSaveWoreda}
                     >
-                      Save changes
+                      {t('savechanges')}
                     </button>
                   </div>
                 </div>
@@ -376,14 +446,14 @@ export default function Woreda() {
                 {/*begin::Title*/}
                 <h3 className="card-title align-items-start flex-column">
                   <span className="card-label fw-bold text-gray-800">
-                    Woreda table
+                    {t('woredatable')}
                   </span>
                 </h3>
                 <div className="card-toolbar">
                   {/*begin::Filters*/}
                   <div className="d-flex flex-stack flex-wrap gap-4">
                     {/*begin::Destination*/}
-                    <div className="text-gray-400 fs-7 me-2">Category</div>
+                    <div className="text-gray-400 fs-7 me-2">{t('category')}</div>
                     {/*end::Label*/}
                     {/*begin::Select*/}
                     <select
@@ -391,7 +461,7 @@ export default function Woreda() {
                       value={selectedFilter}
                       onChange={(e) => setSelectedFilter(e.target.value)}
                     >
-                      <option value="show all">Show all</option>
+                      <option value="show all">{t('showall')}</option>
                       {zone.map((data) => {
                         return (
                           <option key={data.id} value={data.name}>
@@ -434,7 +504,7 @@ export default function Woreda() {
                         type="text"
                         data-kt-table-widget-4="search"
                         className="form-control w-150px fs-7 ps-12"
-                        placeholder="Search"
+                        placeholder={t('search')}
                         onChange={(e) => setSearch(e.target.value)}
                       />
                     </div>
@@ -452,28 +522,28 @@ export default function Woreda() {
                     {/*begin::Table row*/}
                     <tr className="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                       <th className="min-w-100px">
-                        <div className="d-flex align-items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={
-                                Object.keys(selectedUsers).length ===
+                        <div className="d-flex align-items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={
+                              Object.keys(selectedUsers).length ===
+                              woredaData.length
+                            }
+                            onChange={handleSelectAll}
+                            title={
+                              Object.keys(selectedUsers).length ===
                                 woredaData.length
-                              }
-                              onChange={handleSelectAll}
-                              title={
-                                Object.keys(selectedUsers).length ===
-                                woredaData.length
-                                  ? "Deselect All"
-                                  : "Select All"
-                              }
-                              style={{ cursor: "pointer" }}
-                            />
-                            S.N.
+                                ? "Deselect All"
+                                : "Select All"
+                            }
+                            style={{ cursor: "pointer" }}
+                          />
+                          {t('sn')}.
                         </div>
                       </th>
-                      <th className="text-start min-w-100px">Name</th>
-                      <th className="text-start min-w-125px">Zone</th>
-                      <th className="text-start min-w-100px">Action</th>
+                      <th className="text-start min-w-100px">{t('name')}</th>
+                      <th className="text-start min-w-125px">{t('zone')}</th>
+                      <th className="text-start min-w-100px">{t('actions')}</th>
                     </tr>
                     {/*end::Table row*/}
                   </thead>
@@ -492,12 +562,12 @@ export default function Woreda() {
                               searchItem.toLowerCase() === ""
                                 ? row
                                 : String(row.name)
-                                    .toLowerCase()
-                                    .includes(searchItem);
+                                  .toLowerCase()
+                                  .includes(searchItem);
                             const matchFilter =
                               selectedFilter === "show all" ||
                               zoneMap[row.zone_id]?.toLowerCase() ===
-                                selectedFilter.toLowerCase();
+                              selectedFilter.toLowerCase();
 
                             return matchSearch && matchFilter;
                           })
@@ -508,13 +578,13 @@ export default function Woreda() {
                                 data-kt-table-widget-4="subtable_template"
                               >
                                 <td>
-                                  <div className="d-flex align-items-center gap-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={!!selectedUsers[row.id]}
-                                        onChange={() => handleSelectedRows(row.id)}
-                                      />
-                                              {index + 1}
+                                  <div className="d-flex align-items-center gap-4">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!selectedUsers[row.id]}
+                                      onChange={() => handleSelectedRows(row.id)}
+                                    />
+                                    {index + 1}
                                   </div>
                                 </td>
                                 <td className="text-start">{row.name}</td>
@@ -523,16 +593,17 @@ export default function Woreda() {
                                   {zoneMap[row.zone_id] || "-"}
                                 </td>
                                 <td className="text-start">
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
-                                    onClick={() => {
-                                      setIsShowModalOpen(true),
-                                        setSelectedUser(row);
-                                    }}
-                                  >
-                                    {" "}
-                                    <i className="bi bi-eye-fill fs-4"></i>
-                                  </button>
+                                  {permissions?.some(p =>
+                                    p.name.includes('read')) ? (<button
+                                      className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                      onClick={() => {
+                                        setIsShowModalOpen(true),
+                                          setSelectedUser(row);
+                                      }}
+                                    >
+                                      {" "}
+                                      <i className="bi bi-eye-fill"></i>
+                                    </button>) : null}
 
                                   {isShowModalOpen && (
                                     <div
@@ -551,7 +622,7 @@ export default function Woreda() {
                                           {/* Modal Header */}
                                           <div className="modal-header">
                                             <h5 className="modal-title">
-                                              Woreda Details
+                                              {t('woredadetails')}
                                             </h5>
                                             <div
                                               className="btn btn-icon btn-sm btn-active-icon-primary"
@@ -570,7 +641,7 @@ export default function Woreda() {
                                           <div className="modal-body">
                                             <div className="mb-3">
                                               <label className="form-label fw-semibold">
-                                                Woreda Name
+                                                {t('woredaname')}
                                               </label>
                                               <div className="form-control form-control-solid">
                                                 {selectedUser?.name || "-"}
@@ -579,7 +650,7 @@ export default function Woreda() {
 
                                             <div className="mb-3">
                                               <label className="form-label fw-semibold">
-                                                Zone
+                                                {t('zone')}
                                               </label>
                                               <div className="form-control form-control-solid">
                                                 {/* Fixed: Show zone name in view modal */}
@@ -597,15 +668,17 @@ export default function Woreda() {
                                     </div>
                                   )}
 
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
-                                    onClick={() => {
-                                      setIsEditModalOpen(true),
-                                        setSelectedUser(row);
-                                    }}
-                                  >
-                                    <i className="bi bi-pencil-fill"></i>
-                                  </button>
+                                  {permissions?.some(p =>
+                                    p.name.includes('update')) ? (<button
+                                      className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                      onClick={() => {
+                                        setIsEditModalOpen(true),
+                                          setSelectedUser(row)
+                                        setFormData(row);
+                                      }}
+                                    >
+                                      <i className="bi bi-pencil-fill"></i>
+                                    </button>) : null}
                                   {isEditModalOpen && (
                                     <div
                                       className="modal fade show"
@@ -620,7 +693,7 @@ export default function Woreda() {
                                         <div className="modal-content">
                                           <div className="modal-header">
                                             <h5 className="modal-title">
-                                              Edit Woreda
+                                              {t('editworeda')}
                                             </h5>
                                             <div
                                               className="btn btn-icon btn-sm btn-active-icon-primary"
@@ -637,13 +710,13 @@ export default function Woreda() {
 
                                           <fieldset>
                                             <legend className="text-start">
-                                              Woreda Details
+                                              {t('woredadetails')}
                                             </legend>
                                             <form className="p-5 bg-white rounded shadow-sm text-start">
                                               <div className="row g-4">
                                                 <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">
-                                                    Name
+                                                  <label className="form-label fw-semibold required">
+                                                    {t('name')}
                                                   </label>
                                                   <input
                                                     type="text"
@@ -653,21 +726,22 @@ export default function Woreda() {
                                                       handleChange(e)
                                                     }
                                                     required
-                                                    placeholder="Name"
+                                                    value={formData.name || ''}
                                                   ></input>
                                                 </div>
                                                 <br />
                                                 <div className="col-md-6">
-                                                  <label className="form-label fw-semibold">
-                                                    Zone
+                                                  <label className="form-label fw-semibold required">
+                                                    {t('zone')}
                                                   </label>
                                                   <select
                                                     className="form-select"
                                                     name="zone_id"
+                                                    value={formData.zone_id || ''}
                                                     onChange={handleChange}
                                                   >
                                                     <option value="">
-                                                      Select
+                                                      {t('select')}
                                                     </option>
                                                     {zone.map((data) => {
                                                       return (
@@ -695,22 +769,23 @@ export default function Woreda() {
                                                 )
                                               }
                                             >
-                                              Save changes
+                                              {t('savechanges')}
                                             </button>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
                                   )}
-                                  <button
-                                    className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
-                                    onClick={() => {
-                                      setSelectedUser(row),
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                  >
-                                    <i className="bi bi-trash-fill"></i>
-                                  </button>
+                                  {permissions?.some(p =>
+                                    p.name.includes('delete')) ? (<button
+                                      className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                      onClick={() => {
+                                        setSelectedUser(row),
+                                          setIsDeleteModalOpen(true);
+                                      }}
+                                    >
+                                      <i className="bi bi-trash-fill"></i>
+                                    </button>) : null}
                                   {isDeleteModalOpen && (
                                     <div
                                       className="modal fade show"
@@ -725,7 +800,7 @@ export default function Woreda() {
                                           {/* Modal Header */}
                                           <div className="modal-header">
                                             <h5 className="modal-title">
-                                              Confirm Woreda Deletion
+                                              {t('confirmworedadeletion')}
                                             </h5>
                                             <div
                                               className="btn btn-icon btn-sm btn-active-icon-primary"
@@ -743,10 +818,9 @@ export default function Woreda() {
                                           {/* Modal Body */}
                                           <div className="modal-body text-center">
                                             <p className="fs-5 text-gray-800">
-                                              Are you sure you want to
-                                              permanently delete this woreda?
+                                              {t('areyousureyouwanttodeletetheworeda')}
                                               <br />
-                                              This action cannot be undone.
+                                              {t('thisactioncannotbeundone')}
                                             </p>
                                           </div>
 
@@ -761,7 +835,7 @@ export default function Woreda() {
                                                 )
                                               }
                                             >
-                                              Delete Permanently
+                                              {t('deletepermanently')}
                                             </button>
                                           </div>
                                         </div>
@@ -774,26 +848,26 @@ export default function Woreda() {
                           })
                       ) : (
                         <tr>
-                          <td colSpan="8">No data available</td>
+                          <td colSpan="8">{t('nodataavailable')}</td>
                         </tr>
                       )
                     ) : (
                       <tr>
-                        <td colSpan="8">No users found</td>
+                        <td colSpan="8">{t('no woreda found')}</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
                 <div className="pagination d-flex justify-content-between align-items-center mt-5">
                   <div>
-                    Showing{" "}
+                    {t('showing')}{" "}
                     {Math.min(
                       (currentPage - 1) * itemsPerPage + 1,
                       filteredData.length
                     )}{" "}
                     to{" "}
                     {Math.min(currentPage * itemsPerPage, filteredData.length)}{" "}
-                    of {filteredData.length} entries
+                    of {filteredData.length} {t('entries')}
                   </div>
                   <div className="d-flex gap-2">
                     <button
@@ -806,7 +880,7 @@ export default function Woreda() {
                       <i className="bi bi-chevron-left"></i>
                     </button>
                     <span className="px-3 d-flex align-items-center">
-                      Page {currentPage} of {totalPages}
+                      {t('page')} {currentPage} {t('of')} {totalPages}
                     </span>
                     <button
                       className="btn btn-sm btn-icon btn-light-primary"

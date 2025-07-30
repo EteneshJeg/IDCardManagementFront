@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPermissions, selectAllPermissions } from "../features/permissionSlice";
+import { useTranslation } from "react-i18next";
 
 export default function PermissionsPage() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
-  
+
   // Get permissions data and status from Redux
   const permissions = useSelector(selectAllPermissions);
   const status = useSelector(state => state.permissions.status);
   const error = useSelector(state => state.permissions.error);
-  
+
   const [searchItem, setSearch] = useState('');
 
   // Initialize data
@@ -24,7 +23,7 @@ export default function PermissionsPage() {
 
   // Create a safe array for permissions data
   const permissionList = Array.isArray(permissions) ? permissions : [];
-  
+
   // Filter data based on search
   const filteredData = permissionList.filter(perm => {
     const searchTerm = searchItem.toLowerCase();
@@ -77,13 +76,13 @@ export default function PermissionsPage() {
       <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
         <div className="app-container container-xxl d-flex flex-stack">
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
-            <h1 className="page-heading text-dark fw-bold fs-3 my-0">Permissions Management</h1>
+            <h1 className="page-heading text-dark fw-bold fs-3 my-0">{t('permissionsmanagement')}</h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
-                <a href="/" className="text-muted text-hover-primary">Home</a>
+                <a href="/" className="text-muted text-hover-primary">{t('home')}</a>
               </li>
               <li className="breadcrumb-item"><span className="bullet bg-gray-400 w-5px h-2px"></span></li>
-              <li className="breadcrumb-item text-muted">Permissions</li>
+              <li className="breadcrumb-item text-muted">{t('permissions')}</li>
             </ul>
           </div>
           <div className="d-flex align-items-center gap-2 gap-lg-3">
@@ -98,7 +97,7 @@ export default function PermissionsPage() {
           <div className="card card-flush h-xl-100">
             <div className="card-header pt-7">
               <h3 className="card-title align-items-start flex-column">
-                <span className="card-label fw-bold text-gray-800">Permissions List</span>
+                <span className="card-label fw-bold text-gray-800">{t('permissionslist')}</span>
               </h3>
               <div className="card-toolbar">
                 <div className="d-flex flex-stack flex-wrap gap-4">
@@ -112,7 +111,7 @@ export default function PermissionsPage() {
                     <input
                       type="text"
                       className="form-control w-150px fs-7 ps-12"
-                      placeholder="Search permissions..."
+                      placeholder={t('searchpermissions')}
                       value={searchItem}
                       onChange={(e) => setSearch(e.target.value)}
                     />
@@ -125,10 +124,10 @@ export default function PermissionsPage() {
               <table className="table table-striped align-middle table-row-dashed fs-6 gy-3">
                 <thead>
                   <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
-                    <th className="min-w-50px">S.N.</th>
-                    <th>Permission Name</th>
-                    <th>Guard Name</th>
-                    <th>Created At</th>
+                    <th className="min-w-50px">{t('sn')}.</th>
+                    <th>{t('permissionsname')}</th>
+                    <th>{t('guardname')}</th>
+                    <th>{t('createdat')}</th>
                   </tr>
                 </thead>
                 <tbody className="fw-bold text-gray-600">
@@ -156,8 +155,8 @@ export default function PermissionsPage() {
                   ) : (
                     <tr>
                       <td colSpan="4" className="text-center py-10">
-                        {permissionList.length === 0 
-                          ? "No permissions found" 
+                        {permissionList.length === 0
+                          ? "No permissions found"
                           : "No matching permissions"}
                       </td>
                     </tr>
@@ -167,9 +166,9 @@ export default function PermissionsPage() {
 
               <div className="pagination d-flex justify-content-between align-items-center mt-5">
                 <div>
-                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
+                  {t('showing')} {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{' '}
                   {Math.min(currentPage * itemsPerPage, filteredData.length)} of{' '}
-                  {filteredData.length} entries
+                  {filteredData.length} {t('entries')}
                 </div>
                 <div className="d-flex gap-2">
                   <button
@@ -180,7 +179,7 @@ export default function PermissionsPage() {
                     <i className="bi bi-chevron-left"></i>
                   </button>
                   <span className="px-3 d-flex align-items-center">
-                    Page {currentPage} of {totalPages}
+                    {t('page')} {currentPage} {t('of')} {totalPages}
                   </span>
                   <button
                     className="btn btn-sm btn-icon btn-light-primary"

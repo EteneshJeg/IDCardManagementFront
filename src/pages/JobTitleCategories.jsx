@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addJobTitleCategory,
@@ -11,15 +8,24 @@ import {
   deleteBunchCategories,
   fetchJobTitleCategories,
 } from "../features/jobTitleCategorySlice";
+import { fetchRoles } from "../features/roleSlice";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 export default function JobTitleCategories() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const jobTitleCategories = useSelector(selectAllJobTitleCategories);
+  const { user } = useSelector((state) => state.user.user);
+  const { role } = useSelector((state) => state.user.role);
   const [categoryData, setCategoryData] = useState([]);
   const [formErrors, setFormErrors] = useState({});
 
   // State management
+  const [permissions, setPermissions] = useState();
+  const [currentUser, setCurrentUser] = useState();
+  const [currentRole, setCurrentRole] = useState([]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -37,6 +43,66 @@ export default function JobTitleCategories() {
   const [searchItem, setSearch] = useState("");
 
   // Initialize data
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
+
   useEffect(() => {
     setIsLoading(true);
     dispatch(fetchJobTitleCategories()).finally(() => setIsLoading(false));
@@ -68,8 +134,8 @@ export default function JobTitleCategories() {
   // Handlers
   const handleSaveCategory = async () => {
     setFormErrors({});
-    if (!formData.name) {
-      toast.error("Category name is required");
+    if (!formData.name || !formData.description) {
+      toast.error(t('therearemissingfields'));
       return;
     }
 
@@ -81,7 +147,7 @@ export default function JobTitleCategories() {
       };
 
       await dispatch(addJobTitleCategory(payload)).unwrap();
-      toast.success("Category added successfully!");
+      toast.success(t('categoryaddedsuccessfully'));
       setIsModalOpen(false);
       setFormData({ name: "", description: "", parent: null });
     } catch (error) {
@@ -90,13 +156,17 @@ export default function JobTitleCategories() {
       if (error.errors) {
         setFormErrors(error.errors);
       } else {
-        toast.error(error.message || "Failed to add category");
+        toast.error(error.message || t('failedtoaddcategory'));
       }
     }
   };
 
   const handleUpdateCategory = async () => {
     setFormErrors({});
+    if (!formData.name || !formData.description) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
     if (!selectedCategory?.id) return;
 
     try {
@@ -113,14 +183,14 @@ export default function JobTitleCategories() {
         })
       ).unwrap();
 
-      toast.success("Category updated successfully!");
+      toast.success(t('categoryupdatedsuccessfully'));
       setIsEditModalOpen(false);
       setFormData({ name: "", description: "", parent: null });
     } catch (error) {
       if (error.errors) {
         setFormErrors(error.errors);
       } else {
-        toast.error(error.message || "Failed to update category");
+        toast.error(error.message || t('failedtoupdatecategory'));
       }
     }
   };
@@ -130,10 +200,10 @@ export default function JobTitleCategories() {
 
     try {
       await dispatch(deleteJobTitleCategory(selectedCategory.id)).unwrap();
-      toast.success("Category deleted successfully!");
+      toast.success(t('categorydeletedsuccessfully'));
       setIsDeleteModalOpen(false);
     } catch (error) {
-      toast.error("Failed to delete category");
+      toast.error(t('failedtodeletecategory'));
     }
   };
 
@@ -188,11 +258,11 @@ export default function JobTitleCategories() {
 
     if (selectedIds.length > 0) {
       dispatch(deleteBunchCategories(selectedIds));
-      toast.success("Selected categories deleted successfully!");
+      toast.success(t('selectedcategoriesdeletedsuccessfully'));
       setSelectedCategories({});
       setStartSelection(false);
     } else {
-      toast.info("No categories selected for deletion.");
+      toast.info(t('nocategoriesselectedfordeletion'));
     }
   };
 
@@ -254,37 +324,39 @@ export default function JobTitleCategories() {
         <div className="app-container container-xxl d-flex flex-stack">
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Job Title Categories
+              {t('jobtitlecategories')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
                 <a href="/" className="text-muted text-hover-primary">
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
               <li className="breadcrumb-item text-muted">
-                Job Title Categories
+                {t('jobtitlecategories')}
               </li>
             </ul>
           </div>
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <button
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Add Category
-            </button>
-            <button
-              className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${
-                Object.keys(selectedCategories).length === 0 ? "d-none" : ""
-              }`}
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </button>
+            {permissions?.some(p =>
+              p.name.includes('create')) ? (<button
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={() => setIsModalOpen(true)}
+              >
+                {t('addcategory')}
+              </button>) : null}
+
+            {permissions?.some(p =>
+              p.name.includes('delete')) ? (<button
+                className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${Object.keys(selectedCategories).length === 0 ? "d-none" : ""
+                  }`}
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </button>) : null}
           </div>
         </div>
       </div>
@@ -296,7 +368,7 @@ export default function JobTitleCategories() {
             <div className="card-header pt-7">
               <h3 className="card-title align-items-start flex-column">
                 <span className="card-label fw-bold text-gray-800">
-                  Categories Table
+                  {t('categoriestable')}
                 </span>
               </h3>
               <div className="card-toolbar">
@@ -329,7 +401,7 @@ export default function JobTitleCategories() {
                     <input
                       type="text"
                       className="form-control w-150px fs-7 ps-12"
-                      placeholder="Search"
+                      placeholder={t('search')}
                       value={searchItem}
                       onChange={(e) => setSearch(e.target.value)}
                     />
@@ -343,7 +415,7 @@ export default function JobTitleCategories() {
                 <thead>
                   <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                     <th className="min-w-50px">
-                      <div className="d-flex align-items-center gap-2">
+                      <div className="d-flex align-items-center gap-4">
                         <input
                           type="checkbox"
                           checked={
@@ -353,13 +425,13 @@ export default function JobTitleCategories() {
                           onChange={handleSelectAll}
                           style={{ cursor: "pointer" }}
                         />
-                        S.N.
+                        {t('sn')}.
                       </div>
                     </th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Parent Category</th>
-                    <th>Actions</th>
+                    <th>{t('name')}</th>
+                    <th>{t('description')}</th>
+                    <th>{t('parentcategory')}</th>
+                    <th>{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="fw-bold text-gray-600">
@@ -373,7 +445,7 @@ export default function JobTitleCategories() {
                     currentdata.map((category, index) => (
                       <tr key={category.id}>
                         <td>
-                          <div className="d-flex align-items-center gap-2">
+                          <div className="d-flex align-items-center gap-4">
                             <input
                               type="checkbox"
                               checked={!!selectedCategories[category.id]}
@@ -389,50 +461,55 @@ export default function JobTitleCategories() {
                           {category.parent_object?.name ||
                             (category.parent
                               ? categoryData.find(
-                                  (c) => c.id === parseInt(category.parent)
-                                )?.name || "None"
+                                (c) => c.id === parseInt(category.parent)
+                              )?.name || "None"
                               : "None")}
                         </td>
                         <td>
-                          <button
-                            className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setIsShowModalOpen(true);
-                            }}
-                          >
-                            <i className="bi bi-eye-fill fs-4"></i>
-                          </button>
-                          <button
-                            className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setFormData({
-                                name: category.name,
-                                description: category.description,
-                                parent: category.parent,
-                              });
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            <i className="bi bi-pencil-fill"></i>
-                          </button>
-                          <button
-                            className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <i className="bi bi-trash-fill"></i>
-                          </button>
+                          {permissions?.some(p =>
+                            p.name.includes('read')) ? (<button
+                              className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                              onClick={() => {
+                                setSelectedCategory(category);
+                                setIsShowModalOpen(true);
+                              }}
+                            >
+                              <i className="bi bi-eye-fill"></i>
+                            </button>) : null}
+
+                          {permissions?.some(p =>
+                            p.name.includes('update')) ? (<button
+                              className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                              onClick={() => {
+                                setSelectedCategory(category);
+                                setFormData({
+                                  name: category.name,
+                                  description: category.description,
+                                  parent: category.parent,
+                                });
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <i className="bi bi-pencil-fill"></i>
+                            </button>) : null}
+
+                          {permissions?.some(p =>
+                            p.name.includes('delete')) ? (<button
+                              className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                              onClick={() => {
+                                setSelectedCategory(category);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <i className="bi bi-trash-fill"></i>
+                            </button>) : null}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
                       <td colSpan="5" className="text-center py-10">
-                        No categories found
+                        {t('nocategoriesfound')}
                       </td>
                     </tr>
                   )}
@@ -441,13 +518,13 @@ export default function JobTitleCategories() {
 
               <div className="pagination d-flex justify-content-between align-items-center mt-5">
                 <div>
-                  Showing{" "}
+                  {t('showing')}{" "}
                   {Math.min(
                     (currentPage - 1) * itemsPerPage + 1,
                     filteredData.length
                   )}{" "}
                   to {Math.min(currentPage * itemsPerPage, filteredData.length)}{" "}
-                  of {filteredData.length} entries
+                  of {filteredData.length} {t('entries')}
                 </div>
                 <div className="d-flex gap-2">
                   <button
@@ -460,7 +537,7 @@ export default function JobTitleCategories() {
                     <i className="bi bi-chevron-left"></i>
                   </button>
                   <span className="px-3 d-flex align-items-center">
-                    Page {currentPage} of {totalPages}
+                    {t('page')} {currentPage} {t('of')} {totalPages}
                   </span>
                   <button
                     className="btn btn-sm btn-icon btn-light-primary"
@@ -487,7 +564,7 @@ export default function JobTitleCategories() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add Category</h5>
+                <h5 className="modal-title">{t('addcategory')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={closeModal}
@@ -505,12 +582,11 @@ export default function JobTitleCategories() {
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Name *</label>
+                  <label className="form-label required">{t('name')} *</label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      formErrors.name ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${formErrors.name ? "is-invalid" : ""
+                      }`}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -522,11 +598,10 @@ export default function JobTitleCategories() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Description</label>
+                  <label className="form-label required">{t('description')}</label>
                   <textarea
-                    className={`form-control ${
-                      formErrors.description ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${formErrors.description ? "is-invalid" : ""
+                      }`}
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
@@ -540,11 +615,10 @@ export default function JobTitleCategories() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Parent Category</label>
+                  <label className="form-label">{t('parentcategory')}</label>
                   <select
-                    className={`form-select ${
-                      formErrors.parent ? "is-invalid" : ""
-                    }`}
+                    className={`form-select ${formErrors.parent ? "is-invalid" : ""
+                      }`}
                     name="parent"
                     value={formData.parent || "null"}
                     onChange={handleParentChange}
@@ -567,7 +641,7 @@ export default function JobTitleCategories() {
                   className="btn btn-primary"
                   onClick={handleSaveCategory}
                 >
-                  Save
+                  {t('savechanges')}
                 </button>
               </div>
             </div>
@@ -584,7 +658,7 @@ export default function JobTitleCategories() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Category Details</h5>
+                <h5 className="modal-title">{t('categorydetails')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsShowModalOpen(false)}
@@ -596,25 +670,25 @@ export default function JobTitleCategories() {
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label className="form-label">Name</label>
+                  <label className="form-label">{t('name')}</label>
                   <div className="form-control form-control-solid">
                     {selectedCategory.name}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">{t('description')}</label>
                   <div className="form-control form-control-solid">
                     {selectedCategory.description || "N/A"}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Parent Category</label>
+                  <label className="form-label">{t('parentcategory')}</label>
                   <div className="form-control form-control-solid">
                     {selectedCategory.parent_object?.name ||
                       (selectedCategory.parent
                         ? categoryData.find(
-                            (c) => c.id === parseInt(selectedCategory.parent)
-                          )?.name || "None"
+                          (c) => c.id === parseInt(selectedCategory.parent)
+                        )?.name || "None"
                         : "None")}
                   </div>
                 </div>
@@ -633,7 +707,7 @@ export default function JobTitleCategories() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Edit Category</h5>
+                <h5 className="modal-title">{t('editcategory')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={closeModal}
@@ -651,12 +725,11 @@ export default function JobTitleCategories() {
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Name *</label>
+                  <label className="form-label required">{t('name')} </label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      formErrors.name ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${formErrors.name ? "is-invalid" : ""
+                      }`}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -668,11 +741,10 @@ export default function JobTitleCategories() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Description</label>
+                  <label className="form-label required">{t('description')}</label>
                   <textarea
-                    className={`form-control ${
-                      formErrors.description ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${formErrors.description ? "is-invalid" : ""
+                      }`}
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
@@ -686,11 +758,10 @@ export default function JobTitleCategories() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Parent Category</label>
+                  <label className="form-label">{t('parentcategory')}</label>
                   <select
-                    className={`form-select ${
-                      formErrors.parent ? "is-invalid" : ""
-                    }`}
+                    className={`form-select ${formErrors.parent ? "is-invalid" : ""
+                      }`}
                     name="parent"
                     value={formData.parent || "null"}
                     onChange={handleParentChange}
@@ -715,7 +786,7 @@ export default function JobTitleCategories() {
                   className="btn btn-primary"
                   onClick={handleUpdateCategory}
                 >
-                  Save Changes
+                  {t('savechanges')}
                 </button>
               </div>
             </div>
@@ -732,7 +803,7 @@ export default function JobTitleCategories() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Deletion</h5>
+                <h5 className="modal-title">{t('confirmdeletion')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsDeleteModalOpen(false)}
@@ -744,10 +815,10 @@ export default function JobTitleCategories() {
               </div>
               <div className="modal-body">
                 <p>
-                  Are you sure you want to delete the category{" "}
+                  {t('areyousureyouwanttodeletethecategory')}{" "}
                   <strong>{selectedCategory.name}</strong>?
                 </p>
-                <p className="text-danger">This action cannot be undone.</p>
+                <p className="text-danger">{t('thisactioncannotbeundone')}</p>
               </div>
               <div className="modal-footer">
                 <button
@@ -755,7 +826,7 @@ export default function JobTitleCategories() {
                   className="btn btn-danger"
                   onClick={handleDeleteCategory}
                 >
-                  Delete
+                  {t('deletepermanently')}
                 </button>
               </div>
             </div>

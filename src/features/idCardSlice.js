@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { toast } from "react-toastify";
+import { getOrganizationInfo } from "./organizationSlice";
+import QRCode from "react-qr-code";
+import i18next from "i18next";
 
 let token = JSON.parse(localStorage.getItem('token'));
 
@@ -52,12 +55,7 @@ export const generateId = createAsyncThunk(
   'id/create',
   async ({ Id, UserInfo, rawData,templates,Images }, { rejectWithValue }) => {
     try {
-      console.log('trying');
-      console.log(Id);
-      console.log(UserInfo);
-      console.log(rawData);
-      console.log(templates);
-      
+     
       //create if the table is empty or if the employee isn't in the table
       const getIdCardTemplateDetailResponse=await axios.get('http://localhost:8000/api/identity-card-template-details',{
         headers:{
@@ -245,7 +243,8 @@ console.log(getIdCardTemplateDetailData.data.find(data => {
   return data.employee_id == Id; 
 }));
 
-      if(getIdCardTemplateDetailData.length===0 || getIdCardTemplateDetailData.message==="No record available" || !getIdCardTemplateDetailData.data.find(data=>data.employee_id==Id)){
+      if(getIdCardTemplateDetailData.length===0 || getIdCardTemplateDetailData.message==="No record available" || !getIdCardTemplateDetailData.data.find(data=>data.employee_id==Id))
+        {
         console.log("Enter here")
         
 
@@ -255,10 +254,10 @@ console.log(getIdCardTemplateDetailData.data.find(data => {
       headers:{
         Authorization:`Bearer ${token}`}})
         console.log(idcardtemplateresponse);
-        toast.success('Id card template detail information saved');
+        toast.success(i18next.t('templatedetailinformationsaved'));
      }catch(error){
       console.log(error.response);
-      toast.error('Failed to save Id card template detail information');
+      toast.error(i18next.t('failedtosavetemplatedetailinformation'));
      }
 
 
@@ -286,9 +285,9 @@ let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,date
           Authorization:`Bearer ${token}`
         }
       }).then(response=>{
-        toast.success('Id card generated');
+        toast.success(i18next.t('idcardgenerated'));
         console.log(response)}).catch(error=>{
-          toast.error('Id generation failed');
+          toast.error(i18next.t('failedtogenerateidcard'));
           console.log(error.response)})
 
       }
@@ -301,10 +300,10 @@ let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,date
       headers:{
         Authorization:`Bearer ${token}`}})
         console.log(idcardtemplateresponse);
-        toast.success('Id card template detail information updated');
+        toast.success(i18next.t('templatedetailinformationupdated'));
      }catch(error){
       console.log(error.response);
-      toast.error('Failed to update Id card template detail information');
+      toast.error(i18next.t('failedtoupdatetemplatedetailinformation'));
      }
 
      let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,dateform,{
@@ -324,64 +323,15 @@ console.log(employeeIdNumber)
           Authorization:`Bearer ${token}`
         }
       }).then(response=>{
-        toast.success('Id card generated');
+        toast.success(i18next.t('idcardgenerated'));
         console.log(response)}).catch(error=>{
-          toast.error('Id generation failed');
+          toast.error(i18next.t('failedtogenerateidcard'));
           console.log(error.response)})
 
 
       }
 
-      //SAVING INTO ID_CARD_TEMPLATES_TABLE
-
-      //first get the details
-     
-      /*
       
-
-
-      /*let storedProfiles = JSON.parse(localStorage.getItem('profile')) || [];
-      if (!Array.isArray(storedProfiles)) {
-        storedProfiles = []
-      }
-      const userIndex = storedProfiles.findIndex((storedProfile) => {
-        return String(storedProfile.employment_id).toLowerCase().trim() === String(Id).toLowerCase().trim()
-      })
-      console.log(userIndex)
-      const validateDate = FormData?.id_issue_date < FormData?.id_expire_date;
-      if (!validateDate) {
-        toast.error('The issue date needs to be before the expire date');
-        return;
-      }
-      const date = new Date().toISOString().split('T')[0];
-      const updatedProfile = {
-        ...storedProfiles[userIndex],
-        id_expire_date: FormData?.id_expire_date,
-        id_issue_date: FormData?.id_issue_date,
-        id_status: FormData?.id_expire_date < date ? 'Expired' : 'Active'
-      }
-      console.log(updatedProfile);
-      const newId = {
-        en_name: UserInfo?.en_name,
-        job_position: UserInfo?.job_position,
-        id_expire_date: FormData?.id_expire_date,
-        id_issue_date: FormData?.id_issue_date,
-        phone_number: UserInfo?.phone_number,
-        address: UserInfo?.address,
-      }
-      console.log(updatedProfile)
-      storedProfiles[userIndex] = (updatedProfile);
-      console.log(storedProfiles[userIndex])
-      console.log(updatedProfile)
-      localStorage.setItem('profile', JSON.stringify(storedProfiles))
-      const storedIds = JSON.parse(localStorage.getItem('idcard'));
-      storedIds.push(newId);
-      localStorage.setItem('idcard', JSON.stringify(storedIds));
-      console.log(newId);
-      console.log(storedProfiles)
-      console.log('saved');
-      toast.success('Id generated');
-      return newId*/
     } catch (error) {
       //toast.error('Failed to generate Id');
       return rejectWithValue(error.message)
@@ -403,9 +353,9 @@ function toValidDate(value) {
 function dataURLtoFile(dataurl, filename) {
     // Split the dataurl into metadata and base64 string
     const arr = dataurl.split(',');
-    // Extract mime type from the metadata, e.g. "image/png"
+   
     const mime = arr[0].match(/:(.*?);/)[1];
-    // Decode base64 to raw binary string
+   
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
@@ -414,63 +364,28 @@ function dataURLtoFile(dataurl, filename) {
         u8arr[n] = bstr.charCodeAt(n);
     }
 
-    // Create a File object with the binary data, mime type and filename
+   
     return new File([u8arr], filename, { type: mime });
 }
 
 
-export const generateIdBunch = createAsyncThunk(
-  'id/bunchIssue',
-  async ({ selectedUsers, FormData }, { rejectWithValue }) => {
-    try {
-      console.log(selectedUsers);
-      console.log(FormData)
-
-      const issueDate = FormData.get('id_issue_date');
-      const expireDate = FormData.get('id_expire_date');
-
-
-      if (!issueDate || !expireDate) {
-        return rejectWithValue('Issue and Expiry dates are required');
-      }
-
-
-      const updatedUsers = selectedUsers.map(user => ({
-        ...user,
-        id_issue_date: issueDate,
-        id_expire_date: expireDate,
-      }));
 
 
 
 
-      const storedIds = JSON.parse(localStorage.getItem('idcard')) || [];
+
+      
 
 
-      storedIds.push(...updatedUsers);
-
-
-      localStorage.setItem('idcard', JSON.stringify(storedIds));
-      toast.success('generation successful')
-
-      return updatedUsers;
-
-    } catch (error) {
-      toast.error('Generation Failed');
-      return rejectWithValue(error.message || 'An error occurred while updating the IDs');
-    }
-  }
-);
+    
+   
 
 export const saveTemplate = createAsyncThunk(
   'template/save',
   async ({ TemplateData, selected }, { rejectWithValue }) => {
     try {
 
-      console.log(selected)
-
-      console.log(TemplateData);
-      console.log(TemplateData[selected].templateBackground.imageUrl);
+      
       const savedTemplate = {
         type: selected,
         file: TemplateData?.[selected].templateBackground.imageUrl,
@@ -500,11 +415,11 @@ export const saveTemplate = createAsyncThunk(
           }
         }).then(response => {
           console.log(response);
-          toast.success('Template saved');
+          toast.success(i18next.t('templatesaved'));
           return;
         }).catch(error => {
           console.log(error.response);
-          toast.error('Template not saved');
+          toast.error(i18next.t('failedtosavetemplate'));
           return;
         })
       }
@@ -544,11 +459,11 @@ export const saveTemplate = createAsyncThunk(
             }
           }).then(response => {
             console.log(response);
-            toast.success('Template updated');
+            toast.success(i18next.t('templateupdated'));
             return;
           }).catch(error => {
             console.log(error.response);
-            toast.error('Template not updated');
+            toast.error(i18next.t('failedtoupdatetemplate'));
             return;
           })
         }
@@ -560,11 +475,11 @@ export const saveTemplate = createAsyncThunk(
             }
           }).then(response => {
             console.log(response);
-            toast.success('Template saved');
+            toast.success(i18next.t('templatesaved'));
             return;
           }).catch(error => {
             console.log(error.response);
-            toast.error('Template not saved');
+            toast.error(i18next.t('failedtosavetemplate'));
             return;
           })
         }
@@ -611,7 +526,7 @@ export const saveIdDetails = createAsyncThunk(
       const matchingTemplate = templates.find(temp => temp.type === side);
 
       if (!matchingTemplate) {
-        toast.error("Template type not found.");
+        toast.error(i18next.t('templatenotfound'));
         return rejectWithValue("Template not found.");
       }
 
@@ -705,7 +620,7 @@ export const saveIdDetails = createAsyncThunk(
           console.log(updatedData)
           console.log("Updating record:", record.id, updatedData); // DEBUG LOG
 if (!record.id) {
-  toast.error(`Missing ID for record with field: ${record.field_name}`);
+  toast.error(i18next(`missingidforrecordwithfield`)`: ${record.field_name}`);
   throw new Error("Missing record ID");
 }
           if (updatedData) {
@@ -716,11 +631,12 @@ if (!record.id) {
                 headers: { Authorization: `Bearer ${token}` }
               }
             );
-            toast.success("ID details updated successfully.");
-        toast.info(`Updated: ${record.field_name}`);
+            
+       // toast.info(`Updated: ${record.field_name}`);
           }
           
         }
+        toast.success(i18next.t('templatedetailinformationupdated'));
 
         
 
@@ -735,12 +651,12 @@ if (!record.id) {
         ).then(error=>console.log(error.response));
         console.log(response);
 
-        toast.success("ID details saved successfully.");
+        toast.success(i18next.t('templatedetailinformationsaved'));
       }
 
     } catch (error) {
       console.error("Save ID details error:", error.response);
-      toast.error("Failed to save ID details.");
+      toast.error(i18next.t('failedtosavetemplatedetailinformation'));
       return rejectWithValue(error.response?.data?.message || "Unknown error");
     }
   }

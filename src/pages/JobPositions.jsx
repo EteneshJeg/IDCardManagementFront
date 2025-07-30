@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addJobPosition,
@@ -19,17 +16,26 @@ import {
   fetchOrganizationUnits,
   selectAllOrganizationUnits,
 } from "../features/organizationUnitSlice";
+import { fetchRoles } from "../features/roleSlice";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
+
 
 export default function JobPositionManagement() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const jobPositions = useSelector(selectAllJobPositions);
   const { status, error } = useSelector((state) => state.jobPositions);
+  const { user } = useSelector((state) => state.user.user);
+  const { role } = useSelector((state) => state.user.role);
   const jobTitleCategories = useSelector(selectAllJobTitleCategories);
   const organizationUnits = useSelector(selectAllOrganizationUnits);
 
 
   // State management
+  const [permissions, setPermissions] = useState();
+  const [currentUser, setCurrentUser] = useState();
+  const [currentRole, setCurrentRole] = useState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -52,6 +58,65 @@ export default function JobPositionManagement() {
     setIsLoading(true);
     dispatch(fetchJobPositions()).finally(() => setIsLoading(false));
   }, [dispatch]);
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchRoles()).then((data) => {
+      const dataitem = data.payload;
+      const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
+      // setRoles(normalizedData);
+      console.log(role)
+      if (role && role.length !== 0) {
+        console.log('non zero')
+        const rolesExist = normalizedData.filter(data => role?.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
+        console.log(currentRole)
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+    }).catch((error) => {
+      console.log('Error fetching data', error);
+    })
+      .finally(() => setIsLoading(false));
+  }, [dispatch, currentRole]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -130,20 +195,24 @@ export default function JobPositionManagement() {
 
   // Handlers
   const handleSavePosition = () => {
-    if (!formData.organization_unit || !formData.position_code) {
-      toast.error("Organization Unit and Position Code are required");
+    if (!formData.organization_unit || !formData.job_title_category || !formData.status || !formData.job_description) {
+      toast.error(t('therearemissingfields'));
       return;
     }
     dispatch(addJobPosition(formData));
-    toast.success("Position added successfully!");
+    toast.success(t('positionaddedsuccessfully'));
     setIsModalOpen(false);
     resetForm();
   };
 
   const handleUpdatePosition = () => {
+    if (!formData.organization_unit || !formData.job_title_category || !formData.status || !formData.job_description) {
+      toast.error(t('therearemissingfields'));
+      return;
+    }
     if (!selectedPosition?.id) return;
     dispatch(updateJobPosition({ id: selectedPosition.id, formData }));
-    toast.success("Position updated successfully!");
+    toast.success(t('positionupdatedsuccessfully'));
     setIsEditModalOpen(false);
     resetForm();
   };
@@ -151,7 +220,7 @@ export default function JobPositionManagement() {
   const handleDeletePosition = () => {
     if (!selectedPosition?.id) return;
     dispatch(deleteJobPosition(selectedPosition.id));
-    toast.success("Position deleted successfully!");
+    toast.success(t('positiondeletedsuccessfully'));
     setIsDeleteModalOpen(false);
     setSelectedPosition(null);
   };
@@ -163,11 +232,11 @@ export default function JobPositionManagement() {
 
     if (selectedIds.length > 0) {
       dispatch(deleteBunchPositions(selectedIds));
-      toast.success("Selected positions deleted successfully!");
+      toast.success(t('selectedpositionsdeletedsuccessfully'));
       setSelectedPositions({});
       setStartSelection(false);
     } else {
-      toast.info("No positions selected for deletion.");
+      toast.info(t('nopositionsselectedfordeletion'));
     }
   };
 
@@ -246,35 +315,36 @@ export default function JobPositionManagement() {
         <div className="app-container container-xxl d-flex flex-stack">
           <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">
             <h1 className="page-heading text-dark fw-bold fs-3 my-0">
-              Job Positions
+              {t('jobpositions')}
             </h1>
             <ul className="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
               <li className="breadcrumb-item text-muted">
                 <a href="/" className="text-muted text-hover-primary">
-                  Home
+                  {t('home')}
                 </a>
               </li>
               <li className="breadcrumb-item">
                 <span className="bullet bg-gray-400 w-5px h-2px"></span>
               </li>
-              <li className="breadcrumb-item text-muted">Job Positions</li>
+              <li className="breadcrumb-item text-muted">{t('jobpositions')}</li>
             </ul>
           </div>
           <div className="d-flex align-items-center gap-2 gap-lg-3">
-            <button
-              className="btn btn-sm fw-bold btn-primary"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Add Position
-            </button>
-            <button
-              className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${
-                Object.keys(selectedPositions).length === 0 ? "d-none" : ""
-              }`}
-              onClick={handleDeleteBunch}
-            >
-              Delete Selected
-            </button>
+            {permissions?.some(p =>
+              p.name.includes('create')) ? (<button
+                className="btn btn-sm fw-bold btn-primary"
+                onClick={() => setIsModalOpen(true)}
+              >
+                {t('addposition')}
+              </button>) : null}
+            {permissions?.some(p =>
+              p.name.includes('delete')) ? (<button
+                className={`btn btn-sm fw-bold bg-body btn-color-gray-700 ${Object.keys(selectedPositions).length === 0 ? "d-none" : ""
+                  }`}
+                onClick={handleDeleteBunch}
+              >
+                {t('deleteselected')}
+              </button>) : null}
           </div>
         </div>
       </div>
@@ -288,7 +358,7 @@ export default function JobPositionManagement() {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add Position</h5>
+                <h5 className="modal-title">{t('addposition')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsModalOpen(false)}
@@ -301,7 +371,7 @@ export default function JobPositionManagement() {
 
               <div className="modal-body">
                 <div className="mb-3">
-                  <label className="form-label">Organization Unit</label>
+                  <label className="form-label required">{t('organizationunit')}</label>
                   <select
                     className="form-select"
                     name="organization_unit"
@@ -309,7 +379,7 @@ export default function JobPositionManagement() {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Select organization unit</option>
+                    <option value="">{t('selectorganizationunit')}</option>
                     {organizationUnits.map((cat) => (
                       <option key={cat.id} value={cat.id.toString()}>
                         {cat.en_name}
@@ -319,7 +389,7 @@ export default function JobPositionManagement() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Job Title Category</label>
+                  <label className="form-label required">{t('jobtitlecategory')}</label>
                   <select
                     className="form-select"
                     name="job_title_category"
@@ -327,7 +397,7 @@ export default function JobPositionManagement() {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">{t('select')}</option>
                     {jobTitleCategories.map((cat) => (
                       <option key={cat.id} value={cat.id.toString()}>
                         {cat.name}
@@ -337,7 +407,7 @@ export default function JobPositionManagement() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Position Code</label>
+                  <label className="form-label ">{t('positioncode')}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -349,7 +419,7 @@ export default function JobPositionManagement() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Status</label>
+                  <label className="form-label required">{t('status')}</label>
                   <select
                     className="form-select"
                     name="status"
@@ -362,7 +432,7 @@ export default function JobPositionManagement() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Job Description</label>
+                  <label className="form-label required">{t('jobdescription')}</label>
                   <textarea
                     className="form-control"
                     name="job_description"
@@ -377,7 +447,7 @@ export default function JobPositionManagement() {
                   className="btn btn-primary"
                   onClick={handleSavePosition}
                 >
-                  Save
+                  {t('savechanges')}
                 </button>
               </div>
             </div>
@@ -394,7 +464,7 @@ export default function JobPositionManagement() {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Position Details</h5>
+                <h5 className="modal-title">{t('positiondetails')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsShowModalOpen(false)}
@@ -407,41 +477,40 @@ export default function JobPositionManagement() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Organization Unit
+                    {t('organizationunit')}
                   </label>
                   <div className="form-control form-control-solid">
-                    {organizationUnits.find(unit => 
+                    {organizationUnits.find(unit =>
                       unit.id === selectedPosition.organization_unit_id
                     )?.en_name || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Job Title Category
+                    {t('jobtitlecategory')}
                   </label>
                   <div className="form-control form-control-solid">
-                    {jobTitleCategories.find(category => 
+                    {jobTitleCategories.find(category =>
                       category.id === selectedPosition.job_title_category_id
                     )?.name || '-'}
                   </div>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Position Code
+                    {t('positioncode')}
                   </label>
                   <div className="form-control form-control-solid">
                     {selectedPosition?.position_code || "-"}
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Status</label>
+                  <label className="form-label fw-semibold">{t('status')}</label>
                   <div className="form-control form-control-solid">
                     <span
-                      className={`badge badge-light-${
-                        selectedPosition?.status === "active"
+                      className={`badge badge-light-${selectedPosition?.status === "active"
                           ? "success"
                           : "danger"
-                      }`}
+                        }`}
                     >
                       {selectedPosition?.status || "-"}
                     </span>
@@ -449,7 +518,7 @@ export default function JobPositionManagement() {
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Job Description
+                    {t('jobdescription')}
                   </label>
                   <div className="form-control form-control-solid">
                     {selectedPosition?.job_description || "N/A"}
@@ -470,7 +539,7 @@ export default function JobPositionManagement() {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Edit Position</h5>
+                <h5 className="modal-title">{t('editposition')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsEditModalOpen(false)}
@@ -482,7 +551,7 @@ export default function JobPositionManagement() {
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label className="form-label">Organization Unit</label>
+                  <label className="form-label required">{t('organizationunit')}</label>
                   <select
                     className="form-select"
                     name="organization_unit"
@@ -490,7 +559,7 @@ export default function JobPositionManagement() {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">select organization unit</option>
+                    <option value="">{t('select')}</option>
                     {organizationUnits.map((cat) => (
                       <option key={cat.id} value={cat.id.toString()}>
                         {cat.en_name}
@@ -499,7 +568,7 @@ export default function JobPositionManagement() {
                   </select>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Job Title Category</label>
+                  <label className="form-label required">{t('jobtitlecategory')}</label>
                   <select
                     className="form-select"
                     name="job_title_category"
@@ -507,7 +576,7 @@ export default function JobPositionManagement() {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">{t('select')}</option>
                     {jobTitleCategories.map((cat) => (
                       <option key={cat.id} value={cat.id.toString()}>
                         {cat.name}
@@ -516,7 +585,7 @@ export default function JobPositionManagement() {
                   </select>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Position Code</label>
+                  <label className="form-label">{t('positioncode')}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -527,7 +596,7 @@ export default function JobPositionManagement() {
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Status</label>
+                  <label className="form-label required">{t('status')}</label>
                   <select
                     className="form-select"
                     name="status"
@@ -539,7 +608,7 @@ export default function JobPositionManagement() {
                   </select>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Job Description</label>
+                  <label className="form-label required">{t('jobdescription')}</label>
                   <textarea
                     className="form-control"
                     name="job_description"
@@ -553,7 +622,7 @@ export default function JobPositionManagement() {
                   className="btn btn-primary"
                   onClick={handleUpdatePosition}
                 >
-                  Save Changes
+                  {t('savechanges')}
                 </button>
               </div>
             </div>
@@ -570,7 +639,7 @@ export default function JobPositionManagement() {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Position Deletion</h5>
+                <h5 className="modal-title">{t('confirmpositiondeletion')}</h5>
                 <div
                   className="btn btn-icon btn-sm btn-active-icon-primary"
                   onClick={() => setIsDeleteModalOpen(false)}
@@ -582,9 +651,9 @@ export default function JobPositionManagement() {
               </div>
               <div className="modal-body">
                 <p className="fs-5 text-gray-800">
-                  Are you sure you want to permanently remove this position?
+                  {t('areyousureyouwanttodeletethejobposition')}?
                   <br />
-                  This action cannot be undone.
+                  {t('thisactioncannotbeundone')}.
                 </p>
               </div>
               <div className="modal-footer">
@@ -592,7 +661,7 @@ export default function JobPositionManagement() {
                   className="btn btn-danger"
                   onClick={handleDeletePosition}
                 >
-                  Delete Permanently
+                  {t('deletepermanently')}
                 </button>
               </div>
             </div>
@@ -607,7 +676,7 @@ export default function JobPositionManagement() {
             <div className="card-header pt-7">
               <h3 className="card-title align-items-start flex-column">
                 <span className="card-label fw-bold text-gray-800">
-                  Positions Table
+                  {t('positionstable')}
                 </span>
               </h3>
               <div className="card-toolbar">
@@ -615,7 +684,7 @@ export default function JobPositionManagement() {
                   <div className="d-flex align-items-center fw-bold">
                     {/*begin::Label*/}
                     <div className="text-gray-400 fs-7 me-2">
-                      Position Status
+                      {t('positionstatus')}
                     </div>
                     {/*end::Label*/}
                     {/*begin::Select*/}
@@ -628,7 +697,7 @@ export default function JobPositionManagement() {
                       value={selectedFilter}
                       onChange={(e) => setSelectedFilter(e.target.value)}
                     >
-                      <option value="show all">Show All</option>
+                      <option value="show all">{t('showall')}</option>
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
@@ -638,7 +707,7 @@ export default function JobPositionManagement() {
                     <input
                       type="text"
                       className="form-control w-150px fs-7 ps-12"
-                      placeholder="Search"
+                      placeholder={t('search')}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
@@ -651,7 +720,7 @@ export default function JobPositionManagement() {
                 <thead>
                   <tr className="text-gray-400 fw-bold fs-7 text-uppercase gs-0">
                     <th className="min-w-50px">
-                      <div className="d-flex align-items-center gap-2">
+                      <div className="d-flex align-items-center gap-4">
                         <input
                           type="checkbox"
                           checked={
@@ -661,14 +730,14 @@ export default function JobPositionManagement() {
                           onChange={handleSelectAll}
                           style={{ cursor: "pointer" }}
                         />
-                        S.N.
+                        {t('sn')}.
                       </div>
                     </th>
-                    <th>Organization Unit</th>
-                    <th>Job Title</th>
-                    <th>Position Code</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>{t('organizationunit')}</th>
+                    <th>{t('jobtitle')}</th>
+                    <th>{t('positioncode')}</th>
+                    <th>{t('status')}</th>
+                    <th>{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="fw-bold text-gray-600">
@@ -684,13 +753,13 @@ export default function JobPositionManagement() {
                         const matchFilter =
                           selectedFilter === "show all" ||
                           data.status?.toLowerCase() ===
-                            selectedFilter.toLowerCase();
+                          selectedFilter.toLowerCase();
                         return matchFilter;
                       })
                       .map((position, index) => (
                         <tr key={position.id}>
                           <td>
-                            <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex align-items-center gap-4">
                               <input
                                 type="checkbox"
                                 checked={!!selectedPositions[position.id]}
@@ -700,52 +769,56 @@ export default function JobPositionManagement() {
                             </div>
                           </td>
                           <td>
-                            {organizationUnits.find(unit => 
+                            {organizationUnits.find(unit =>
                               unit.id === position.organization_unit_id
                             )?.en_name || '-'}
                           </td>
                           <td>
-                            {jobTitleCategories.find(category => 
+                            {jobTitleCategories.find(category =>
                               category.id === position.job_title_category_id
                             )?.name || '-'}
                           </td>
                           <td>{position.position_code || "-"}</td>
                           <td>
                             <span
-                              className={`badge badge-${
-                                position.status === "active"
+                              className={`badge badge-${position.status === "active"
                                   ? "success"
                                   : "danger"
-                              }`}
+                                }`}
                             >
                               {position.status}
                             </span>
                           </td>
                           <td>
-                            <button
-                              className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
-                              onClick={() => {
-                                setSelectedPosition(position);
-                                setIsShowModalOpen(true);
-                              }}
-                            >
-                              <i className="bi bi-eye-fill"></i>
-                            </button>
-                            <button
-                              className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
-                              onClick={() => openEditModal(position)}
-                            >
-                              <i className="bi bi-pencil-fill"></i>
-                            </button>
-                            <button
-                              className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
-                              onClick={() => {
-                                setSelectedPosition(position);
-                                setIsDeleteModalOpen(true);
-                              }}
-                            >
-                              <i className="bi bi-trash-fill"></i>
-                            </button>
+                            {permissions?.some(p =>
+                              p.name.includes('read')) ? (<button
+                                className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2"
+                                onClick={() => {
+                                  setSelectedPosition(position);
+                                  setIsShowModalOpen(true);
+                                }}
+                              >
+                                <i className="bi bi-eye-fill"></i>
+                              </button>) : null}
+
+                            {permissions?.some(p =>
+                              p.name.includes('update')) ? (<button
+                                className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                onClick={() => openEditModal(position)}
+                              >
+                                <i className="bi bi-pencil-fill"></i>
+                              </button>) : null}
+
+                            {permissions?.some(p =>
+                              p.name.includes('delete')) ? (<button
+                                className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                onClick={() => {
+                                  setSelectedPosition(position);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                              >
+                                <i className="bi bi-trash-fill"></i>
+                              </button>) : null}
                           </td>
                         </tr>
                       ))
@@ -755,13 +828,13 @@ export default function JobPositionManagement() {
 
               <div className="pagination d-flex justify-content-between align-items-center mt-5">
                 <div>
-                  Showing{" "}
+                  {t('showing')}{" "}
                   {Math.min(
                     (currentPage - 1) * itemsPerPage + 1,
                     filteredData.length
                   )}{" "}
                   to {Math.min(currentPage * itemsPerPage, filteredData.length)}{" "}
-                  of {filteredData.length} entries
+                  of {filteredData.length} {t('entries')}
                 </div>
                 <div className="d-flex gap-2">
                   <button
@@ -774,7 +847,7 @@ export default function JobPositionManagement() {
                     <i className="bi bi-chevron-left"></i>
                   </button>
                   <span className="px-3 d-flex align-items-center">
-                    Page {currentPage} of {totalPages}
+                    {t('page')} {currentPage} {t('of')} {totalPages}
                   </span>
                   <button
                     className="btn btn-sm btn-icon btn-light-primary"

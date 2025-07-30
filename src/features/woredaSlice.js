@@ -1,5 +1,7 @@
 import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
+import i18next from "i18next";
+
 
 export const createWoreda=createAsyncThunk(
     'woreda/create',
@@ -12,52 +14,14 @@ export const createWoreda=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success("Woreda saved");
+                toast.success(i18next.t('woredasavedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error.response);
-                toast.error("Failed to save woreda");
+                toast.error(i18next.t('failedtosaveworeda'));
                 return;
             })
-            /*let woredaId;
-            let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
-            console.log(storedWoredas);
             
-            if (!Array.isArray(storedWoredas)) {
-                storedWoredas = [storedWoredas];
-            }
-            console.log(storedWoredas)
-
-             if (storedWoredas.length === 0) {
-                let lastWoredaId=0;
-                woredaId=lastWoredaId+1;
-            } else {
-                const lastWoreda = storedWoredas.pop();
-                if (lastWoreda && lastWoreda.id) {
-                    let lastWoredaId = lastWoreda.id;
-                     lastWoredaId=parseInt(lastWoredaId,10);
-                      woredaId=lastWoredaId+1;
-                      
-                } else {
-                    let lastWoredaId=0;
-                    woredaId=lastWoredaId+1;
-                }
-                storedWoredas.push(lastWoreda);
-            }
-            
-            let newWoreda={
-                id:woredaId,
-                name:FormData.name,
-                zone:FormData.zone
-            }
-            if(!newWoreda){
-                toast.error('Failed to create woreda');
-                return rejectWithValue('Failed to create woreda');
-            }
-            storedWoredas.push(newWoreda);
-            localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            toast.success ('Woreda saved successfully');
-            return newWoreda;*/
         }catch(error){
             return rejectWithValue(error.message);
         }
@@ -80,15 +44,7 @@ export const getWoreda=createAsyncThunk(
             let returneddata=Array.isArray(data)?data:[data];
             console.log(returneddata)
             return returneddata;
-            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
-            console.log(storedWoredas);
             
-            if (!Array.isArray(storedWoredas)) {
-                storedWoredas = [storedWoredas];
-            }
-            if(storedWoredas){
-                return storedWoredas;
-            }*/
         }catch(error){
             return rejectWithValue(error.message);
         }
@@ -106,38 +62,18 @@ export const updateWoreda=createAsyncThunk(
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success("Woreda updated");
+                toast.success(i18next.t('woredaupdatedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error.response);
-                toast.error("Failed to update woreda");
+                toast.error(i18next.t('failedtoupdateworeda'));
                 return;
             })
-            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             
-            if (!Array.isArray(storedWoredas)) {
-                storedWoredas = [storedWoredas];
-            }
-            let woredaIndex=storedWoredas.findIndex(storedWoreda=>{
-                return String(storedWoreda.id).trim()===String(Id).trim()
-            })
-            if(woredaIndex==-1){
-                return rejectWithValue('Woreda not found');
-            }
-            let updatedWoreda={
-                ...storedWoredas[woredaIndex],
-                name:FormData.name,
-                zone:FormData.zone
-            }
-            storedWoredas[woredaIndex]=updatedWoreda;
-            
-            localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            toast.success('Woreda updated successfully');
-            return updatedWoreda;*/
             
 
         }catch(error){
-            toast.error('Failed to update woreda');
+            toast.error(i18next.t('failedtoupdateworeda'));
             return rejectWithValue(error.message)
         }
     }
@@ -154,28 +90,15 @@ export const deleteWoreda=createAsyncThunk(
                 }
             })
             .then(response=>{
-                toast.success('Delete Successful');
+                toast.success(i18next.t('woredadeletesuccessful'));
                 console.log(response);
             })
             .catch(error=>{
                 console.log(error);
             })
-            /*let storedWoredas = JSON.parse(localStorage.getItem('woreda')) || [];
             
-            if (!Array.isArray(storedWoredas)) {
-                storedWoredas = [storedWoredas];
-            }
-            storedWoredas=storedWoredas.filter(storedWoredas=>{
-                return String(storedWoredas.id).trim()!==String(Id).trim();
-            })
-            if(!storedWoredas){
-                return rejectWithValue('Woreda not found');
-            }
-            localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            toast.success('Woreda deleted successfully');
-            return storedWoredas*/
         }catch(error){
-            toast.error('Failed to delete woreda');
+            toast.error(i18next.t('failedtodeleteworeda'));
             return rejectWithValue(error.message);
         }
     }
@@ -199,10 +122,10 @@ export const deleteBunch=createAsyncThunk(
                 return rejectWithValue('Woredas not found');
             }
             localStorage.setItem('woreda',JSON.stringify(storedWoredas));
-            toast.success('Woredas deleted successfully');
+            toast.success(i18next.t('woredadeletedsuccessfully'));
             return storedWoredas;
         }catch(error){
-            toast.error('Failed to delete');
+            toast.error(i18next.t('failedtodeleteworeda'));
             return rejectWithValue(error.message);
         }
     }

@@ -1,6 +1,9 @@
 import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 import axios from 'axios';
+import { useTranslation } from "react-i18next";
+import i18next from "i18next";
+
 
 
 export const signin=createAsyncThunk(
@@ -8,16 +11,19 @@ export const signin=createAsyncThunk(
     async(FormData,{rejectWithValue})=>{
         
         try{
-            await axios.post('http://localhost:8000/api/login',FormData).then(response=>{
-                localStorage.setItem('token',JSON.stringify(response.data.token));
-                console.log(response.data.token);
+            const loginResponse=await axios.post('http://localhost:8000/api/login',FormData)
+            .catch(error=>console.log("Error",error.data));
+
+            localStorage.setItem('token',JSON.stringify(loginResponse.data.token));
+                console.log(loginResponse.data.token);
+            localStorage.setItem('userId',JSON.stringify(loginResponse.data.user.id));
+            
                  
 
             
-                console.log("Success",response.data)}
-            )
-            .catch(error=>console.log("Error",error.data));
+                console.log("Success",loginResponse.data)
             let token=JSON.parse(localStorage.getItem('token'));
+           
 
             let userlist=await axios.get('http://localhost:8000/api/users',{
                 headers:{
@@ -49,60 +55,19 @@ export const signin=createAsyncThunk(
                 }).then(response=>{
                 console.log(response.data);
                 
-                return;
+                return match;
             }).catch(error=>{
                 console.log(error);
                 console.log(error.response);
                 
-                return;
+                
             })
             }
             else{
                 console.log('not first time');
             }
-            
-            /*let userdata=await axios.post('http://localhost:8000/api/login',Form);
-            let userData=userdata.data;
-            //let userData = JSON.parse(localStorage.getItem('userdata'));
-            console.log(userData)
-            if(!Array.isArray(userData)){
-                userData=[userData]
-            }
-            
-
-            if (!userData) {
-                return rejectWithValue('No user found in localStorage');
-            }
-            console.log(userData)
-            if(!Array.isArray(userData)){
-                if(String(FormData.email).trim()===String(userData.email).trim()){
-                    if(String(FormData.password).trim()===String(userData.password).trim()){
-                        toast.success('Login successful');
-                        
-                        console.log(userData.role)
-                    return { role: userData.role, email:userData.email,message: 'Login successful' };
-                    }
-                }
-            }
-
-            else{
-                const userFound=userData.find(user=>String(user.email).trim()===FormData.email);
-                if(userFound){
-                    if(String(userFound.password).trim()===FormData.password){
-                        toast.success('Login successful');
-                        console.log(userFound)
-                        return { role: userFound.role, email:userFound.email,message: 'Login successful' };
-                    }
-                    else{
-                        toast.error('Incorrect password');
-                        return rejectWithValue('password mismatch');
-                    }
-                }   
-                else{
-                    toast.error('Email not found');
-                    return rejectWithValue('email not found');
-                }
-            }*/
+            return loginResponse.data
+           
             
         }catch(error){
                 return rejectWithValue(error.message);
@@ -147,15 +112,7 @@ export const getUser=createAsyncThunk(
             let returneddata=Array.isArray(data)?data:[data];
             console.log(returneddata)
             return returneddata;
-            /*const userData = JSON.parse(localStorage.getItem('userdata'));
 
-            if (!userData) {
-                return rejectWithValue('No user found in localStorage');
-            }
-            else{
-               
-                return userData;
-            }*/
         }catch(error){
                 return rejectWithValue(error.message);
         }
@@ -167,9 +124,11 @@ export const addUser = createAsyncThunk(
     
 
     async ({rawForm,Date}, {  rejectWithValue }) => {
-        
+      
+
         
         try {
+             
              console.log(rawForm);
             let token=JSON.parse(localStorage.getItem('token'));
             let form={
@@ -212,63 +171,15 @@ for (let pair of formdata.entries()) {
                 }
             }).then(response=>{
                 console.log(response.data);
-                toast.success('User saved successfully');
+                toast.success(i18next.t('usersavedsuccessfully'));
                 return;
             }).catch(error=>{
                 console.log(error);
                 console.log(error.response);
-                toast.error("Failed to save user");
+                toast.error(i18next.t('failedtosaveuser'));
                 return;
             })
-            /*let storedUsers;
-            try {
-                storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
-            } catch (e) {
-                storedUsers = [];
-            }
             
-            if (!Array.isArray(storedUsers)) {
-                storedUsers = []; 
-            }
-            console.log(storedUsers);
-            if (storedUsers.length === 0) {
-                let lastUserId=0;
-                userId=lastUserId+1;
-            } else {
-                const lastUser = storedUsers.pop();
-                if (lastUser && lastUser.id) {
-                    let lastUserId = lastUser.id;
-                     lastUserId=parseInt(lastUserId,10);
-                      userId=lastUserId+1;
-                      
-                } else {
-                    let lastUserId=0;
-                    userId=lastUserId+1;
-                }
-                storedUsers.push(lastUser);
-            }
-            const isUserRegistered=storedUsers.some(storedUser=>storedUser.email===FormData.email)
-
-            if(isUserRegistered){
-                toast.error('Email is already taken');
-                return;
-            }
-            console.log(Date)
-            const user = {
-                id: userId || "",
-                name: FormData?.name || "",
-                email: FormData?.email || "",
-                password: FormData?.password || "",
-                role:FormData?.role || "",
-                first_time:Date,
-                active:FormData?.active || "",
-                image: FormData?.image || "",
-            };            
-            console.log(user)
-            storedUsers.push(user); 
-            localStorage.setItem('userdata', JSON.stringify(storedUsers)); 
-            toast.success('User successfully added:', user);
-            return user;*/
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -277,14 +188,14 @@ for (let pair of formdata.entries()) {
 
 export const updateUser = createAsyncThunk(
     'user/update',
+    
     async ({ Id, rawForm }, { rejectWithValue }) => {
-        /*let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
-        if (!Array.isArray(storedUsers)) {
-            storedUsers = []; 
-        }*/
+        
        console.log(rawForm);
-       
+      
+
         try {
+           
             let form={
                 name:rawForm.name,
                 email:rawForm.email,
@@ -317,33 +228,14 @@ for (const key in form) {
                 }
             })
             console.log(response.data);
-            toast.success("User updated");
+            toast.success(i18next.t('userupdated'));
             return;
             }catch(error){
                 console.log(error.response);
-                toast.error("Failed to update user");
+                toast.error(i18next.t('failedtoupdateuser'));
                 return;
             }
-            /*const userIndex = storedUsers.findIndex(storedUser => {
-                return String(storedUser.id).trim() === String(Id).trim();  
-            });
-            if (userIndex === -1) {
-                return rejectWithValue('User not found');
-            }
-            const updatedUser = {
-                ...storedUsers[userIndex], 
-                name: FormData?.name || storedUsers[userIndex].name,
-                email: FormData?.email || storedUsers[userIndex].email,
-                password: FormData?.password || storedUsers[userIndex].password,
-                role:FormData?.role || "",
-                image: FormData?.image || storedUsers[userIndex].image,
-            };
-            
-            storedUsers[userIndex] = updatedUser;
-            localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            toast.success('Update successful');
-
-            return updatedUser;*/
+           
         } catch (error) {
             return rejectWithValue(error.message || 'Update failed');
         }
@@ -354,7 +246,10 @@ for (const key in form) {
 export const deleteUser = createAsyncThunk(
     'user/delete',
     async (Id, { rejectWithValue }) => {
+        
+
         try {
+            
             console.log(Id);
             let id=(Id.id);
             console.log(id);
@@ -365,20 +260,14 @@ export const deleteUser = createAsyncThunk(
                 }
             })
             .then(response=>{
-                toast.success('Delete Successful');
+                toast.success(i18next.t('deletesuccessful'));
                 console.log(response);
             })
             .catch(error=>{
+                toast.error(i18next.t('deletefailed'));
                 console.log(error);
             })
-            /*let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
-            storedUsers = storedUsers.filter(storedUser => { 
-                return storedUser.id !== Id.id; 
-            });
-
-            localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            toast.success('Delete successful');
-            return storedUsers; */
+           
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -388,22 +277,37 @@ export const deleteUser = createAsyncThunk(
 export const deleteBunch=createAsyncThunk(
     'user/deletebunch',
     async(id,{rejectWithValue})=>{
+        
+
         try{
-            let storedUsers = JSON.parse(localStorage.getItem('userdata')) || [];
-            let userIdToRemove = Object.keys(id).map(Number);
-            storedUsers=storedUsers.filter(storedUser=>{
-                
-                return !userIdToRemove.includes(storedUser.id)
-            }
- )
-            localStorage.setItem('userdata', JSON.stringify(storedUsers));
-            toast.success('Delete successful');
-            return storedUsers
+            
+            let token=JSON.parse(localStorage.getItem('token'));
+            const idList=Object.keys(id);
+            const ids = idList.map(id => Number(id));
+            console.log(ids);
+            await axios.post(`http://localhost:8000/api/users/delete-bunch`,{
+                "ids":ids
+            },{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            .then(response=>{
+                toast.success(i18next.t('deletesuccessful'));
+                console.log(response);
+            })
+            .catch(error=>{
+                toast.error(i18next.t('deletefailed'));
+                console.log(error);
+            })
+            
         }catch(error){
             return rejectWithValue(error);
         }
     }
 )
+
+
 
 export const getEmployee=createAsyncThunk(
     'user/employee',
@@ -432,22 +336,28 @@ const userSlice=createSlice({
         email:'',
         password:'',
         name:'',
-        role:'',
+        role:[],
         id:1,
         status:'',
         users:[],
-        logged:false
+        employee_id:'',
+        logged:false,
+        user:''
     },
     reducers:{},
     extraReducers:(builder)=>{
         builder
         .addCase(signin.fulfilled,(state,action)=>{
+            console.log(action.payload);
             state.logged=true;
-            //state.role = action.payload.role;
-            //state.email = action.payload.email;
+            state.role = action.payload.role;
+            state.email = action.payload.email;
+            state.employee_id=action.payload.employee_id;
+            state.user=action.payload.user;
         })
         .addCase(signin.rejected,(state)=>{
             state.logged=false;
+            console.log(action.payload);
         })
         .addCase(addUser.fulfilled,(state,action)=>{
             state.users=[...state.users,action.payload]

@@ -42,6 +42,7 @@ export const addRole = createAsyncThunk(
   'roles/add',
   async (roleData, { rejectWithValue }) => {
     try {
+      console.log(roleData)
       const response = await api.post('/', roleData, {
         headers: getAuthHeaders(),
       });

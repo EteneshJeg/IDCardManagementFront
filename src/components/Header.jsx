@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react"
+import { useEffect, useState } from "react"
 
 
 import { getOrganizationInfo } from "../features/organizationSlice";
@@ -6,64 +6,102 @@ import { signout } from "../features/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
-export default function Header(){
- const navigate=useNavigate();
-  const [logo,setLogo]=useState();
-	const dispatch=useDispatch();
-	const {organizationInfo}=useSelector((state)=>state.organization);
+import { useTranslation } from "react-i18next";
 
-   useEffect(() => {
+export default function Header() {
 
-  if (window.KTDrawer) {
+  const { t, i18n } = useTranslation();
 
-    window.KTDrawer.createInstances();
+  const changeLanguage = (lang) => {
+    i18n.changeLanguage(lang); // Dynamically change language
+    console.log(lang);
+  };
 
-  }
+  const navigate = useNavigate();
+  const [logo, setLogo] = useState();
 
-}, []);
+  const dispatch = useDispatch();
+  const { organizationInfo } = useSelector((state) => state.organization);
+  const [currentUser, setCurrentUser] = useState(null);
+  const user = useSelector((state) => state.user.user);
 
-	useEffect(()=>{
-		dispatch(getOrganizationInfo()).then((data)=>{
-			console.log(data);
-			console.log(data.payload);
-			console.log(data.payload?.en_name)
+  useEffect(() => {
+
+    if (window.KTDrawer) {
+
+      window.KTDrawer.createInstances();
+
+    }
+
+  }, []);
+  console.log(user);
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
+  useEffect(() => {
+    dispatch(getOrganizationInfo()).then((data) => {
+      console.log(data);
+      console.log(data.payload);
+      console.log(data.payload?.en_name)
       console.log(data.payload?.logo)
-			const backendBaseUrl = 'http://localhost:8000'; 
+      const backendBaseUrl = 'http://localhost:8000';
 
-setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
-		})
-	},[organizationInfo]);
+      setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
+    })
+  }, [organizationInfo]);
 
-  const handleSignout=()=>{
+  const handleSignout = () => {
     dispatch(signout());
     navigate('/login');
-    
+
   }
-    return(
-        
-      <div id="kt_app_header" className="app-header">
+  return (
+
+    <div id="kt_app_header" className="app-header">
       {/*begin::Header container*/}
       <div
         className="app-container container-fluid d-flex align-items-stretch justify-content-between"
         id="kt_app_header_container"
       >
         {/*begin::sidebar mobile toggle*/}
-       
-						<div className="d-flex align-items-center d-lg-none ms-n2 me-2" title="Show sidebar menu">
-							<div className="btn btn-icon btn-active-color-primary w-35px h-35px" id="kt_app_sidebar_mobile_toggle" >
-								
-								<span className="svg-icon svg-icon-1">
-									<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path d="M21 7H3C2.4 7 2 6.6 2 6V4C2 3.4 2.4 3 3 3H21C21.6 3 22 3.4 22 4V6C22 6.6 21.6 7 21 7Z" fill="currentColor" />
-										<path opacity="0.3" d="M21 14H3C2.4 14 2 13.6 2 13V11C2 10.4 2.4 10 3 10H21C21.6 10 22 10.4 22 11V13C22 13.6 21.6 14 21 14ZM22 20V18C22 17.4 21.6 17 21 17H3C2.4 17 2 17.4 2 18V20C2 20.6 2.4 21 3 21H21C21.6 21 22 20.6 22 20Z" fill="currentColor" />
-									</svg>
-								</span>
-								
-							</div>
-						</div>
-						
+
+        <div className="d-flex align-items-center d-lg-none ms-n2 me-2" title="Show sidebar menu">
+          <div className="btn btn-icon btn-active-color-primary w-35px h-35px" id="kt_app_sidebar_mobile_toggle" >
+
+            <span className="svg-icon svg-icon-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 7H3C2.4 7 2 6.6 2 6V4C2 3.4 2.4 3 3 3H21C21.6 3 22 3.4 22 4V6C22 6.6 21.6 7 21 7Z" fill="currentColor" />
+                <path opacity="0.3" d="M21 14H3C2.4 14 2 13.6 2 13V11C2 10.4 2.4 10 3 10H21C21.6 10 22 10.4 22 11V13C22 13.6 21.6 14 21 14ZM22 20V18C22 17.4 21.6 17 21 17H3C2.4 17 2 17.4 2 18V20C2 20.6 2.4 21 3 21H21C21.6 21 22 20.6 22 20Z" fill="currentColor" />
+              </svg>
+            </span>
+
+          </div>
+        </div>
+
         {/*end::sidebar mobile toggle*/}
-        
+
         {/*begin::Header wrapper*/}
         <div
           className="d-flex align-items-stretch justify-content-between flex-lg-grow-1"
@@ -98,31 +136,31 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                 {/*begin:Menu link*/}
                 <span className="menu-link">
                   <span className="menu-title">
-                  <a href="/">
-							{logo ? (
-								<img src={logo} className="h-30px"/>
-							  ) : (
-								<img alt="Logo"  className="h-30px"/>
-							  )}
-							</a>
+                    <a href="/">
+                      {logo ? (
+                        <img src={logo} className="h-30px" />
+                      ) : (
+                        <img alt="Logo" className="h-30px" />
+                      )}
+                    </a>
                   </span>
                   <span className="menu-arrow d-lg-none" />
                 </span>
                 {/*end:Menu link*/}
-                
+
               </div>
               {/*end:Menu item*/}
-              
+
             </div>
             {/*end::Menu*/}
           </div>
-          
+
           {/*end::Menu wrapper*/}
-          <h2 className="system-title">ID Management System</h2>
+          <h2 className="system-title">{t('idmanagementsystem')}</h2>
           {/*begin::Navbar*/}
           <div className="app-navbar flex-shrink-0">
-            
-            
+
+
             {/*begin::Notifications*/}
             <div className="app-navbar-item ms-1 ms-lg-3">
               {/*begin::Menu- wrapper*/}
@@ -193,8 +231,8 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                         Alerts
                       </a>
                     </li>
-                    
-                    
+
+
                   </ul>
                   {/*end::Tabs*/}
                 </div>
@@ -264,10 +302,10 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                       <div className="d-flex flex-stack py-4">
                         {/*begin::Section*/}
                         <div className="d-flex align-items-center">
-                          
+
                         </div>
                         {/*end::Section*/}
-                        
+
                       </div>
                       {/*end::Item*/}
                     </div>
@@ -311,7 +349,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                     {/*end::View more*/}
                   </div>
                   {/*end::Tab panel*/}
-                  
+
                 </div>
                 {/*end::Tab content*/}
               </div>
@@ -319,9 +357,9 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
               {/*end::Menu wrapper*/}
             </div>
             {/*end::Notifications*/}
-            
-            
-            
+
+
+
             {/*begin::User menu*/}
             <div
               className="app-navbar-item ms-1 ms-lg-3"
@@ -334,7 +372,7 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                 data-kt-menu-attach="parent"
                 data-kt-menu-placement="bottom-end"
               >
-                <img src="assets/media/avatars/300-1.jpg" alt="user" />
+                <img src={user.profile_image_url || currentUser?.profile_image_url} alt="user" />
               </div>
               {/*begin::User account menu*/}
               <div
@@ -346,22 +384,23 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                   <div className="menu-content d-flex align-items-center px-3">
                     {/*begin::Avatar*/}
                     <div className="symbol symbol-50px me-5">
-                      <img alt="Logo" src="assets/media/avatars/300-1.jpg" />
+                      <img alt="Logo" src={user.profile_image_url || currentUser?.profile_image_url} />
                     </div>
                     {/*end::Avatar*/}
                     {/*begin::Username*/}
                     <div className="d-flex flex-column">
                       <div className="fw-bold d-flex align-items-center fs-5">
-                        Max Smith
-                        <span className="badge badge-light-success fw-bold fs-8 px-2 py-1 ms-2">
-                          Pro
+                        {user.name || currentUser?.name}
+                        <span className="badge badge-success fw-bold fs-8 px-2 py-1 ms-2">
+                          {user.roles?.map(role => role.name) || user.roles?.[0].name
+                            || currentUser?.roles?.map(role => role.name || currentUser?.roles?.[0].name)}
                         </span>
                       </div>
                       <a
                         href="#"
                         className="fw-semibold text-muted text-hover-primary fs-7"
                       >
-                        max@kt.com
+                        {user.email || currentUser?.email}
                       </a>
                     </div>
                     {/*end::Username*/}
@@ -371,19 +410,10 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                 {/*begin::Menu separator*/}
                 <div className="separator my-2" />
                 {/*end::Menu separator*/}
-                {/*begin::Menu item*/}
-                <div className="menu-item px-5">
-                  <a
-                    href="../../demo1/dist/account/overview.html"
-                    className="menu-link px-5"
-                  >
-                    My Profile
-                  </a>
-                </div>
-                {/*end::Menu item*/}
-                
-                
-                
+
+
+
+
                 {/*begin::Menu separator*/}
                 <div className="separator my-2" />
                 {/*end::Menu separator*/}
@@ -396,9 +426,9 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                 >
                   <a href="#" className="menu-link px-5">
                     <span className="menu-title position-relative">
-                      Language
+                      {t('language')}
                       <span className="fs-8 rounded bg-light px-3 py-2 position-absolute translate-middle-y top-50 end-0">
-                        English
+                        {t('english')}
                         <img
                           className="w-15px h-15px rounded-1 ms-2"
                           src="assets/media/flags/united-states.svg"
@@ -410,9 +440,12 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                   {/*begin::Menu sub*/}
                   <div className="menu-sub menu-sub-dropdown w-175px py-4">
                     {/*begin::Menu item*/}
-                    <div className="menu-item px-3">
+                    <button className="menu-item px-3" onClick={(e) => {
+                      e.preventDefault()
+                      changeLanguage('en')
+                    }}>
                       <a
-                        href="../../demo1/dist/account/settings.html"
+                        href=""
                         className="menu-link d-flex px-5 active"
                       >
                         <span className="symbol symbol-20px me-4">
@@ -422,90 +455,51 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
                             alt=""
                           />
                         </span>
-                        English
+                        {t('english')}
                       </a>
-                    </div>
+                    </button>
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
-                    <div className="menu-item px-3">
+                    <button className="menu-item px-3" onClick={(e) => {
+                      e.preventDefault()
+                      changeLanguage('am')
+                    }}>
                       <a
-                        href="../../demo1/dist/account/settings.html"
+                        href=""
                         className="menu-link d-flex px-5"
                       >
                         <span className="symbol symbol-20px me-4">
                           <img
                             className="rounded-1"
-                            src="assets/media/flags/spain.svg"
+                            src="assets/media/flags/ethiopia.svg"
                             alt=""
                           />
                         </span>
-                        Spanish
+                        {t('amharic')}
                       </a>
-                    </div>
+                    </button>
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
-                    <div className="menu-item px-3">
-                      <a
-                        href="../../demo1/dist/account/settings.html"
-                        className="menu-link d-flex px-5"
-                      >
-                        <span className="symbol symbol-20px me-4">
-                          <img
-                            className="rounded-1"
-                            src="assets/media/flags/germany.svg"
-                            alt=""
-                          />
-                        </span>
-                        German
-                      </a>
-                    </div>
+
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
-                    <div className="menu-item px-3">
-                      <a
-                        href="../../demo1/dist/account/settings.html"
-                        className="menu-link d-flex px-5"
-                      >
-                        <span className="symbol symbol-20px me-4">
-                          <img
-                            className="rounded-1"
-                            src="assets/media/flags/japan.svg"
-                            alt=""
-                          />
-                        </span>
-                        Japanese
-                      </a>
-                    </div>
+
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
-                    <div className="menu-item px-3">
-                      <a
-                        href="../../demo1/dist/account/settings.html"
-                        className="menu-link d-flex px-5"
-                      >
-                        <span className="symbol symbol-20px me-4">
-                          <img
-                            className="rounded-1"
-                            src="assets/media/flags/france.svg"
-                            alt=""
-                          />
-                        </span>
-                        French
-                      </a>
-                    </div>
+
                     {/*end::Menu item*/}
                   </div>
                   {/*end::Menu sub*/}
                 </div>
                 {/*end::Menu item*/}
-                
+
                 {/*begin::Menu item*/}
                 <div className="menu-item px-5">
                   <a
                     onClick={handleSignout}
                     className="menu-link px-5"
                   >
-                    Sign Out
+                    {t('signout')}
                   </a>
                 </div>
                 {/*end::Menu item*/}
@@ -554,6 +548,6 @@ setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
       </div>
       {/*end::Header container*/}
     </div>
-  
-    )
+
+  )
 }
