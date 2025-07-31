@@ -204,6 +204,7 @@ export default function EmployeeDashboard() {
   const selectedTemplateFields = templates[selectedTemplate] || {};
   const [qrImage, setQRImage] = useState();
 
+  console.log(userProfile)
   useEffect(() => {
     if (
       logged &&
@@ -297,7 +298,7 @@ export default function EmployeeDashboard() {
       };
     }).catch((error) => {
       console.error("Error loading templates:", error);
-    }).finally(()=>setIsLoading(false));
+    }).finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {  //get the saved template
@@ -322,7 +323,7 @@ export default function EmployeeDashboard() {
       };
     }).catch((error) => {
       console.error("Error loading templates:", error);
-    }).finally(()=>setIsLoading(false));
+    }).finally(() => setIsLoading(false));
   }, [dispatch]);
 
   useEffect(() => {  //get the saved template
@@ -347,7 +348,7 @@ export default function EmployeeDashboard() {
       };
     }).catch((error) => {
       console.error("Error loading templates:", error);
-    }).finally(()=>setIsLoading(false));
+    }).finally(() => setIsLoading(false));
   }, [dispatch]);
   console.log(templates);
 
@@ -447,13 +448,13 @@ export default function EmployeeDashboard() {
     }
   }, [dispatch])
 
-   const Loader = () => (
-  <div className="d-flex justify-content-center py-10">
-    <div className="spinner-border text-primary" role="status">
-      <span className="visually-hidden">Loading...</span>
+  const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
     </div>
-  </div>
-);
+  );
   console.log(userProfile)
   const userRole = role.length !== 0 ? role : currentRole?.[0]
   console.log(userRole);
@@ -488,7 +489,7 @@ export default function EmployeeDashboard() {
               <QRCode
                 ref={qrRef}
                 style={{ display: "none" }}
-                value={`/employeeid?data=${userProfile.employment_id}`}
+                value={`http://localhost:5173/employeeid?data=${userProfile.employment_id}`}
               />
 
               <ul className="nav nav-tabs nav-line-tabs mb-5 fs-6" id="myTab" role="tablist">
@@ -513,9 +514,9 @@ export default function EmployeeDashboard() {
 
                     <div className="id" >
                       <div className="front">
-                        {isLoading?(<div colSpan="8" className="text-center">
+                        {isLoading ? (<div colSpan="8" className="text-center">
                           <Loader /> {/* Use the loader here */}
-                        </div>):selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
+                        </div>) : selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
                           <div style={{ width: '100%', overflow: 'auto' }}>
                             <Stage className="stage" width={700} height={600}>
                               <Layer>
@@ -606,7 +607,13 @@ export default function EmployeeDashboard() {
                                       fieldValue = abbreviation;
                                       break;
                                     default:
-                                      fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                      if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                                   }
                                   console.log(fieldValue)
                                   const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
@@ -646,9 +653,9 @@ export default function EmployeeDashboard() {
 
                       </div>
                       <div className="back">
-                        {isLoading?(<div colSpan="8" className="text-center">
+                        {isLoading ? (<div colSpan="8" className="text-center">
                           <Loader /> {/* Use the loader here */}
-                        </div>):selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
+                        </div>) : selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
                           <div style={{ width: '100%', overflow: 'auto' }}>
                             <Stage className="stage" width={700} height={600}>
                               <Layer>
@@ -720,7 +727,13 @@ export default function EmployeeDashboard() {
                                         case "tin": fieldValue = tin; break;
                                         case "abbreviation": fieldValue = abbreviation; break;
                                         default:
-                                          fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                          if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                                       }
 
                                       const displayText = Array.isArray(fieldValue)
@@ -766,9 +779,9 @@ export default function EmployeeDashboard() {
                   {/* Badge Content */}
 
 
-                  {isLoading?(<div colSpan="8" className="text-center">
-                          <Loader /> {/* Use the loader here */}
-                        </div>):selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
+                  {isLoading ? (<div colSpan="8" className="text-center">
+                    <Loader /> {/* Use the loader here */}
+                  </div>) : selectedTemplateFields && Object.entries(selectedTemplateFields).length > 0 && (
 
 
                     <div className="d-flex justify-content-center"
@@ -871,7 +884,13 @@ export default function EmployeeDashboard() {
                                 fieldValue = abbreviation;
                                 break;
                               default:
-                                fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                             }
 
                             const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;

@@ -2260,7 +2260,7 @@ export default function IdDetails() {
                                 type="radio"
                                 name="type"
                                 value="text"
-                                checked={newTemplates[selectedTemplate]?.imageFields?.['logo'].type === "text"}
+                                checked={field?.type === "text"}
                                 onChange={(e) => handleTemplateChange(e, key)}
                                 className="w-4 h-4"
                               />
@@ -2272,7 +2272,7 @@ export default function IdDetails() {
                                 type="radio"
                                 name="type"
                                 value="text"
-                                checked={field.type === "number"}
+                                checked={field?.type === "number"}
                                 onChange={(e) => handleTemplateChange(e, key)}
                                 className="w-4 h-4"
                               />
@@ -2284,7 +2284,7 @@ export default function IdDetails() {
                                 type="radio"
                                 name="type"
                                 value="image"
-                                checked={field.type === "image"}
+                                checked={field?.type === "image"}
                                 onChange={(e) => handleTemplateChange(e, key)}
                                 className="w-4 h-4"
                               />
@@ -2300,7 +2300,7 @@ export default function IdDetails() {
                           type="number"
                           className="form-control"
                           name="text_positionx"
-                          value={field.text_positionx ?? ''}
+                          value={field?.text_positionx ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)}
 
                         />
@@ -2309,7 +2309,7 @@ export default function IdDetails() {
                           type="number"
                           className="form-control"
                           name="text_positiony"
-                          value={field.text_positiony ?? ''}
+                          value={field?.text_positiony ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)}
 
                         />
@@ -2318,7 +2318,7 @@ export default function IdDetails() {
                           type="number"
                           className="form-control"
                           name="text_font_size"
-                          value={field.text_font_size ?? ''}
+                          value={field?.text_font_size ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)}
 
                         />
@@ -2326,7 +2326,7 @@ export default function IdDetails() {
                         <input type="number"
                           className="form-control"
                           name="label_length"
-                          value={field.label_length ?? 'Label length'}
+                          value={field?.label_length ?? 'Label length'}
                           onChange={(e) => handleTemplateChange(e, key)} />
 
                         <label className="field">{t('fieldlabel')}</label>
@@ -2334,7 +2334,7 @@ export default function IdDetails() {
                           type="text"
                           className="form-control"
                           name="field_label"
-                          value={field.field_label ?? ''}
+                          value={field?.field_label ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)} />
 
                         <label className="field">{t('fontcolor')}</label>
@@ -2342,7 +2342,7 @@ export default function IdDetails() {
                           type="color"
                           className="form-control"
                           name="text_font_color"
-                          value={field.text_font_color ?? ''}
+                          value={field?.text_font_color ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)}
                         />
                         <label className="field">{t('textgap')}</label>
@@ -2350,12 +2350,12 @@ export default function IdDetails() {
                           type="number"
                           className="form-control"
                           name="text_gap"
-                          value={field.text_gap ?? ''}
+                          value={field?.text_gap ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)} />
                         <label className="field">{t('fonttype')}</label>
                         <select
                           name="text_font_type"
-                          value={field.text_font_type ?? ''}
+                          value={field?.text_font_type ?? ''}
                           onChange={(e) => handleTemplateChange(e, key)}
                           className="form-select"
                         >

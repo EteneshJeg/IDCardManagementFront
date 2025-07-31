@@ -37,7 +37,7 @@ export default function EmployeeManagement() {
     };
   }, []);
   const { t } = useTranslation();
-
+  const navigate=useNavigate();
   const dispatch = useDispatch();
 
   const [userInfo, setUserInfo] = useState();
@@ -748,14 +748,16 @@ export default function EmployeeManagement() {
 
             {permissions.some(p =>
               p.name.includes('create IdentityCardTemplateDetail')) ? (<a
-                href="#"
                 className={Object.keys(selectedEmployees).length > 0
                   ? "btn btn-sm fw-bold bg-body btn-color-gray-700 btn-active-color-primary"
                   : "hide"
                 }
                 onClick={(e) => {
                   e.preventDefault();
-                  setIsIdModalOpen(true);
+                  console.log(Object.keys(selectedEmployees))
+                 navigate('/idmanagement/bulk',{
+                    state:{selectedEmployees:Object.keys(selectedEmployees)}
+                  })
                 }}
               >
                 Issue bunch ids

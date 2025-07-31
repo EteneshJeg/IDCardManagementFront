@@ -22,6 +22,7 @@ import Zone from './pages/ZoneManagement';
 import Woreda from './pages/WoredaManagement';
 import Role from './pages/Roles';
 import QRScan from './pages/qrcodescanpage';
+import BulkIDGenerator from './pages/issuebunchid';
 
 import { Navigate } from 'react-router-dom';
 import PermissionsPage from './pages/Permissions';
@@ -59,6 +60,7 @@ function App() {
         <Route path="roles" element={<Role/>} />
         <Route path="/permissions" element={<PermissionsPage/>} />
         <Route path="/employeeid" element={<QRScan/>}/>
+        <Route path="idmanagement/bulk" element={<BulkIDGenerator/>}/>
       </Route>
     </Routes>
       <ToastContainer />
