@@ -188,18 +188,20 @@ console.log(form);
       id_status:checkedStatus,
       en_name:data.en_name,
       sex:"female",
+      employment_id:data.employment_id,
+      user_id:data.user?.id,
       phone_number:data.phone_number,
       status:data.status,
       title:data.title,
-      martial_status_id:1,
-      job_position_id:3,
+      martial_status_id:data.marital_status?.id,
+      job_position_id:data.job_position?.id,
       organization_id:1,
-      organization_unit_id:3,
-      job_title_category_id:1,
-      region_id:4,
-      zone_id:2,
-      woreda_id:2,
-      nation:"american"
+      organization_unit_id:data.organization_unit?.id,
+      job_title_category_id:data.job_title_category?.id,
+      region_id:data.region?.id,
+      zone_id:data.zone?.id,
+      woreda_id:data.woreda?.id,
+      nation:data.nation
 
     }
     console.log(dateform);

@@ -36,7 +36,7 @@ export default function EmployeeManagement() {
       document.body.removeChild(script);
     };
   }, []);
-  const {t}=useTranslation();
+  const { t } = useTranslation();
 
   const dispatch = useDispatch();
 
@@ -49,8 +49,8 @@ export default function EmployeeManagement() {
   const [jobTitleCatInfo, setJobTitleCatInfo] = useState();
   const [organizationUnitInfo, setOrganizationUnitInfo] = useState();
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser,setCurrentUser]=useState(null);
-  const [currentRole,setCurrentRole]=useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState([]);
 
 
   const [profilePhoto, setProfilePhoto] = useState();
@@ -207,7 +207,7 @@ export default function EmployeeManagement() {
   const [isIdModalOpen, setIsIdModalOpen] = useState(false);
   const [permissions, setPermissions] = useState([]);
   const role = useSelector((state) => state.user.role);
-  const user=useSelector((state)=>state.user.user);
+  const user = useSelector((state) => state.user.user);
   console.log(role)
 
   const [formData, setFormData] = useState({
@@ -287,63 +287,64 @@ export default function EmployeeManagement() {
   const currentdata = (employeeProfile || []).slice(firstItemIndex, lastItemIndex);
 
   const [extractData, setExtractData] = useState([]);
-  
 
-useEffect(()=>{
-let token=JSON.parse(localStorage.getItem('token'));
-if(token){
-  let userId=JSON.parse(localStorage.getItem('userId'));
-   console.log(userId);
-   async function fetchUser(){
-      let response=await axios.get(`http://localhost:8000/api/users/${userId}`,{
-        headers:{
-          Authorization:`Bearer ${token}`
-        }
-      })
-      console.log(response);
-      let data=response.data;
-      console.log(data);
-      setCurrentUser(data.user);
-      setCurrentRole(data.role);
-   }
-   fetchUser();
-  
-}
-else{
-  console.log('no current user');
-}
-},[user]);
+
+  useEffect(() => {
+    let token = JSON.parse(localStorage.getItem('token'));
+    if (token) {
+      let userId = JSON.parse(localStorage.getItem('userId'));
+      console.log(userId);
+      async function fetchUser() {
+        let response = await axios.get(`http://localhost:8000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        console.log(response);
+        let data = response.data;
+        console.log(data);
+        setCurrentUser(data.user);
+        setCurrentRole(data.role);
+      }
+      fetchUser();
+
+    }
+    else {
+      console.log('no current user');
+    }
+  }, [user]);
 
   useEffect(() => {
     dispatch(fetchRoles()).then((data) => {
       const dataitem = data.payload;
       const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
       //setRoles(normalizedData);
-      if(role.length!==0)
-        {const rolesExist = normalizedData.filter(data => role.includes(data.name)).map(data => ({
-        id: data.id,
-        name: data.name,
-        permissions: data.permissions
-      }))
-      console.log(rolesExist);
-      const allPermissions = rolesExist.flatMap(role => role.permissions);
-      setPermissions(allPermissions);}
-      else{
+      if (role.length !== 0) {
+        const rolesExist = normalizedData.filter(data => role.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
+      }
+      else {
         console.log(currentRole)
-        const rolesExist=dataitem.filter(data=>currentRole.includes(data.name)).map(data=>({
-        id:data.id,
-        name:data.name,
-        permissions:data.permissions
-      }))
-      console.log(rolesExist);
-      const allPermissions = rolesExist.flatMap(role => role.permissions);
-      setPermissions(allPermissions);
+        const rolesExist = dataitem.filter(data => currentRole.includes(data.name)).map(data => ({
+          id: data.id,
+          name: data.name,
+          permissions: data.permissions
+        }))
+        console.log(rolesExist);
+        const allPermissions = rolesExist.flatMap(role => role.permissions);
+        setPermissions(allPermissions);
       }
     }).catch((error) => {
       console.log('Error fetching data', error);
     })
       .finally(() => setIsLoading(false));
-  }, [dispatch,currentRole]);
+  }, [dispatch, currentRole]);
 
   console.log(permissions)
 
@@ -414,43 +415,43 @@ else{
     }
   }
 
-  const PHONE_REGX=/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
-  const NAME_REGX=/^[\p{L}\s\-.'’]+$/u;
+  const PHONE_REGX = /^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
+  const NAME_REGX = /^[\p{L}\s\-.'’]+$/u;
 
 
-  const [validName,setValidName]=useState();
-  const [validPhone,setValidPhone]=useState();
+  const [validName, setValidName] = useState();
+  const [validPhone, setValidPhone] = useState();
 
-  const [nameFocus,setNameFocus]=useState();
-  const [phoneFocus,setPhoneFocus]=useState();
+  const [nameFocus, setNameFocus] = useState();
+  const [phoneFocus, setPhoneFocus] = useState();
 
-   useEffect(()=>{
-      const res=NAME_REGX.test(formData.en_name);
-      console.log(res);
-      console.log(formData.en_name);
-      setValidName(res);
-    },[formData]);
+  useEffect(() => {
+    const res = NAME_REGX.test(formData.en_name);
+    console.log(res);
+    console.log(formData.en_name);
+    setValidName(res);
+  }, [formData]);
 
-    useEffect(()=>{
-      const res=PHONE_REGX.test(formData.phone_number);
-      console.log(res);
-      console.log(formData.phone_number);
-      setValidPhone(res);
-    },[formData]);
+  useEffect(() => {
+    const res = PHONE_REGX.test(formData.phone_number);
+    console.log(res);
+    console.log(formData.phone_number);
+    setValidPhone(res);
+  }, [formData]);
 
   const handleCreateProfile = () => {
-    if (!validName||!formData.sex||!formData.title||!formData.user_id||!formData.employment_id||!validPhone||
-      !formData.organization_unit_id||!formData.job_position_id||!formData.job_title_category_id||!formData.marital_status_id||!formData.nation||
-      !formData.region_id||!formData.zone_id||!formData.woreda_id
-     ) {
-console.log(validName);
-console.log(validPhone)
+    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
+      !formData.organization_unit_id || !formData.job_position_id || !formData.job_title_category_id || !formData.marital_status_id || !formData.nation ||
+      !formData.region_id || !formData.zone_id || !formData.woreda_id
+    ) {
+      console.log(validName);
+      console.log(validPhone)
       toast.error(t('therearemissingfields'));
 
       return;
 
     }
-    else{
+    else {
       dispatch(createProfile(formData));
       setIsCreateModalOpen(false)
     }
@@ -459,21 +460,21 @@ console.log(validPhone)
   const handleUpdateProfile = (id) => {
     console.log(id);
     console.log(formData)
-    if (!validName||!formData.sex||!formData.title||!formData.user_id||!formData.employment_id||!validPhone||
-      !formData.organization_unit_id||!formData.job_position_id||!formData.job_title_category||!formData.marital_status_id||!formData.nation||
-      !formData.region_id||!formData.zone_id||!formData.woreda_id
-     ) {
+    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
+      !formData.organization_unit_id || !formData.job_position_id || !formData.job_title_category || !formData.marital_status_id || !formData.nation ||
+      !formData.region_id || !formData.zone_id || !formData.woreda_id
+    ) {
 
       toast.error(t('therearemissingfields'));
 
       return;
 
     }
-    else{
+    else {
       dispatch(updateProfile({ Id: id, rawForm: formData }));
-    setIsEditModalOpen(false);
+      setIsEditModalOpen(false);
     }
-    
+
   }
 
   const handleDeleteProfile = (id) => {
@@ -628,23 +629,23 @@ console.log(validPhone)
 
   const handleCreateId = () => {
 
-  
-      
-
-        const selectedIds = Object.keys(selectedEmployees).map(Number); // convert ["12", "18"] to [12, 18]
-
-const matchingSelectedEmployees = employeeProfile.filter(employee =>
-  selectedIds.includes(employee.id)
-);
 
 
-        
-       //   dispatch(generateIdBunch({Employees:matchingSelectedEmployees,rawForm:extractData}));
+
+    const selectedIds = Object.keys(selectedEmployees).map(Number); // convert ["12", "18"] to [12, 18]
+
+    const matchingSelectedEmployees = employeeProfile.filter(employee =>
+      selectedIds.includes(employee.id)
+    );
+
+
+
+    //   dispatch(generateIdBunch({Employees:matchingSelectedEmployees,rawForm:extractData}));
 
     setIsCreateModalOpen(false)
 
   }
-const CloseIcon = () => (
+  const CloseIcon = () => (
     <svg
       width="24"
       height="24"
@@ -771,9 +772,9 @@ const CloseIcon = () => (
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title">{t('addemployee')}</h5>
-             
-              <span className="svg-icon svg-icon-1" onClick={() => setIsCreateModalOpen(false)}>
-                    <CloseIcon /></span>
+
+                    <span className="svg-icon svg-icon-1" onClick={() => setIsCreateModalOpen(false)}>
+                      <CloseIcon /></span>
                   </div>
 
                   <fieldset>
@@ -786,11 +787,11 @@ const CloseIcon = () => (
                         <div className="col-md-6">
                           <label className="form-label fw-semibold required">{t('name')}</label>
                           <input type="text" name="en_name" className="form-control" onChange={handleChange}
-                           onFocus={()=>setNameFocus(true)} 
-                           onBlur={()=>setNameFocus(false)}/>
+                            onFocus={() => setNameFocus(true)}
+                            onBlur={() => setNameFocus(false)} />
                         </div>
-                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={nameFocus&&!validName?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
-                         Please enter a correct name</p>
+                        <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={nameFocus && !validName ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                          Please enter a correct name</p>
 
                         {/* Title */}
                         <div className="col-md-6">
@@ -834,11 +835,11 @@ const CloseIcon = () => (
                         <div className="col-md-6">
                           <label className="form-label fw-semibold required">{t('phonenumber')}</label>
                           <input type="tel" name="phone_number" className="form-control" onChange={handleChange}
-                          onFocus={()=>setPhoneFocus(true)}
-                          onBlur={()=>setPhoneFocus(false)} />
+                            onFocus={() => setPhoneFocus(true)}
+                            onBlur={() => setPhoneFocus(false)} />
                         </div>
-                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={phoneFocus&&!validPhone?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
-                         Please enter a correct phone number</p>
+                        <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={phoneFocus && !validPhone ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                          Please enter a correct phone number</p>
 
                         {/* Organization Unit */}
                         <div className="col-md-6">
@@ -968,7 +969,7 @@ const CloseIcon = () => (
                   </fieldset>
 
                   <div className="modal-footer">
-                    
+
                     <button type="button" className="btn btn-primary" onClick={handleCreateProfile}>
                       {t('savechanges')}
                     </button>
@@ -1219,28 +1220,29 @@ const CloseIcon = () => (
                                     </span>
                                   </td>
 
-                                  
+
 
                                   <td className="text-start">
                                     {permissions.some(p =>
                                       p.name.includes('read IdentityCardTemplateDetail')) ? (
-                                        <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}>
-                                           <i className="bi bi-eye-fill"></i>
-                                           </button>
-                                      ) : null}
-                                    
+                                      <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}>
+                                        <i className="bi bi-eye-fill"></i>
+                                      </button>
+                                    ) : null}
 
-                                      {permissions.some(p =>
+
+                                    {permissions.some(p =>
                                       p.name.includes('update Employee')) ? (
-                                        <button disabled={permissions.some(p =>
-                                      p.name.includes('update Employee')) ? false : true} className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2" 
-                                      onClick={() => {
-                                        setFormData(row),
-                                       setIsEditModalOpen(true),
-                                        setSelectedEmployee(row) }}><i className="bi bi-pencil-fill"></i></button>
-                                      ) : null}
+                                      <button disabled={permissions.some(p =>
+                                        p.name.includes('update Employee')) ? false : true} className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                        onClick={() => {
+                                          setFormData(row),
+                                            setIsEditModalOpen(true),
+                                            setSelectedEmployee(row)
+                                        }}><i className="bi bi-pencil-fill"></i></button>
+                                    ) : null}
 
-                                    
+
                                     {isEditModalOpen && (
                                       <div
                                         className="modal fade show"
@@ -1253,9 +1255,9 @@ const CloseIcon = () => (
                                             <div className="modal-header">
                                               <h5 className="modal-title">{t('editemployee')}</h5>
 
-                              <span className="svg-icon svg-icon-1" onClick={() => setIsEditModalOpen(false)}>
-                                                  <CloseIcon />
-                                                  </span>
+                                              <span className="svg-icon svg-icon-1" onClick={() => setIsEditModalOpen(false)}>
+                                                <CloseIcon />
+                                              </span>
                                             </div>
 
                                             <fieldset>
@@ -1274,15 +1276,15 @@ const CloseIcon = () => (
                                                     <input
                                                       type="text"
                                                       className="form-control"
-                                                       value={formData?.en_name || ""}
+                                                      value={formData?.en_name || ""}
                                                       name="en_name"
                                                       onChange={handleChange}
                                                       required
-                                                     onFocus={()=>setNameFocus(true)} 
-                           onBlur={()=>setNameFocus(false)}/>
-                        </div>
-                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={nameFocus&&!validName?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
-                         Please enter a correct name</p>
+                                                      onFocus={() => setNameFocus(true)}
+                                                      onBlur={() => setNameFocus(false)} />
+                                                  </div>
+                                                  <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={nameFocus && !validName ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                                                    Please enter a correct name</p>
 
                                                   {/* Title */}
                                                   <div className="col-md-6">
@@ -1290,7 +1292,7 @@ const CloseIcon = () => (
                                                     <input
                                                       type="text"
                                                       className="form-control"
-                                                       value={formData?.title || ""}
+                                                      value={formData?.title || ""}
                                                       name="title"
                                                       onChange={handleChange}
                                                     />
@@ -1336,15 +1338,15 @@ const CloseIcon = () => (
                                                   </div>
 
                                                   <div className="col-md-6">
-                          <label className="form-label fw-semibold required">{t('username')}</label>
-                          <select className="form-select" name="user_id" onChange={handleChange}>
-                            <option value={formData?.sex || ""}>{t('select')}</option>
-                            {userInfo.map((data) => {
-                              return <option value={data.id}>{data.name}</option>
-                            })}
-                          </select>
-                        </div>
-                                                  
+                                                    <label className="form-label fw-semibold required">{t('username')}</label>
+                                                    <select className="form-select" name="user_id" onChange={handleChange}>
+                                                      <option value={formData?.sex || ""}>{t('select')}</option>
+                                                      {userInfo.map((data) => {
+                                                        return <option value={data.id}>{data.name}</option>
+                                                      })}
+                                                    </select>
+                                                  </div>
+
 
                                                   {/* Phone Number */}
                                                   <div className="col-md-6">
@@ -1353,13 +1355,13 @@ const CloseIcon = () => (
                                                       type="tel"
                                                       className="form-control"
                                                       name="phone_number"
-                                                       value={formData?.phone_number || ""}
+                                                      value={formData?.phone_number || ""}
                                                       onChange={handleChange}
-                                                     onFocus={()=>setPhoneFocus(true)} 
-                           onBlur={()=>setPhoneFocus(false)}/>
-                        </div>
-                        <p style={{backgroundColor:"lightgreen", width:"60%", borderRadius:"10px", margin:"2px 0px"}} className={phoneFocus&&!validPhone?"visible":"hide"}><i className="bi bi-exclamation-circle-fill" style={{color:'red'}}></i> 
-                         Please enter a correct name</p>
+                                                      onFocus={() => setPhoneFocus(true)}
+                                                      onBlur={() => setPhoneFocus(false)} />
+                                                  </div>
+                                                  <p style={{ backgroundColor: "lightgreen", width: "60%", borderRadius: "10px", margin: "2px 0px" }} className={phoneFocus && !validPhone ? "visible" : "hide"}><i className="bi bi-exclamation-circle-fill" style={{ color: 'red' }}></i>
+                                                    Please enter a correct name</p>
 
                                                   {/* Organization Unit */}
                                                   <div className="col-md-6">
@@ -1400,7 +1402,7 @@ const CloseIcon = () => (
                                                     <input
                                                       type="text"
                                                       className="form-control"
-                                                       value={formData?.salary || ""}
+                                                      value={formData?.salary || ""}
                                                       name="salary"
                                                       onChange={handleChange}
                                                     />
@@ -1450,7 +1452,7 @@ const CloseIcon = () => (
                                                       type="date"
                                                       className="form-control"
                                                       name="job_position_start_date"
-                                                       value={formData?.job_position_start_date || ""}
+                                                      value={formData?.job_position_start_date || ""}
                                                       onChange={handleChange}
                                                     />
                                                   </div>
@@ -1462,7 +1464,7 @@ const CloseIcon = () => (
                                                       type="date"
                                                       className="form-control"
                                                       name="job_position_end_date"
-                                                       value={formData?.job_position_end_date || ""}
+                                                      value={formData?.job_position_end_date || ""}
                                                       onChange={handleChange}
                                                     />
                                                   </div>
@@ -1474,7 +1476,7 @@ const CloseIcon = () => (
                                                       type="text"
                                                       className="form-control"
                                                       name="address"
-                                                       value={formData?.address || ""}
+                                                      value={formData?.address || ""}
                                                       onChange={handleChange}
                                                     />
                                                   </div>
@@ -1530,7 +1532,7 @@ const CloseIcon = () => (
                                             </fieldset>
 
                                             <div className="modal-footer">
-                                              
+
                                               <button type="button" className="btn btn-primary" onClick={() => handleUpdateProfile(selectedEmployee.id)}>
                                                 {t('savechanges')}
                                               </button>
@@ -1541,61 +1543,61 @@ const CloseIcon = () => (
                                     )}
                                     {permissions.some(p =>
                                       p.name.includes('delete Employee')) ? (
-                                        <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm" 
-                                      onClick={() => { setSelectedEmployee(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
-                                      ) : null}
-                                    
+                                      <button className="btn btn-icon btn-bg-light btn-color-danger btn-sm"
+                                        onClick={() => { setSelectedEmployee(row), setIsDeleteModalOpen(true) }}><i className="bi bi-trash-fill"></i></button>
+                                    ) : null}
+
                                     {isDeleteModalOpen && (
                                       <div
-                                      className="modal fade show"
-                                      tabIndex="-1"
-                                      style={{
-                                        display: "block",
-                                        backgroundColor: "rgba(0,0,0,0.1)",
-                                      }}
-                                    >
-                                      <div className="modal-dialog">
-                                        <div className="modal-content">
-                                          {/* Modal Header */}
-                                          <div className="modal-header">
-                                            <h5 className="modal-title">
-                                              {t('confirmdeletion')}
-                                            </h5>
-                                            <div
-                                              className="btn btn-icon btn-sm btn-active-icon-primary"
-                                              onClick={() =>
-                                                setIsDeleteModalOpen(false)
-                                              }
-                                            >
-                                              <span className="svg-icon svg-icon-1">
-                                                <CloseIcon />
-                                              </span>
+                                        className="modal fade show"
+                                        tabIndex="-1"
+                                        style={{
+                                          display: "block",
+                                          backgroundColor: "rgba(0,0,0,0.1)",
+                                        }}
+                                      >
+                                        <div className="modal-dialog">
+                                          <div className="modal-content">
+                                            {/* Modal Header */}
+                                            <div className="modal-header">
+                                              <h5 className="modal-title">
+                                                {t('confirmdeletion')}
+                                              </h5>
+                                              <div
+                                                className="btn btn-icon btn-sm btn-active-icon-primary"
+                                                onClick={() =>
+                                                  setIsDeleteModalOpen(false)
+                                                }
+                                              >
+                                                <span className="svg-icon svg-icon-1">
+                                                  <CloseIcon />
+                                                </span>
+                                              </div>
                                             </div>
-                                          </div>
 
-                                          {/* Modal Body */}
-                                          <div className="modal-body text-center">
-                                            <p className="fs-5 text-gray-800">
-                                              {t('areyousureyouwanttopermanentlydeletethisemployee')}?
-                                              <br />
-                                              {t('thisactioncannotbeundone')}
-                                            </p>
-                                          </div>
+                                            {/* Modal Body */}
+                                            <div className="modal-body text-center">
+                                              <p className="fs-5 text-gray-800">
+                                                {t('areyousureyouwanttopermanentlydeletethisemployee')}?
+                                                <br />
+                                                {t('thisactioncannotbeundone')}
+                                              </p>
+                                            </div>
 
-                                          {/* Modal Footer */}
-                                          <div className="modal-footer">
-                                            <button
-                                              type="button"
-                                              className="btn btn-danger"
-                                              onClick={() => handleDeleteProfile(selectedEmployee.id)}
-                                            >
-                                              {t('deletepermanently')}
-                                            </button>
+                                            {/* Modal Footer */}
+                                            <div className="modal-footer">
+                                              <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                onClick={() => handleDeleteProfile(selectedEmployee.id)}
+                                              >
+                                                {t('deletepermanently')}
+                                              </button>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                      
+
                                     )}
                                   </td>
                                 </tr>

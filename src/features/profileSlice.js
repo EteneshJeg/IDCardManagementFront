@@ -70,7 +70,7 @@ const prepareFormData = (formData) => {
     region_id: formData.region_id || "",
     woreda_id: formData.woreda_id || "",
     zone_id: formData.zone_id || "",
-    id_status:false,
+    id_status:"unissued",
     status:true
   };
 };

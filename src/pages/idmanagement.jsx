@@ -807,7 +807,15 @@ export default function IdManagement() {
                         'job_position_start_date', 'job_position_end_date', 'address', 'house_number', 'region', 'zone', 'woreda',
                         'id_issue_date', 'id_expire_date'].map((field) => (
                           <p key={field} style={{ margin: '8px 0', fontSize: '1rem' }}>
-                            <strong>{field.replace('_', ' ').toUpperCase()}:</strong> <span>{userProfile?.[field] || "N/A"}</span>
+                            <strong>{field.replace('_', ' ').toUpperCase()}:</strong> <span>
+  {field === 'job_position'
+  ? userProfile?.[field]?.job_description || 'N/A'
+  : typeof userProfile?.[field] === 'object'
+    ? userProfile?.[field]?.name || 'N/A'
+    : userProfile?.[field] || 'N/A'}
+
+</span>
+
                           </p>
                         ))}
                     </div>
@@ -923,7 +931,13 @@ export default function IdManagement() {
                                 fieldValue = abbreviation;
                                 break;
                               default:
-                                fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                             }
 
                             const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
@@ -1063,7 +1077,13 @@ export default function IdManagement() {
                                   fieldValue = abbreviation;
                                   break;
                                 default:
-                                  fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                  if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                               }
                               const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
                               const xPos = Number(field.text_positionx || 0);
@@ -1177,7 +1197,13 @@ export default function IdManagement() {
                                     case "tin": fieldValue = tin; break;
                                     case "abbreviation": fieldValue = abbreviation; break;
                                     default:
-                                      fieldValue = userProfile?.[field.field_name] ?? "N/A";
+                                      if (field.field_name === 'job_position') {
+  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+} else if (typeof userProfile?.[field.field_name] === 'object') {
+  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+} else {
+  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+}
                                   }
 
                                   const displayText = Array.isArray(fieldValue)
