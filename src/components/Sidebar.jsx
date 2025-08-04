@@ -9,7 +9,7 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const [logo, setLogo] = useState();
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [permissions, setPermissions] = useState([]);
   const dispatch = useDispatch();
   const { organizationInfo } = useSelector((state) => state.organization);
@@ -49,11 +49,12 @@ export default function Sidebar() {
 
   // Fetch organization info
   useEffect(() => {
+    setIsLoading(true)
     dispatch(getOrganizationInfo()).then((data) => {
       const backendBaseUrl = 'http://localhost:8000'; // or your actual domain
 
       setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
-    });
+    }).finally(()=>setIsLoading(false));
   }, [dispatch, organizationInfo]);
 
   useEffect(() => {
@@ -135,7 +136,13 @@ export default function Sidebar() {
 
   console.log(permissions.map(p => p.name));
 
-
+const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
 
 
 
@@ -157,7 +164,7 @@ export default function Sidebar() {
         style={{ borderBottom: "none" }}
       >
         <Link to="/">
-          {logo ? (
+          {isLoading?(<Loader/>):(logo ? (
             <img
               src={logo}
               className={`h-25px app-sidebar-logo-default ${isMinimized ? 'minimized-logo' : ''}`}
@@ -168,7 +175,7 @@ export default function Sidebar() {
               <div className="placeholder-box" />
               {!isMinimized && <span>Organization Logo</span>}
             </div>
-          )}
+          ))}
         </Link>
 
         <div

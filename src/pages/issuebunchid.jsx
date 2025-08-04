@@ -5,7 +5,8 @@ import { useDispatch } from "react-redux";
 import { Stage, Layer, Text, Image, Group, Image as KonvaImage, Circle } from 'react-konva'
 import QRCode from "react-qr-code";
 
-import { getTemplate, getIdDetails, getProfile,generateId } from "../features/idCardSlice";
+import { getTemplate, getIdDetails, generateId } from "../features/idCardSlice";
+import { getEmployee } from "../features/employeeSlice";
 import { getOrganizationInfo } from "../features/organizationSlice";
 export default function BulkIDGenerator() {
     const { t } = useTranslation();
@@ -413,7 +414,7 @@ export default function BulkIDGenerator() {
                 const results = await Promise.all(selectedEmployeeIds.map(async (id) => {
                     if (!id) return null;
                     console.log(id)
-                    const response = await dispatch(getProfile({ Id: id }));
+                    const response = await dispatch(getEmployee({ Id: id }));
                     console.log(response.payload)
                     return response.payload || null
                 }))

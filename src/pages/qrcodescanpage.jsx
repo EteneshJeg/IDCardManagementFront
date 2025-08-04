@@ -88,7 +88,7 @@ export default function QRScan() {
 
       <div id="kt_app_content" className="app-content flex-column-fluid">
         <div id="kt_app_content_container" className="app-container container-xxl">
-          <div className="card mb-5 mb-xl-10" style={{ backgroundColor: employeeProfile?.id_status.toLowerCase() === "expired" ? "#ff4d4f" : "lightgreen" }}>
+          <div className="card mb-5 mb-xl-10" style={{ backgroundColor: employeeProfile?.id_status.toLowerCase() === "expired" ? "#ff4d4f" :employeeProfile?.id_status.toLowerCase()==="unissued"?"#adb5bd": "lightgreen" }}>
             <div className="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
               <div className="card-title m-0">
                 Employee {id}
@@ -131,7 +131,7 @@ export default function QRScan() {
                   <div className="row mb-6">
                     <label className="col-lg-4 col-form-label  fw-semibold fs-6">Status</label>
                     <div className="col-lg-8">
-                      {employeeProfile?.id_status}
+                     <span style={{textTransform:'uppercase',fontWeight:'bold'}}>{employeeProfile?.id_status}</span> 
                     </div>
                   </div>
 

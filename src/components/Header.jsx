@@ -2,11 +2,12 @@ import { useEffect, useState } from "react"
 
 
 import { getOrganizationInfo } from "../features/organizationSlice";
-import { signout } from "../features/userSlice";
+import { signout } from "../features/authslice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
 import { useTranslation } from "react-i18next";
+import i18next from "i18next";
 
 export default function Header() {
 
@@ -19,11 +20,12 @@ export default function Header() {
 
   const navigate = useNavigate();
   const [logo, setLogo] = useState();
+  const [isLoading,setIsLoading]=useState(false);
 
   const dispatch = useDispatch();
   const { organizationInfo } = useSelector((state) => state.organization);
   const [currentUser, setCurrentUser] = useState(null);
-  const user = useSelector((state) => state.user.user);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
 
@@ -61,6 +63,7 @@ export default function Header() {
     }
   }, [user]);
   useEffect(() => {
+    setIsLoading(true);
     dispatch(getOrganizationInfo()).then((data) => {
       console.log(data);
       console.log(data.payload);
@@ -69,14 +72,22 @@ export default function Header() {
       const backendBaseUrl = 'http://localhost:8000';
 
       setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
-    })
+    }).finally(()=>setIsLoading(false));
   }, [organizationInfo]);
 
   const handleSignout = () => {
     dispatch(signout());
     navigate('/login');
 
+    
   }
+  const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
   return (
 
     <div id="kt_app_header" className="app-header">
@@ -137,11 +148,11 @@ export default function Header() {
                 <span className="menu-link">
                   <span className="menu-title">
                     <a href="/">
-                      {logo ? (
+                      {isLoading?(<Loader/>):(logo ? (
                         <img src={logo} className="h-30px" />
                       ) : (
                         <img alt="Logo" className="h-30px" />
-                      )}
+                      ))}
                     </a>
                   </span>
                   <span className="menu-arrow d-lg-none" />
@@ -440,44 +451,46 @@ export default function Header() {
                   {/*begin::Menu sub*/}
                   <div className="menu-sub menu-sub-dropdown w-175px py-4">
                     {/*begin::Menu item*/}
-                    <button className="menu-item px-3" onClick={(e) => {
-                      e.preventDefault()
-                      changeLanguage('en')
-                    }}>
-                      <a
-                        href=""
-                        className="menu-link d-flex px-5 active"
-                      >
-                        <span className="symbol symbol-20px me-4">
-                          <img
-                            className="rounded-1"
-                            src="assets/media/flags/united-states.svg"
-                            alt=""
-                          />
-                        </span>
-                        {t('english')}
-                      </a>
-                    </button>
+                    <button
+className={`menu-item d-flex align-items-center px-5 py-2 border-0 w-100 ${
+    i18next.language === 'en' ? 'bg-primary text-white' : 'bg-light text-dark'
+  }`}
+  onClick={(e) => {
+    e.preventDefault();
+    changeLanguage('en');
+  }}
+>
+  <span className="symbol symbol-20px me-4">
+    <img
+      className="rounded-1"
+      src="assets/media/flags/united-states.svg"
+      alt=""
+    />
+  </span>
+  {t('english')}
+</button>
+
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
-                    <button className="menu-item px-3" onClick={(e) => {
-                      e.preventDefault()
-                      changeLanguage('am')
-                    }}>
-                      <a
-                        href=""
-                        className="menu-link d-flex px-5"
-                      >
-                        <span className="symbol symbol-20px me-4">
-                          <img
-                            className="rounded-1"
-                            src="assets/media/flags/ethiopia.svg"
-                            alt=""
-                          />
-                        </span>
-                        {t('amharic')}
-                      </a>
-                    </button>
+                    <button
+  className={`menu-item d-flex align-items-center px-5 py-2 border-0 w-100 ${
+    i18next.language === 'am' ? 'bg-primary text-white' : 'bg-light text-dark'
+  }`}
+  onClick={(e) => {
+    e.preventDefault();
+    changeLanguage('am');
+  }}
+>
+  <span className="symbol symbol-20px me-4">
+    <img
+      className="rounded-1"
+      src="assets/media/flags/ethiopia.svg"
+      alt=""
+    />
+  </span>
+  {t('amharic')}
+</button>
+                    
                     {/*end::Menu item*/}
                     {/*begin::Menu item*/}
 

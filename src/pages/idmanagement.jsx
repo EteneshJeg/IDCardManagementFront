@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 import { useState } from 'react'
 
 import { getOrganizationInfo } from "../features/organizationSlice";
-import QRCode from "react-qr-code"
+import QRCode from "react-qr-code";
 
 
-import { getProfile, generateId, getTemplate, getIdDetails } from '../features/idCardSlice'
+import { generateId, getTemplate, getIdDetails } from '../features/idCardSlice'
+import { getEmployee } from "../features/employeeSlice";
 import { fetchRoles } from "../features/roleSlice";
 
 import { useDispatch, useSelector } from 'react-redux'
@@ -282,6 +283,7 @@ export default function IdManagement() {
   useEffect(() => {
     const canvas = qrRef.current;
     if (canvas) {
+      console.log('canvas');
       const svgData = new XMLSerializer().serializeToString(canvas);
       const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
       const url = URL.createObjectURL(svgBlob);
@@ -292,9 +294,12 @@ export default function IdManagement() {
       };
       img.src = url
     }
+    else{
+      console.log('no canvas')
+    }
 
-  }, []);
-  
+  }, [empId]);
+
 
 
   useEffect(() => {
@@ -334,7 +339,7 @@ export default function IdManagement() {
   useEffect(() => {
     setIsLoading(true)
     if (id) {
-      dispatch(getProfile({ Id: id })).then((data) => {
+      dispatch(getEmployee({ Id: id })).then((data) => {
         console.log(data)
         const dataitem = data.payload;
         console.log(dataitem);
@@ -577,8 +582,9 @@ export default function IdManagement() {
   console.log(logo)
 
   const handleDownload = async () => {
-    if (!frontRef.current || !backRef.current) {
+    if (!frontRef.current || !backRef.current ||!badgeRef.current) {
       console.error("Stage refs not available");
+      
       return;
     }
 
@@ -588,6 +594,8 @@ export default function IdManagement() {
 
 
       let backUri = await backRef.current.toImage({ mimeType: 'image/png', pixelRatio: 2 });
+
+      let badgeUri=await badgeRef.current.toImage({mimeType:'image/png',pixelRatio:2});
 
 
       if (frontUri instanceof HTMLImageElement || frontUri instanceof HTMLCanvasElement) {
@@ -613,6 +621,17 @@ export default function IdManagement() {
         backUri = backUri.trim();
       }
 
+      if (badgeUri instanceof HTMLImageElement || badgeUri instanceof HTMLCanvasElement) {
+        const badgeCanvas = document.createElement('canvas');
+        const badgeCtx = badgeCanvas.getContext('2d');
+        badgeCanvas.width = badgeUri.width || badgeUri.naturalWidth;
+        badgeCanvas.height = badgeUri.height || badgeUri.naturalHeight;
+        badgeCtx.drawImage(badgeUri, 0, 0);
+        badgeUri = badgeCanvas.toDataURL('image/png');
+      } else if (typeof badgeUri === 'string') {
+        badgeUri = badgeUri.trim();
+      }
+
 
       const frontLink = document.createElement('a');
       frontLink.download = `${userProfile.en_name}-front.png`;
@@ -628,6 +647,13 @@ export default function IdManagement() {
       document.body.appendChild(backLink);
       backLink.click();
       document.body.removeChild(backLink);
+
+      const badgeLink = document.createElement('a');
+      badgeLink.download = `${userProfile.en_name}-badge.png`;
+      badgeLink.href = badgeUri;
+      document.body.appendChild(badgeLink);
+      badgeLink.click();
+      document.body.removeChild(badgeLink);
 
     } catch (error) {
       console.error("Error generating images: ", error);
@@ -668,7 +694,7 @@ export default function IdManagement() {
     }
   }, [id]);
 
-
+console.log(empId)
 
 
 
@@ -792,8 +818,11 @@ export default function IdManagement() {
           <div class="tab-content" id="myTabContent">
             <div className="tab-pane fade show active" id="kt_tab_pane_1" role="tabpanel">
               <div className="d-flex justify-content-between align-items-start">
-
+    <svg ref={qrRef} style={{ display: "none" }}>
+                        <QRCode value={`http://localhost:5173/employeeid?data=${empId}`} />
+                      </svg>
                 {/* User Info Card */}
+                
                 <div className="card card-flush h-md-50 mb-5 mb-xl-10" style={{ width: '50%', margin: '20px auto', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
 
                   {/* Card Header */}
@@ -809,13 +838,13 @@ export default function IdManagement() {
                         'id_issue_date', 'id_expire_date'].map((field) => (
                           <p key={field} style={{ margin: '8px 0', fontSize: '1rem' }}>
                             <strong>{field.replace('_', ' ').toUpperCase()}:</strong> <span>
-  {field === 'job_position'
-  ? userProfile?.[field]?.job_description || 'N/A'
-  : typeof userProfile?.[field] === 'object'
-    ? userProfile?.[field]?.name || 'N/A'
-    : userProfile?.[field] || 'N/A'}
+                              {field === 'job_position'
+                                ? userProfile?.[field]?.job_description || 'N/A'
+                                : typeof userProfile?.[field] === 'object'
+                                  ? userProfile?.[field]?.name || 'N/A'
+                                  : userProfile?.[field] || 'N/A'}
 
-</span>
+                            </span>
 
                           </p>
                         ))}
@@ -832,15 +861,14 @@ export default function IdManagement() {
 
                     <div className="d-flex justify-content-center"
                       style={{ width: '100%', padding: '20px' }}>
-                      <svg ref={qrRef} style={{ display: "none" }}>
-                        <QRCode value={`/employeeid?data=${empId}`} />
-                      </svg>
+                      
+                     
                       <Stage className="stage"
                         width={700}
                         height={600}
-                        scale={{ x: 0.9, y: 1 }}>
+                        ref={badgeRef} scale={{ x: 0.73, y: 0.61 }}>
                         <Layer>
-                          <KonvaImage width={700} height={600} scale={{ x: 0.9, y: 1 }} ref={badgeRef} image={badgeImage} />
+                          <KonvaImage width={700} height={600} scale={{ x: 0.9, y: 1 }} image={badgeImage} />
                           {image && templates?.['badge']?.['imageFields']?.['photo'] && (
                             <Image
                               x={Number(templates['badge']?.imageFields?.photo?.circle_positionx) || 50}
@@ -933,12 +961,12 @@ export default function IdManagement() {
                                 break;
                               default:
                                 if (field.field_name === 'job_position') {
-  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
-} else if (typeof userProfile?.[field.field_name] === 'object') {
-  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
-} else {
-  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
-}
+                                  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+                                } else if (typeof userProfile?.[field.field_name] === 'object') {
+                                  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+                                } else {
+                                  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+                                }
                             }
 
                             const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
@@ -1079,12 +1107,12 @@ export default function IdManagement() {
                                   break;
                                 default:
                                   if (field.field_name === 'job_position') {
-  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
-} else if (typeof userProfile?.[field.field_name] === 'object') {
-  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
-} else {
-  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
-}
+                                    fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+                                  } else if (typeof userProfile?.[field.field_name] === 'object') {
+                                    fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+                                  } else {
+                                    fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+                                  }
                               }
                               const displayText = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
                               const xPos = Number(field.text_positionx || 0);
@@ -1199,12 +1227,12 @@ export default function IdManagement() {
                                     case "abbreviation": fieldValue = abbreviation; break;
                                     default:
                                       if (field.field_name === 'job_position') {
-  fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
-} else if (typeof userProfile?.[field.field_name] === 'object') {
-  fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
-} else {
-  fieldValue = userProfile?.[field.field_name] ?? 'N/A';
-}
+                                        fieldValue = userProfile?.job_position?.job_description ?? 'N/A';
+                                      } else if (typeof userProfile?.[field.field_name] === 'object') {
+                                        fieldValue = userProfile?.[field.field_name]?.name ?? 'N/A';
+                                      } else {
+                                        fieldValue = userProfile?.[field.field_name] ?? 'N/A';
+                                      }
                                   }
 
                                   const displayText = Array.isArray(fieldValue)

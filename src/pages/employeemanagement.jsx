@@ -3,8 +3,8 @@ import { useEffect } from "react";
 
 import { useState } from "react"
 
-import { createProfile, getProfile, updateProfile, deleteProfile, deleteProfileBunch, } from "../features/profileSlice"
-import { getUser } from "../features/userSlice";
+import { addEmployee, getEmployees, updateEmployee, deleteEmployee, deleteEmployeeBunch, getEmployee, } from "../features/employeeSlice"
+import { getUsers } from "../features/userSlice";
 
 import { fetchJobPositions } from "../features/jobPositionSlice";
 import { fetchJobTitleCategories } from "../features/jobTitleCategorySlice";
@@ -37,7 +37,7 @@ export default function EmployeeManagement() {
     };
   }, []);
   const { t } = useTranslation();
-  const navigate=useNavigate();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [userInfo, setUserInfo] = useState();
@@ -75,7 +75,7 @@ export default function EmployeeManagement() {
   //get user data
   useEffect(() => {
     setIsLoading(true);
-    dispatch(getUser())
+    dispatch(getUsers())
       .then((data) => {
 
         const dataitem = data.payload;
@@ -370,7 +370,7 @@ export default function EmployeeManagement() {
 
 
   useEffect(() => {
-    dispatch(getProfile())
+    dispatch(getEmployees())
       .then((action) => {
         if (action.meta.requestStatus === 'fulfilled') {
           // If payload is an array with data
@@ -391,7 +391,7 @@ export default function EmployeeManagement() {
         console.error('Unexpected error', error);
       });
 
-  }, [dispatch]);
+  }, [dispatch, profiles]);
   console.log(employeeProfile)
 
   useEffect(() => {
@@ -438,50 +438,6 @@ export default function EmployeeManagement() {
     console.log(formData.phone_number);
     setValidPhone(res);
   }, [formData]);
-
-  const handleCreateProfile = () => {
-    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
-      !formData.organization_unit_id || !formData.job_position_id || !formData.job_title_category_id || !formData.marital_status_id || !formData.nation ||
-      !formData.region_id || !formData.zone_id || !formData.woreda_id
-    ) {
-      console.log(validName);
-      console.log(validPhone)
-      toast.error(t('therearemissingfields'));
-
-      return;
-
-    }
-    else {
-      dispatch(createProfile(formData));
-      setIsCreateModalOpen(false)
-    }
-  }
-
-  const handleUpdateProfile = (id) => {
-    console.log(id);
-    console.log(formData)
-    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
-      !formData.organization_unit_id || !formData.job_position_id || !formData.job_title_category || !formData.marital_status_id || !formData.nation ||
-      !formData.region_id || !formData.zone_id || !formData.woreda_id
-    ) {
-
-      toast.error(t('therearemissingfields'));
-
-      return;
-
-    }
-    else {
-      dispatch(updateProfile({ Id: id, rawForm: formData }));
-      setIsEditModalOpen(false);
-    }
-
-  }
-
-  const handleDeleteProfile = (id) => {
-    console.log('to delete', id);
-    dispatch(deleteProfile({ Id: id }));
-    setIsDeleteModalOpen(false);
-  }
 
   const handleSelectedRows = (rowId) => {
 
@@ -554,97 +510,57 @@ export default function EmployeeManagement() {
 
   };
 
+  const handleCreateProfile = () => {
+    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
+      !formData.organization_unit_id || !formData.job_position_id || !formData.job_title_category_id || !formData.marital_status_id || !formData.nation ||
+      !formData.region_id || !formData.zone_id || !formData.woreda_id
+    ) {
+      console.log(validName);
+      console.log(validPhone)
+      toast.error(t('therearemissingfields'));
 
+      return;
+
+    }
+    else {
+      dispatch(addEmployee(formData));
+      setIsCreateModalOpen(false)
+    }
+  }
+
+  const handleUpdateProfile = (id) => {
+    console.log(id);
+    console.log(formData)
+    if (!validName || !formData.sex || !formData.title || !formData.user_id || !formData.employment_id || !validPhone ||
+      !formData.organization_unit?.id || !formData.job_position?.id || !formData.job_title_category?.id || !formData.marital_status?.id || !formData.nation ||
+      !formData.region?.id || !formData.zone?.id || !formData.woreda?.id
+    ) {
+
+      toast.error(t('therearemissingfields'));
+
+      return;
+
+    }
+    else {
+      dispatch(updateEmployee({ Id: id, rawForm: formData }));
+      setIsEditModalOpen(false);
+    }
+
+  }
+
+  const handleDeleteProfile = (id) => {
+    console.log('to delete', id);
+    dispatch(deleteEmployee({ Id: id }));
+    setIsDeleteModalOpen(false);
+  }
 
   const handleDeleteBunch = () => {
     console.log(selectedEmployees);
-    dispatch(deleteProfileBunch(selectedEmployees)).then((data) => {
+    dispatch(deleteEmployeeBunch(selectedEmployees)).then((data) => {
       console.log("Updated Users:", data.payload);
     });
   };
-  const handleIdChange = (e) => {
-    setExtractData({ ...extractData, [e.target.name]: e.target.value })
-    console.log(extractData);
-  }
-
-
-
-  const handleDownload = async () => {
-    if (!frontRef.current || !backRef.current) {
-      console.error("Stage refs not available");
-      return;
-    }
-
-    try {
-
-      let frontUri = await frontRef.current.toImage({ mimeType: 'image/png', pixelRatio: 2 });
-
-
-      let backUri = await backRef.current.toImage({ mimeType: 'image/png', pixelRatio: 2 });
-
-
-      if (frontUri instanceof HTMLImageElement || frontUri instanceof HTMLCanvasElement) {
-        const frontCanvas = document.createElement('canvas');
-        const frontCtx = frontCanvas.getContext('2d');
-        frontCanvas.width = frontUri.width || frontUri.naturalWidth;
-        frontCanvas.height = frontUri.height || frontUri.naturalHeight;
-        frontCtx.drawImage(frontUri, 0, 0);
-        frontUri = frontCanvas.toDataURL('image/png');
-      } else if (typeof frontUri === 'string') {
-        frontUri = frontUri.trim();
-      }
-
-
-      if (backUri instanceof HTMLImageElement || backUri instanceof HTMLCanvasElement) {
-        const backCanvas = document.createElement('canvas');
-        const backCtx = backCanvas.getContext('2d');
-        backCanvas.width = backUri.width || backUri.naturalWidth;
-        backCanvas.height = backUri.height || backUri.naturalHeight;
-        backCtx.drawImage(backUri, 0, 0);
-        backUri = backCanvas.toDataURL('image/png');
-      } else if (typeof backUri === 'string') {
-        backUri = backUri.trim();
-      }
-
-
-      const frontLink = document.createElement('a');
-      frontLink.download = `${userProfile.en_name}-front.png`;
-      frontLink.href = frontUri;
-      document.body.appendChild(frontLink);
-      frontLink.click();
-      document.body.removeChild(frontLink);
-
-
-      const backLink = document.createElement('a');
-      backLink.download = `${userProfile.en_name}-back.png`;
-      backLink.href = backUri;
-      document.body.appendChild(backLink);
-      backLink.click();
-      document.body.removeChild(backLink);
-
-    } catch (error) {
-      console.error("Error generating images: ", error);
-    }
-  };
-
-  const handleCreateId = () => {
-
-
-
-
-    const selectedIds = Object.keys(selectedEmployees).map(Number); // convert ["12", "18"] to [12, 18]
-
-    const matchingSelectedEmployees = employeeProfile.filter(employee =>
-      selectedIds.includes(employee.id)
-    );
-
-
-
-    //   dispatch(generateIdBunch({Employees:matchingSelectedEmployees,rawForm:extractData}));
-
-    setIsCreateModalOpen(false)
-
-  }
+ 
   const CloseIcon = () => (
     <svg
       width="24"
@@ -689,8 +605,6 @@ export default function EmployeeManagement() {
 
   return (
     <>
-
-
 
 
       {/* Toolbar */}
@@ -755,8 +669,8 @@ export default function EmployeeManagement() {
                 onClick={(e) => {
                   e.preventDefault();
                   console.log(Object.keys(selectedEmployees))
-                 navigate('/idmanagement/bulk',{
-                    state:{selectedEmployees:Object.keys(selectedEmployees)}
+                  navigate('/idmanagement/bulk', {
+                    state: { selectedEmployees: Object.keys(selectedEmployees) }
                   })
                 }}
               >
@@ -781,10 +695,15 @@ export default function EmployeeManagement() {
 
                   <fieldset>
                     <legend>{t('employeedetails')}</legend>
-                    {formData.photo ? <img src={formData.photo || ""} /> : null}
-                    <input type="file" onChange={imageUploader}></input>
-                    <form className="p-5 bg-white rounded shadow-sm">
+
+
+
+                    <form className="p-5 bg-white rounded shadow-sm text-start">
                       <div className="row g-4">
+                        {formData.photo ? <img src={formData.photo || ""} /> : null}
+                        <div className="col-12 text-center">
+                          <input type="file" onChange={imageUploader} className="form-control" />
+                        </div>
                         {/* Name */}
                         <div className="col-md-6">
                           <label className="form-label fw-semibold required">{t('name')}</label>
@@ -980,69 +899,6 @@ export default function EmployeeManagement() {
               </div>
             </div>
           )}
-
-          {isIdModalOpen && (
-            <div
-              className="modal fade show"
-              tabIndex="-1"
-              id="kt_modal_scrollable_1"
-              style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-            >
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title">Issue Multiple IDs</h5>
-
-                  </div>
-
-                  <form style={{ margin: '20px auto', width: '50%' }}>
-                    <div className="mb-3">
-                      <label htmlFor="issuedate" className="form-label">Issue Date</label>
-                      <input
-                        type="date"
-                        id="issuedate"
-                        className="form-control"
-                        name="id_issue_date"
-                        onChange={handleIdChange}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="expiredate" className="form-label">Expire Date</label>
-                      <input
-                        type="date"
-                        id="expiredate"
-                        className="form-control"
-                        name="id_expire_date"
-                        onChange={handleIdChange}
-                      />
-                    </div>
-                  </form>
-
-
-                  <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-light"
-                      onClick={() => setIsIdModalOpen(false)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-light"
-                      onClick={() => handleCreateId()}
-                    >
-                      Generate
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-
-
-
         </div>
       </div>
 
@@ -1227,7 +1083,7 @@ export default function EmployeeManagement() {
                                   <td className="text-start">
                                     {permissions.some(p =>
                                       p.name.includes('read IdentityCardTemplateDetail')) ? (
-                                      <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => window.open(`http://localhost:5173/idmanagement?data=${row.id}`, '_blank')}>
+                                      <button className="btn btn-icon btn-bg-light btn-color-primary btn-sm me-2" onClick={() => navigate(`/idmanagement?data=${row.id}`)}>
                                         <i className="bi bi-eye-fill"></i>
                                       </button>
                                     ) : null}
@@ -1235,8 +1091,7 @@ export default function EmployeeManagement() {
 
                                     {permissions.some(p =>
                                       p.name.includes('update Employee')) ? (
-                                      <button disabled={permissions.some(p =>
-                                        p.name.includes('update Employee')) ? false : true} className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
+                                      <button className="btn btn-icon btn-bg-light btn-color-warning btn-sm me-2"
                                         onClick={() => {
                                           setFormData(row),
                                             setIsEditModalOpen(true),
@@ -1268,7 +1123,7 @@ export default function EmployeeManagement() {
                                                 <div className="row g-4">
                                                   {/* Image Preview and Upload */}
                                                   <div className="col-12 text-center">
-                                                    {formData.image && <img src={formData.image} alt="Preview" className="img-thumbnail mb-3" />}
+
                                                     <input type="file" onChange={imageUploader} className="form-control" />
                                                   </div>
 
@@ -1341,8 +1196,8 @@ export default function EmployeeManagement() {
 
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('username')}</label>
-                                                    <select className="form-select" name="user_id" onChange={handleChange}>
-                                                      <option value={formData?.sex || ""}>{t('select')}</option>
+                                                    <select className="form-select" name="user_id" value={formData?.user_id || ""} onChange={handleChange}>
+                                                      <option value="">{t('select')}</option>
                                                       {userInfo.map((data) => {
                                                         return <option value={data.id}>{data.name}</option>
                                                       })}
@@ -1368,7 +1223,7 @@ export default function EmployeeManagement() {
                                                   {/* Organization Unit */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('organizationunit')}</label>
-                                                    <select className="form-select" name="organization_unit_id" value={formData?.organization_unit_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="organization_unit_id" value={formData?.organization_unit?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {organizationUnitInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.en_name}</option>
@@ -1379,7 +1234,7 @@ export default function EmployeeManagement() {
                                                   {/* Job Position */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('jobposition')}</label>
-                                                    <select className="form-select" name="job_position_id" value={formData?.job_position_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="job_position_id" value={formData?.job_position?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {jobPositionInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.job_description}</option>
@@ -1390,7 +1245,7 @@ export default function EmployeeManagement() {
                                                   {/* Job Title Category */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('jobtitlecategory')}</label>
-                                                    <select className="form-select" name="job_title_category_id" value={formData?.job_title_category_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="job_title_category_id" value={formData?.job_title_category?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {jobTitleCatInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.name}</option>
@@ -1413,7 +1268,7 @@ export default function EmployeeManagement() {
                                                   {/* Marital Status */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('maritalstatus')}</label>
-                                                    <select className="form-select" name="marital_status_id" value={formData?.marital_status_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="marital_status_id" value={formData?.marital_status?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {maritalInfo.map((data) => {
 
@@ -1498,7 +1353,7 @@ export default function EmployeeManagement() {
                                                   {/* Region */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('region')}</label>
-                                                    <select className="form-select" name="region_id" value={formData?.region_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="region_id" value={formData?.region?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {regionInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.name}</option>
@@ -1509,7 +1364,7 @@ export default function EmployeeManagement() {
                                                   {/* Zone */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('zone')}</label>
-                                                    <select className="form-select" name="zone_id" value={formData?.zone_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="zone_id" value={formData?.zone?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {zoneInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.name}</option>
@@ -1520,7 +1375,7 @@ export default function EmployeeManagement() {
                                                   {/* Woreda */}
                                                   <div className="col-md-6">
                                                     <label className="form-label fw-semibold required">{t('woreda')}</label>
-                                                    <select className="form-select" name="woreda_id" value={formData?.woreda_id || ""} onChange={handleChange}>
+                                                    <select className="form-select" name="woreda_id" value={formData?.woreda?.id || ""} onChange={handleChange}>
                                                       <option value="">{t('select')}</option>
                                                       {woredaInfo.map((data) => {
                                                         return <option key={data.id} value={data.id}>{data.name}</option>

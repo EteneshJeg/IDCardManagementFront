@@ -4,52 +4,8 @@ import { getOrganizationInfo } from "./organizationSlice";
 import QRCode from "react-qr-code";
 import i18next from "i18next";
 
-let token = JSON.parse(localStorage.getItem('token'));
-
-export const getProfile = createAsyncThunk(
-  'profile/get',
-  async ({ Id }, { rejectWithValue }) => {
-    try {
-
-      console.log("id",Id);
-      const response=await axios.get(`http://localhost:8000/api/employees/${Id}`,{
-        headers:{
-          Authorization:`Bearer ${token}`
-        }
-      });
-      console.log(response);
-      const data=response.data;
-      console.log(data.data);
-      return data.data;
-
-      /*let storedProfiles = JSON.parse(localStorage.getItem('profile')) || [];
-
-      if (!Array.isArray(storedProfiles)) {
-        storedProfiles = [];
-      }
-
-      let profile = storedProfiles.find((storedProfile) => {
-
-        const employmentId = storedProfile.employment_id;
-
-
-        if (Array.isArray(employmentId)) {
-          return employmentId.map(String).includes(String(Id).trim());
-        }
-
-        return String(employmentId).toLowerCase().trim() === String(Id).toLowerCase().trim();
-      });
-
-      console.log('Found profile:', profile);
-      console.log(profile)
-      return profile ?? {};*/
-    } catch (error) {
-      console.log(error);
-      return rejectWithValue(error.message || 'Failed to get profile');
-    }
-  }
-);
-
+let tokenFetched = localStorage.getItem('token');
+let token = (tokenFetched && tokenFetched !== "undefined") ? JSON.parse(tokenFetched) : null;
 
 export const generateId = createAsyncThunk(
   'id/create',
@@ -187,7 +143,7 @@ console.log(form);
       id_expire_date:toValidDate(rawData.id_expire_date) || null,
       id_status:checkedStatus,
       en_name:data.en_name,
-      sex:"female",
+      sex:data.sex,
       employment_id:data.employment_id,
       user_id:data.user?.id,
       phone_number:data.phone_number,
@@ -201,10 +157,40 @@ console.log(form);
       region_id:data.region?.id,
       zone_id:data.zone?.id,
       woreda_id:data.woreda?.id,
-      nation:data.nation
-
+      nation:data.nation,
+      address:data.address,
+      house_number:data.house_number,
+      job_position_start_date:toValidDate(data.job_position_start_date),
+      job_position_end_date:toValidDate(data.job_position_end_date),
+      address:data.address,
+      salary:parseInt(data.salary),
+      joined_date:toValidDate(data.joined_date),
+      date_of_birth:toValidDate(data.date_of_birth),
+     
     }
     console.log(dateform);
+async function urlToFile(url, filename, mimeType) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: mimeType });
+}
+
+
+const dateForm=new FormData();
+for (const key in dateform) {
+    if (dateform[key] !== undefined && dateform[key] !== null) {
+      dateForm.append(key, dateform[key]);
+    }
+  }
+
+  // Convert photo_url to File
+  if (data.photo_url) {
+    const response = await fetch(data.photo_url);
+    const blob = await response.blob();
+    const file = new File([blob], "photo.jpg", { type: blob.type || "image/jpeg" });
+    dateForm.append("photo", file);
+  }
+
 
     const responseTemp=await axios.get('http://localhost:8000/api/identity-card-templates',{
         headers:{
@@ -308,7 +294,7 @@ let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,date
       toast.error(i18next.t('failedtoupdatetemplatedetailinformation'));
      }
 
-     let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,dateform,{
+     let responseNew=await axios.put(`http://localhost:8000/api/employees/${Id}`,dateForm,{
                 headers:{
                     Authorization:`Bearer ${token}`
                 }
@@ -369,18 +355,6 @@ function dataURLtoFile(dataurl, filename) {
    
     return new File([u8arr], filename, { type: mime });
 }
-
-
-
-
-
-
-
-      
-
-
-    
-   
 
 export const saveTemplate = createAsyncThunk(
   'template/save',

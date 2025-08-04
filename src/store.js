@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './features/userSlice'
-import profileReducer from './features/profileSlice'
+import profileReducer from './features/employeeSlice'
 import idReducer from './features/idCardSlice'
 import organizationReducer from './features/organizationSlice';
 import jobTitleCategoryReducer from './features/jobTitleCategorySlice';
@@ -12,6 +12,7 @@ import woredaReducer from './features/woredaSlice'
 import maritalStatusReducer from './features/maritalStatusSlice'
 import roleReducer from './features/roleSlice'
 import permissionReducer from './features/permissionSlice'; // Add this line
+import AuthReducer from './features/authslice';
 
 
 const store = configureStore({
@@ -28,8 +29,8 @@ const store = configureStore({
     woreda:woredaReducer,
     maritalStatus:maritalStatusReducer,
     roles:roleReducer,
-    permissions: permissionReducer
-    
+    permissions: permissionReducer,
+    auth:AuthReducer
 
 
 

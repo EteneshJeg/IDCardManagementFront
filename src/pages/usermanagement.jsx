@@ -5,7 +5,7 @@ import { useState, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { toast } from "react-toastify";
 
-import { addUser, deleteUser, updateUser, getUser, deleteBunch } from "../features/userSlice";
+import { addUser, deleteUser, updateUser, getUsers, deleteBunch } from "../features/userSlice";
 import { fetchRoles } from "../features/roleSlice";
 import { useTranslation } from "react-i18next";
 
@@ -58,7 +58,7 @@ export default function UserManagement() {
     first_time: '',
     active: '',
     profile_image: '' || 'No image available',
-    role: ''
+    role: []
   })
   const [searchItem, setSearch] = useState('');
   const [confPassword, setConfPassword] = useState('');
@@ -75,7 +75,7 @@ export default function UserManagement() {
 
   useEffect(() => {
     setIsLoading(true);
-    dispatch(getUser())
+    dispatch(getUsers())
       .then((data) => {
         const dataitem = data.payload;
         console.log(dataitem)
@@ -368,21 +368,21 @@ export default function UserManagement() {
   }
   console.log(formData)
   const handleRoleChange = (roleId) => {
-    setFormData(prev => {
-      const newRoles = [...prev?.role];
-      const index = newRoles.indexOf(roleId);
+    setFormData((prev) => {
+      const currentRoles = Array.isArray(prev?.role) ? prev.role : []; // ✅ safe fallback
+      const newRoles = [...currentRoles];
 
+      const index = newRoles.indexOf(roleId);
       if (index > -1) {
-        newRoles.splice(index, 1);
+        newRoles.splice(index, 1); // remove
       } else {
-        newRoles.push(roleId);
+        newRoles.push(roleId); // add
       }
 
       return { ...prev, role: newRoles };
     });
-
-
   };
+
   console.log(formData)
   console.log(selectedRoles)
 
@@ -545,7 +545,7 @@ export default function UserManagement() {
                           <div className="mb-3">
                             {/* Role selection toggle button */}
                             <div
-                              className="btn btn-primary w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
+                              className="btn btn-primary-light border border-primary rounded w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
                               onClick={() => setIsRoleSelectionOpen(!isRoleSelectionOpen)}
                               style={{
                                 minHeight: "48px",
@@ -844,7 +844,7 @@ export default function UserManagement() {
                                               <br />
                                               <div className="mb-3">
                                                 <div className="form-label fw-semibold">{t('role')}</div>
-                                                <div className="form-control form-control-solid">{selectedUser.role}</div>
+                                                <div className="form-control form-control-solid">{selectedUser?.roles?.map(role => role?.name).join(",") || selectedUser?.roles?.[0]?.name}</div>
                                               </div>
 
                                               <br />
@@ -930,9 +930,8 @@ export default function UserManagement() {
                                                     <div className="mb-3">
                                                       {/* Role selection toggle button */}
                                                       <div
-                                                        className="btn btn-outline-secondary w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
+                                                        className="btn btn-primary w-100 text-start d-flex flex-wrap align-items-center gap-2 px-3 py-2"
                                                         onClick={() => setIsRoleSelectionOpen(!isRoleSelectionOpen)}
-                                                        value={formData.role || ''}
                                                         style={{
                                                           minHeight: "48px",
                                                           borderRadius: "0.5rem",
@@ -943,7 +942,7 @@ export default function UserManagement() {
                                                           <span className="text-muted">{t('selectroles')}</span>
                                                         ) : (
                                                           roles
-                                                            .filter((role) => formData?.role?.includes(role.id))
+                                                            .filter((role) => formData.role?.includes(role.id))
                                                             .map((role) => (
                                                               <span
                                                                 key={role.id}
@@ -985,7 +984,7 @@ export default function UserManagement() {
                                                                 className="form-check-input"
                                                                 type="checkbox"
                                                                 id={`role-${role.id}`}
-                                                                checked={formData?.role?.includes(role.id)}
+                                                                checked={formData.role?.includes(role.id)}
                                                                 onChange={() => handleRoleChange(role.id)}
                                                               />
                                                               <label className="form-check-label" htmlFor={`role-${role.id}`}>

@@ -1,10 +1,8 @@
 import { useEffect, useRef } from "react";
 
-
 import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { Stage, Layer, Text, Image, Circle, Group, Image as KonvaImage } from "react-konva";
-
 
 import { fetchRoles } from "../features/roleSlice";
 import { getOrganizationInfo } from "../features/organizationSlice";
@@ -58,7 +56,7 @@ export default function IdDetails() {
 
   useEffect(() => {
     dispatch(getOrganizationInfo()).then((data) => {
-      //console.log(data);
+
       const org = data.payload;
       console.log(org);
 
@@ -72,10 +70,8 @@ export default function IdDetails() {
         const img = new window.Image();
         img.onload = () => setLogo(img);
         img.onerror = (e) => console.error('Image failed to load:', e);
-        img.crossOrigin = 'anonymous'; // only if you need CORS / pixel access
+        img.crossOrigin = 'anonymous';
         img.src = `http://localhost:8000/cors-logo/${org.logo}`;
-
-
 
         setOrgAddress(org.address);
         setWebsite(org.website);
@@ -85,8 +81,6 @@ export default function IdDetails() {
         setPoBox(org.po_box);
         setTin(org.tin_number);
         setAbbreviation(org.abbreviation);
-
-
 
       }
     });
@@ -119,8 +113,7 @@ export default function IdDetails() {
   }
 
   const textdetails = {
-    //label_length: 20, //add
-    text_content: null, //to be filled when generated
+    text_content: null,
     text_positionx: 400,
     text_positiony: 80,
     text_font_type: 'arial',
@@ -130,8 +123,8 @@ export default function IdDetails() {
   }
 
   const shareddetails = {
-    type: 'active', //add- you'll use this to determine the text_content or image_file
-    status: 'inactive', //to be filled when generated,
+    type: 'active',
+    status: 'inactive',
     label_length: 20
   }
 
@@ -209,6 +202,7 @@ export default function IdDetails() {
   useEffect(() => {
     const canvas = qrRef.current;
     if (canvas) {
+      console.log('canvas')
       const svgData = new XMLSerializer().serializeToString(canvas);
       const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
       const url = URL.createObjectURL(svgBlob);
@@ -219,14 +213,15 @@ export default function IdDetails() {
       };
       img.src = url
     }
+    else {
+      console.log('no canvas')
+    }
 
   }, []);
 
-
-
-
-
-
+  useEffect(() => {
+    console.log(qrCodeImage)
+  }, [qrCodeImage, dispatch])
 
 
   const [sampleProfile, setSampleProfile] = useState({
@@ -301,6 +296,7 @@ export default function IdDetails() {
   }, [user]);
 
   useEffect(() => {
+    setIsLoading(true)
     dispatch(fetchRoles()).then((data) => {
       const dataitem = data.payload;
       const normalizedData = Array.isArray(dataitem) ? dataitem : [dataitem];
@@ -336,25 +332,6 @@ export default function IdDetails() {
 
   const [enableField, setEnableField] = useState(loadFieldState);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [imagePosition, setImagePosition] = useState({ x: 50, y: 50 });
-  const [imageDimension, setImageDimension] = useState({ width: 150, height: 150 });
-  const [imageMask, setImageMask] = useState(false);
-  const [imageMaskThickness, setImageMaskThickness] = useState(0);
-  const [imageCircle, setImageCircle] = useState({ is_circle: false });
-  const [imageCircleDiameter, setImageCircleDiameter] = useState(0);
-  const [imageMaskColor, setImageMaskColor] = useState('black');
-  const [imageCircleBackground, setImageCircleBackground] = useState();
-  const [logoPosition, setLogoPosition] = useState({ x: 250, y: 50 });
-  const [logoDimension, setLogoDimension] = useState({ width: 150, height: 150 });
-  const [logoMask, setLogoMask] = useState(false);
-  const [logoMaskThickness, setLogoMaskThickness] = useState(0);
-  const [logoCircle, setLogoCircle] = useState({ is_circle: false });
-  const [logoCircleDiameter, setLogoCircleDiameter] = useState(0);
-  const [logoMaskColor, setLogoMaskColor] = useState('black');
-  const [circleBackground, setLogoCircleBackground] = useState();
-  const [circleDiameter, setCircleDiameter] = useState();
-
-  const [isUpdating, setIsUpdating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("front");
   const selectedTemplateFields = newTemplates?.[selectedTemplate] || {};
 
@@ -362,27 +339,6 @@ export default function IdDetails() {
   const [backImage, setBackImage] = useState();
   const [badgeImage, setBadgeImage] = useState();
   const [templateImage, setTemplateImage] = useState();
-  const [logoImage, setLogoImage] = useState();
-
-  /*useEffect(() => {
-  const imageUrl = newTemplates?.[selectedTemplate]?.templateBackground?.image_file||newTemplates?.[selectedTemplate]?.templateBackground?.imageUrl;
-
-  if (!imageUrl) {
-    setTemplateImage(null);
-    return;
-  }
-
-  const img = new window.Image();
-  img.src = imageUrl;
-
-  img.onload = () => {
-    setTemplateImage(img);
-  };
-
-  img.onerror = () => {
-    console.error("Failed to load image from template");
-  };
-}, [newTemplates, selectedTemplate]);*/
 
 
   const handleImageSelect = (e, viewType) => {
@@ -435,26 +391,6 @@ export default function IdDetails() {
     reader.readAsDataURL(file);
   };
 
-  /*useEffect(() => {
-    if (!logo) {
-      console.log("!log")
-      setLogoImage(null);
-      return;
-    }
-  
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";  // add if you get CORS issues
-    img.src = logo; // logo is the URL string
-  
-    img.onload = () => {
-      setLogoImage(img);
-    };
-  
-    img.onerror = () => {
-      console.error("Failed to load logo image", logo);
-    };
-  }, [logo]);*/
-
 
   console.log(newTemplates?.[selectedTemplate]?.photo?.circle_positionx)
 
@@ -475,6 +411,7 @@ export default function IdDetails() {
   }, []);
 
   useEffect(() => {  //get the saved template
+    setIsLoading(true)
     dispatch(getTemplate()).then((action) => {
       console.log(action)
       const dataitem = action.payload;
@@ -506,26 +443,11 @@ export default function IdDetails() {
       img.onerror = (e) => {
         console.error("Failed to load image", e);
       };
-
-      /*if (dataitem && typeof dataitem === 'object') {
-        
-  
-        const keys = Object.keys(dataitem);
-        if (keys.length === 0) {
-          console.log("No templates found.");
-          setNewTemplates(null);
-        } else {
-          console.log("Loaded templates:", dataitem);
-          setNewTemplates(dataitem); // optional: auto-select first template
-        }
-      } else {
-        console.warn("Invalid template payload.");
-      }*/
     }).catch((error) => {
       console.error("Error loading templates:", error);
-    });
+    }).finally(() => setIsLoading(false));
   }, [dispatch, selectedTemplate]);
-  console.log('front image', frontImage)
+
 
   useEffect(() => {
 
@@ -590,12 +512,12 @@ export default function IdDetails() {
 
         setNewTemplates((prev) => ({
           ...prev,
-          ...templates // merged by template type like 'front', 'back', etc.
+          ...templates
         }));
 
         setOldTemplates((prev) => ({
           ...prev,
-          ...templates // merged by template type like 'front', 'back', etc.
+          ...templates
         }));
 
 
@@ -635,34 +557,7 @@ export default function IdDetails() {
   console.log(enableField)
   console.log(newTemplates)
 
-
-
-
-
-
-
-
-
-
-
-
   console.log(templateImage)
-
-
-  const [backObj, setBackObj] = useState();
-
-  useEffect(() => {
-    const img = localStorage.getItem(`templateCards${selectedTemplate}`);
-    console.log(img);
-    const loading = new window.Image();
-    loading.src = img;
-    setBackObj(loading);
-    setImageDimension({
-      width: newTemplates[selectedTemplate]?.image_width || 150,
-      height: newTemplates[selectedTemplate]?.image_height || 150,
-    });
-  }, [selectedTemplate])
-
 
   const handleEnableField = (e) => {
     const selectedField = e.target?.previousSibling?.value;
@@ -873,154 +768,8 @@ export default function IdDetails() {
   console.log(newTemplates);
 
 
-
-
-  const handleMaskThickness = (e) => {
-    const { value } = e.target;
-
-
-    setImageMaskThickness(Number(value));
-
-    setNewTemplates((prevTemplates) => ({
-      ...prevTemplates,
-      [selectedTemplate]: {
-        ...prevTemplates[selectedTemplate],
-        imageMaskThickness: Number(value),
-      },
-    }));
-  }
-
-  const handleLogoMaskThickness = (e) => {
-    const { value } = e.target;
-
-
-    setLogoMaskThickness(Number(value));
-
-    setNewTemplates((prevTemplates) => ({
-      ...prevTemplates,
-      [selectedTemplate]: {
-        ...prevTemplates[selectedTemplate],
-        logoMaskThickness: Number(value),
-      },
-    }));
-  }
-
-
-
-  const handleCircle = (e, maskVal) => {
-    setImageCircle((prevMask) => ({
-      ...prevMask,
-      is_circle: maskVal,
-    }));
-
-    setNewTemplates((prevTemplates) => ({
-      ...prevTemplates,
-      [selectedTemplate]: {
-        ...prevTemplates[selectedTemplate],
-        photo: {
-          ...(prevTemplates[selectedTemplate]?.photo || {}),
-          is_circle: maskVal,
-        },
-      },
-    }));
-  };
-
-  const handleLogoCircle = (e, maskVal) => {
-    setLogoCircle((prevMask) => ({
-      ...prevMask,
-      logo_is_circle: maskVal,
-    }));
-
-    setNewTemplates((prevTemplates) => ({
-      ...prevTemplates,
-      [selectedTemplate]: {
-        ...prevTemplates[selectedTemplate],
-        logo: {
-          ...(prevTemplates[selectedTemplate]?.logo || {}),
-          logo_is_circle: maskVal,
-        },
-      },
-    }));
-  };
-
-
   const handleSaveTemplateDetail = (newTemplates) => {
 
-
-    /*const enabledText = () => {
-      return Object.values(newTemplates[selectedTemplate]?.textFields || {})
-        .filter(field => field.status === 'active');
-    };
-
-    const enabledTextName = () => {
-      return Object.values(newTemplates[selectedTemplate]?.textFields || {})
-        .filter(field => field.status === 'active')
-        .map(field => field.field_name);
-    };*/
-
-
-    /*  const enabledImages = () => {
-        return Object.values(newTemplates[selectedTemplate]?.imageFields || {})
-          .filter(field => field.shareddetails.status === 'active')
-      }*/
-
-
-    //console.log(enabledText())
-    //console.log(enabledImages());
-
-
-    /*const detaildata = {
-      field_names: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]
-      }),
-      field_labels: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.field_label
-      }),
-      label_lengths: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.label_length
-      }),
-      types: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.type
-      }),
-      text_positionxValues: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.text_positionx
-      }),
-      text_positionyValues: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.text_positiony
-      }),
-      text_fontTypes: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.text_font_type
-      }),
-      text_fontSizes: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.text_font_size
-      }),
-      text_fontColors: textFields.map(field_name => {
-        return newTemplates[selectedTemplate]?.textFields?.[field_name]?.text_font_color
-      }),
-      imageWidths: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.image_width
-      }),
-      imageHeights: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.image_height
-      }),
-      masks: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.has_mask
-      }),
-      circle_diameters: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.circle_diameter
-      }),
-      circle_positionxValues: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.circle_positionx
-      }),
-      circle_positionyValues: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.circle_positiony
-      }),
-      circle_backgrounds: imageFields.map(name => {
-        return newTemplates[selectedTemplate]?.textFields?.[name]?.circle_background
-      }),
-    }*/
-    //console.log(enableField)
-    //dispatch(saveIdDetails({Side:selectedTemplate,Text:enabledText(),TextName:enabledTextName().field_name,Image:enabledImages()}));
     console.log("template data", newTemplates);
     console.log("enabled", enableField);
     dispatch(saveIdDetails({ side: selectedTemplate, detailData: newTemplates }));
@@ -1165,13 +914,13 @@ export default function IdDetails() {
                         width={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_width) || 150}
                         height={Number(newTemplates[selectedTemplate]?.imageFields?.photo?.image_height) || 150}
                         stroke={
-                          newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || imageMaskColor
+                          newTemplates[selectedTemplate]?.imageFields?.photo?.circle_background || 'black'
                         }
                         strokeWidth={
                           Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_mask_thickness) || 2
                         }
                         cornerRadius={
-                          Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || imageCircleDiameter) / 2
+                          Number(newTemplates[selectedTemplate]?.imageFields?.photo?.circle_diameter || 0) / 2
                         }
                         rotation={0}
                       />
@@ -1207,11 +956,11 @@ export default function IdDetails() {
                           image={logo}
                           width={newTemplates[selectedTemplate]?.imageFields?.logo?.image_width || 150}
                           height={newTemplates[selectedTemplate]?.imageFields?.logo?.image_height || 150}
-                          stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || imageMaskColor}
+                          stroke={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_background || 'black'}
                           strokeWidth={newTemplates[selectedTemplate]?.imageFields?.logo?.circle_mask_thickness || 2}
                           cornerRadius={
                             //newTemplates[selectedTemplate]?.logo?.logo_is_circle
-                            (newTemplates[selectedTemplate]?.imageFields?.logo?.circle_diameter || imageCircleDiameter) / 2
+                            (newTemplates[selectedTemplate]?.imageFields?.logo?.circle_diameter || 0) / 2
                             // : 0
                           }
                           rotation={0}
@@ -1236,6 +985,7 @@ export default function IdDetails() {
                           case "orgPhone": fieldValue = orgPhone; break;
                           case "website": fieldValue = website; break;
                           case "orgEmail": fieldValue = orgEmail; break;
+                          case "poBox": fieldValue = poBox; break;
                           case "fax": fieldValue = fax; break;
                           case "tin": fieldValue = tin; break;
                           case "abbreviation": fieldValue = abbreviation; break;
@@ -1621,7 +1371,7 @@ export default function IdDetails() {
                             type="text"
                             className="form-control"
                             name="field_label"
-                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.field_label ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
                             }
@@ -1634,7 +1384,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="label_length"
-                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.label_length ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
                             }
@@ -1647,7 +1397,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positionx"
-                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.circle_positionx ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)
                             }
@@ -1659,6 +1409,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positiony"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.circle_positiony ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
 
 
@@ -1671,6 +1422,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_width"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.image_width ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
 
                             placeholder="width"
@@ -1683,8 +1435,8 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_height"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.image_height ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
-
                             placeholder="height"
                           />
                         </details>
@@ -1718,6 +1470,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_mask_thickness"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.circle_mask_thickness ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
 
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
@@ -1730,6 +1483,7 @@ export default function IdDetails() {
                             type="color"
                             className="form-control"
                             name="circle_background"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.circle_background ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.photo?.has_mask}
 
@@ -1767,6 +1521,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_diameter"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['photo']?.circle_diameter ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'photo', e.target.name, e.target.value)}
                           // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
                           />
@@ -1850,7 +1605,7 @@ export default function IdDetails() {
                             type="text"
                             className="form-control"
                             name="field_label"
-                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.field_label ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
                             }
@@ -1863,7 +1618,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="label_length"
-                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.label_length ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
                             }
@@ -1876,7 +1631,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positionx"
-                            //value={newTemplates[selectedTemplate]['qrcode']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.circle_positionx ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)
                             }
@@ -1888,6 +1643,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positiony"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.circle_positiony ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
 
 
@@ -1900,6 +1656,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_width"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.image_width ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
 
                             placeholder="width"
@@ -1912,6 +1669,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_height"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.image_height ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
 
                             placeholder="height"
@@ -1947,6 +1705,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_mask_thickness"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.circle_mask_thickness ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
 
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
@@ -1959,6 +1718,7 @@ export default function IdDetails() {
                             type="color"
                             className="form-control"
                             name="circle_background"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.circle_background ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.qrcode?.has_mask}
 
@@ -1996,6 +1756,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_diameter"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['qrcode']?.circle_diameter ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'qrcode', e.target.name, e.target.value)}
                           // disabled={!newTemplates[selectedTemplate]?.photo?.is_circle}
                           />
@@ -2078,7 +1839,7 @@ export default function IdDetails() {
                             type="text"
                             className="form-control"
                             name="field_label"
-                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.field_label ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
                             }
@@ -2091,7 +1852,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="label_length"
-                            //value={newTemplates[selectedTemplate]['photo']?.circle_positionx }
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.label_length ?? ''}
                             onChange={(e) =>
                               handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)
                             }
@@ -2104,6 +1865,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positionx"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.circle_positionx ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
 
                             placeholder="x-axis"
@@ -2116,6 +1878,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_positiony"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.circle_positiony ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
 
 
@@ -2128,6 +1891,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_width"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.image_width ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
 
                             placeholder="width"
@@ -2140,6 +1904,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="image_height"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.image_height ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
 
                             placeholder="height"
@@ -2153,7 +1918,6 @@ export default function IdDetails() {
                               type="radio"
                               className="form-control"
                               name="has_mask"
-
                               onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, true)}
                             />
                             Apply
@@ -2177,6 +1941,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_mask_thickness"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.circle_mask_thickness ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
 
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
@@ -2189,6 +1954,7 @@ export default function IdDetails() {
                             type="color"
                             className="form-control"
                             name="circle_background"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.circle_background ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
                             disabled={!newTemplates[selectedTemplate]?.imageFields?.logo?.has_mask}
 
@@ -2226,6 +1992,7 @@ export default function IdDetails() {
                             type="number"
                             className="form-control"
                             name="circle_diameter"
+                            value={newTemplates[selectedTemplate]?.imageFields?.['logo']?.circle_diameter ?? ''}
                             onChange={(e) => handleImageChange(selectedTemplate, 'logo', e.target.name, e.target.value)}
                           //disabled={!newTemplates[selectedTemplate]?.logo?.logo_is_circle}
                           />

@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getProfile } from "../features/idCardSlice";
+import { getEmployee } from "../features/employeeSlice";
 import { getOrganizationInfo } from "../features/organizationSlice";
 import QRCode from "react-qr-code"
 import { useTranslation } from "react-i18next";
@@ -197,9 +197,9 @@ export default function EmployeeDashboard() {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const logged = useSelector((state) => state.user.logged);
-  const role = useSelector((state) => state.user.role);
-  const employeeId = useSelector((state) => state.user.employee_id);
+  const logged = useSelector((state) => state.auth.logged);
+  const role = useSelector((state) => state.auth.role);
+  const employeeId = useSelector((state) => state.auth.employee_id);
   const [selectedTemplate, setSelectedTemplate] = useState("front");
   const selectedTemplateFields = templates[selectedTemplate] || {};
   const [qrImage, setQRImage] = useState();
@@ -429,9 +429,11 @@ export default function EmployeeDashboard() {
 
 
   useEffect(() => {
+    console.log(employeeId)
     setIsLoading(true)
     if (employeeId) {
-      dispatch(getProfile({ Id: employeeId })).then((data) => {
+      dispatch(getEmployee({ Id: employeeId })).then((data) => {
+        
         console.log(data)
         const dataitem = data.payload;
         console.log(dataitem);
@@ -447,6 +449,7 @@ export default function EmployeeDashboard() {
       })
     }
   }, [dispatch])
+  console.log(userProfile)
 
   const Loader = () => (
     <div className="d-flex justify-content-center py-10">
@@ -458,6 +461,8 @@ export default function EmployeeDashboard() {
   console.log(userProfile)
   const userRole = role.length !== 0 ? role : currentRole?.[0]
   console.log(userRole);
+  console.log(logged);
+  console.log(String(userProfile?.id_status).toLowerCase() )
 
   return (
     <>

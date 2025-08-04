@@ -1,5 +1,5 @@
 
-import { signin } from "../features/userSlice"
+import { signin } from "../features/authslice"
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
@@ -13,20 +13,22 @@ export default function Login() {
 
 	const { t, i18n } = useTranslation();
 
-	const logged = useSelector((state) => state.user.logged);
+	const logged = useSelector((state) => state.auth.logged);
 
-	const role = useSelector((state) => state.user.role);
+	const role = useSelector((state) => state.auth.role);
 
 
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const [logo, setLogo] = useState();
 	const [orgName, setOrgName] = useState();
+	const [isLoading,setIsLoading]=useState(false);
 
 	const { organizationInfo } = useSelector((state) => state.organization);
 	const [roleList, setRoleList] = useState([]);
 
 	useEffect(() => {
+		setIsLoading(true);
 		dispatch(getOrganizationInfo()).then((data) => {
 			console.log(data);
 			console.log(data.payload);
@@ -35,7 +37,7 @@ export default function Login() {
 			const backendBaseUrl = 'http://localhost:8000'; // or your actual domain
 
 			setLogo(`${backendBaseUrl}/storage/${data.payload.logo}`);
-		})
+		}).finally(()=>setIsLoading(false));
 	}, [organizationInfo]);
 
 	const [formData, setFormData] = useState({
@@ -64,6 +66,14 @@ export default function Login() {
 	useEffect(() => {
 		console.log("Updated roleList:", roleList);
 	}, [roleList]);
+
+	const Loader = () => (
+    <div className="d-flex justify-content-center py-10">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
 
 	return (
 		<div id="kt_body" className="app-blank app-blank h-screen ">
@@ -142,7 +152,7 @@ export default function Login() {
 						<div className="d-flex flex-column flex-center py-7 py-lg-15 px-5 px-md-15 w-100">
 							{/*begin::Logo*/}
 							<a href="/">
-								{logo ? (
+								{isLoading?(<Loader />):logo ? (
 									<img src={logo} className="h-200px w-200px" style={{ borderRadius: '50%' }} />
 								) : (
 									<img alt="Logo" className="h-30px" />
