@@ -329,7 +329,14 @@ i18next.use(initReactI18next).init({
                 woredaupdatedsuccessfully:'Woreda updated successfully',
                 failedtoupdateworeda:'Failed to update woreda',
                 woredadeletesuccessful:'Woreda deleted successfully',
-                failedtodeleteworeda:'Failed to delete woreda'
+                failedtodeleteworeda:'Failed to delete woreda',
+                notifications:'Notifications',
+                alerts:'Alerts',
+                s:'s',
+                report:'report',
+                unissued:'Unissued',
+                active:'Active',
+                expired:'Expired'
 
             }
         },
@@ -657,7 +664,14 @@ i18next.use(initReactI18next).init({
                 woredaupdatedsuccessfully:'ወረዳ በተሳካ ሁኔታ ዘምኗል',
                 failedtoupdateworeda:'ወረዳ ማዘመን አልተሳካም።',
                 woredadeletesuccessful:'ወረዳ በተሳካ ሁኔታ ተሰርዟል።',
-                failedtodeleteworeda:'ወረዳን መሰረዝ አልተሳካም'
+                failedtodeleteworeda:'ወረዳን መሰረዝ አልተሳካም',
+                notifications:'ማሳወቂያዎች',
+                alerts:'ማንቂያዎች',
+                s:'ዎች',
+                report:'ሪፖርት',
+                unissued:'ያልወጣ',
+                active:'ንቁ',
+                expired:'ጊዜው አልፎበታል'
                 
             }
         }
